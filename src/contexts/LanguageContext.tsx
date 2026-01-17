@@ -8,17 +8,29 @@ interface LanguageContextType {
   t: (de: string, en: string) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+// Default values for context to prevent errors during hot reload
+const defaultContext: LanguageContextType = {
+  language: 'de',
+  setLanguage: () => {},
+  t: (de: string) => de,
+};
+
+const LanguageContext = createContext<LanguageContextType>(defaultContext);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('language');
-    return (saved === 'en' ? 'en' : 'de') as Language;
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('language');
+      return (saved === 'en' ? 'en' : 'de') as Language;
+    }
+    return 'de';
   });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('language', lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('language', lang);
+    }
   };
 
   useEffect(() => {
@@ -37,9 +49,5 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 }
 
 export function useLanguage() {
-  const context = useContext(LanguageContext);
-  if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
+  return useContext(LanguageContext);
 }
