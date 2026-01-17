@@ -9,61 +9,40 @@ import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-
-const faqs = [
-  {
-    frage: "Was passiert beim ersten Termin?",
-    antwort: "Beim Ersttermin nehme ich mir viel Zeit für Sie. Wir besprechen ausführlich Ihre Beschwerden, Ihre Krankengeschichte und Ihren Lebensstil. Anschließend erfolgt eine körperliche Untersuchung. Basierend auf allen Informationen erstelle ich einen individuellen Behandlungsplan. Der Ersttermin dauert in der Regel 60-90 Minuten.",
-  },
-  {
-    frage: "Muss ich den Anamnesebogen vorher ausfüllen?",
-    antwort: "Es wäre sehr hilfreich, wenn Sie den Anamnesebogen vor Ihrem ersten Termin ausfüllen. So können wir die Zeit optimal nutzen und direkt in die Behandlung einsteigen. Sie finden den Bogen in dieser App unter 'Anamnesebogen'.",
-  },
-  {
-    frage: "Werden die Kosten von der Krankenkasse übernommen?",
-    antwort: "Private Krankenversicherungen und Beihilfestellen erstatten in der Regel die Kosten für Heilpraktikerbehandlungen, je nach Tarif ganz oder teilweise. Gesetzliche Krankenkassen übernehmen diese Kosten grundsätzlich nicht. Eine Heilpraktiker-Zusatzversicherung kann hier sinnvoll sein. Gerne erstelle ich Ihnen einen Kostenvoranschlag.",
-  },
-  {
-    frage: "Wie lange dauert eine Behandlungssitzung?",
-    antwort: "Eine reguläre Behandlung dauert zwischen 30 und 60 Minuten, je nach Therapieverfahren und Ihren individuellen Bedürfnissen. Akupunkturbehandlungen dauern beispielsweise etwa 45 Minuten, manuelle Therapien ca. 30-45 Minuten.",
-  },
-  {
-    frage: "Wie viele Behandlungen sind nötig?",
-    antwort: "Das hängt stark von Ihren Beschwerden, deren Dauer und Ihrem allgemeinen Gesundheitszustand ab. Bei akuten Beschwerden sind oft schon wenige Behandlungen hilfreich. Chronische Erkrankungen erfordern meist eine längere Behandlungsreihe. Nach den ersten Sitzungen kann ich Ihnen eine bessere Einschätzung geben.",
-  },
-  {
-    frage: "Behandeln Sie auch Kinder?",
-    antwort: "Ja, ich behandle auch Kinder und Jugendliche. Die Naturheilkunde bietet gerade für Kinder sanfte und nebenwirkungsarme Behandlungsmöglichkeiten. Die Therapie wird selbstverständlich kindgerecht angepasst.",
-  },
-  {
-    frage: "Was sollte ich zum Termin mitbringen?",
-    antwort: "Bitte bringen Sie aktuelle Befunde, Laborwerte und Röntgenbilder mit, sofern vorhanden. Auch eine Liste Ihrer aktuellen Medikamente ist wichtig. Wenn Sie den Anamnesebogen bereits ausgefüllt haben, ist das sehr hilfreich.",
-  },
-  {
-    frage: "Kann ich einen Termin absagen?",
-    antwort: "Termine können Sie bis 24 Stunden vorher kostenlos absagen oder verschieben. Bei kurzfristigeren Absagen oder Nichterscheinen muss ich leider eine Ausfallgebühr berechnen, da der Termin nicht mehr anderweitig vergeben werden kann.",
-  },
-  {
-    frage: "Gibt es Parkplätze in der Nähe?",
-    antwort: "Ja, direkt vor der Praxis befinden sich kostenlose Parkplätze. Falls diese belegt sein sollten, finden Sie weitere Parkmöglichkeiten in den umliegenden Straßen.",
-  },
-  {
-    frage: "Ist die Praxis barrierefrei?",
-    antwort: "Die Praxisräume sind ebenerdig und barrierefrei zugänglich. Bei Mobilitätseinschränkungen sprechen Sie mich gerne vorher an, damit ich entsprechende Vorkehrungen treffen kann.",
-  },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FAQ = () => {
+  const { language, t } = useLanguage();
+  const tr = translations.faq;
+
+  const { data: faqs, isLoading, error } = useQuery({
+    queryKey: ['faqs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('faqs')
+        .select('*')
+        .eq('is_published', true)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <Layout>
       <div className="bg-sage-50 py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="mb-4 font-serif text-3xl font-semibold text-foreground md:text-4xl">
-              Häufig gestellte Fragen
+              {t(tr.title.de, tr.title.en)}
             </h1>
             <p className="text-lg text-muted-foreground">
-              Antworten auf die wichtigsten Fragen rund um die Behandlung
+              {t(tr.subtitle.de, tr.subtitle.en)}
             </p>
           </div>
         </div>
@@ -73,22 +52,37 @@ const FAQ = () => {
         <div className="mx-auto max-w-3xl">
           <Card className="mb-8 shadow-card">
             <CardContent className="p-0">
-              <Accordion type="single" collapsible className="w-full">
-                {faqs.map((faq, index) => (
-                  <AccordionItem
-                    key={index}
-                    value={`item-${index}`}
-                    className="border-b border-border last:border-0"
-                  >
-                    <AccordionTrigger className="px-6 py-4 text-left font-serif text-lg font-medium hover:no-underline [&[data-state=open]]:text-primary">
-                      {faq.frage}
-                    </AccordionTrigger>
-                    <AccordionContent className="px-6 pb-4 text-muted-foreground leading-relaxed">
-                      {faq.antwort}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+              {isLoading ? (
+                <div className="space-y-4 p-6">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="p-6 text-center text-destructive">
+                  {t(translations.common.error.de, translations.common.error.en)}
+                </div>
+              ) : (
+                <Accordion type="single" collapsible className="w-full">
+                  {faqs?.map((faq, index) => (
+                    <AccordionItem
+                      key={faq.id}
+                      value={`item-${index}`}
+                      className="border-b border-border last:border-0"
+                    >
+                      <AccordionTrigger className="px-6 py-4 text-left font-serif text-lg font-medium hover:no-underline [&[data-state=open]]:text-primary">
+                        {language === 'de' ? faq.question_de : faq.question_en}
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-4 text-muted-foreground leading-relaxed">
+                        {language === 'de' ? faq.answer_de : faq.answer_en}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              )}
             </CardContent>
           </Card>
 
@@ -99,21 +93,21 @@ const FAQ = () => {
                 <HelpCircle className="h-7 w-7 text-primary-foreground" />
               </div>
               <h2 className="mb-2 font-serif text-xl font-semibold text-foreground">
-                Ihre Frage war nicht dabei?
+                {t(tr.notFound.de, tr.notFound.en)}
               </h2>
               <p className="mb-6 text-muted-foreground">
-                Kontaktieren Sie mich gerne direkt – ich beantworte Ihre Fragen persönlich.
+                {t(tr.contact.de, tr.contact.en)}
               </p>
               <div className="flex flex-col justify-center gap-4 sm:flex-row">
                 <Button asChild>
                   <a href="tel:+49123456789">
                     <Phone className="mr-2 h-4 w-4" />
-                    Anrufen
+                    {t(tr.call.de, tr.call.en)}
                   </a>
                 </Button>
                 <Button asChild variant="outline">
                   <Link to="/anamnesebogen">
-                    Zum Anamnesebogen
+                    {t(tr.toAnamnesis.de, tr.toAnamnesis.en)}
                   </Link>
                 </Button>
               </div>
