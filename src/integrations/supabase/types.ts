@@ -14,7 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      faqs: {
+        Row: {
+          answer_de: string
+          answer_en: string
+          created_at: string
+          id: string
+          is_published: boolean
+          question_de: string
+          question_en: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer_de: string
+          answer_en: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question_de: string
+          question_en: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          answer_de?: string
+          answer_en?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question_de?: string
+          question_en?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      practice_info: {
+        Row: {
+          content_de: string
+          content_en: string
+          created_at: string
+          icon: string | null
+          id: string
+          is_published: boolean
+          slug: string
+          sort_order: number
+          title_de: string
+          title_en: string
+          updated_at: string
+        }
+        Insert: {
+          content_de: string
+          content_en: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_published?: boolean
+          slug: string
+          sort_order?: number
+          title_de: string
+          title_en: string
+          updated_at?: string
+        }
+        Update: {
+          content_de?: string
+          content_en?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_published?: boolean
+          slug?: string
+          sort_order?: number
+          title_de?: string
+          title_en?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +100,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      language_code: "de" | "en"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +227,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      language_code: ["de", "en"],
+    },
   },
 } as const

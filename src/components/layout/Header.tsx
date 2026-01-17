@@ -3,19 +3,26 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { label: "Start", href: "/" },
-  { label: "Anamnesebogen", href: "/anamnesebogen" },
-  { label: "Was ist ein Heilpraktiker?", href: "/heilpraktiker" },
-  { label: "GebÜH", href: "/gebueh" },
-  { label: "Ernährung", href: "/ernaehrung" },
-  { label: "FAQ", href: "/faq" },
-];
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { t } = useLanguage();
+  const nav = translations.nav;
+  const header = translations.header;
+
+  const navItems = [
+    { label: t(nav.home.de, nav.home.en), href: "/" },
+    { label: t(nav.anamnesis.de, nav.anamnesis.en), href: "/anamnesebogen" },
+    { label: t(nav.practitioner.de, nav.practitioner.en), href: "/heilpraktiker" },
+    { label: t(nav.fees.de, nav.fees.en), href: "/gebueh" },
+    { label: t(nav.nutrition.de, nav.nutrition.en), href: "/ernaehrung" },
+    { label: t(nav.practice.de, nav.practice.en), href: "/praxis-info" },
+    { label: t(nav.faq.de, nav.faq.en), href: "/faq" },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -26,9 +33,9 @@ export function Header() {
           </div>
           <div className="flex flex-col">
             <span className="font-serif text-lg font-semibold leading-tight text-foreground">
-              Naturheilpraxis
+              {t(header.practice.de, header.practice.en)}
             </span>
-            <span className="text-xs text-muted-foreground">Peter Rauch</span>
+            <span className="text-xs text-muted-foreground">{header.owner.de}</span>
           </div>
         </Link>
 
@@ -48,18 +55,21 @@ export function Header() {
               {item.label}
             </Link>
           ))}
+          <LanguageSwitcher className="ml-2" />
         </nav>
 
         {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label="Menü öffnen"
-        >
-          {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <LanguageSwitcher />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={t(header.openMenu.de, header.openMenu.en)}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
       </div>
 
       {/* Mobile Navigation */}
