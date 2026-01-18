@@ -90,7 +90,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
                         ].map((option) => (
                           <div key={option.key} className="flex items-center gap-2">
                             <Checkbox
-                              checked={formData.kopfErkrankungen?.augenerkrankung?.[option.key as keyof typeof formData.kopfErkrankungen.augenerkrankung] || false}
+                              checked={!!formData.kopfErkrankungen?.augenerkrankung?.[option.key as keyof typeof formData.kopfErkrankungen.augenerkrankung]}
                               onCheckedChange={(checked) => updateNestedField("kopfErkrankungen", "augenerkrankung", option.key, !!checked)}
                             />
                             <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
@@ -131,7 +131,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
                         ].map((option) => (
                           <div key={option.key} className="flex items-center gap-2">
                             <Checkbox
-                              checked={formData.kopfErkrankungen?.kopfschmerzen?.[option.key as keyof typeof formData.kopfErkrankungen.kopfschmerzen] || false}
+                              checked={!!formData.kopfErkrankungen?.kopfschmerzen?.[option.key as keyof typeof formData.kopfErkrankungen.kopfschmerzen]}
                               onCheckedChange={(checked) => updateNestedField("kopfErkrankungen", "kopfschmerzen", option.key, !!checked)}
                             />
                             <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
@@ -170,7 +170,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
                         ].map((option) => (
                           <div key={option.key} className="flex items-center gap-2">
                             <Checkbox
-                              checked={formData.kopfErkrankungen?.schwindel?.[option.key as keyof typeof formData.kopfErkrankungen.schwindel] || false}
+                              checked={!!formData.kopfErkrankungen?.schwindel?.[option.key as keyof typeof formData.kopfErkrankungen.schwindel]}
                               onCheckedChange={(checked) => updateNestedField("kopfErkrankungen", "schwindel", option.key, !!checked)}
                             />
                             <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
