@@ -272,6 +272,7 @@ export const initialFormData = {
     bluttransfusion: { ja: false, jahr: "", grund: "" },
     chemotherapie: { ja: false, jahr: "", art: "" },
     strahlentherapie: { ja: false, bereich: "" },
+    szintigraphie: { ja: false, jahr: "", grund: "" },
   },
   
   // VI. Krebserkrankung

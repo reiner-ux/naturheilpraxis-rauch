@@ -336,6 +336,47 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
             />
           )}
         </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="szintigraphie"
+              checked={formData.unfaelleOperationen?.szintigraphie?.ja || false}
+              onCheckedChange={(checked) => updateNestedField("szintigraphie", "ja", checked)}
+            />
+            <Label htmlFor="szintigraphie">
+              {language === "de" ? "Szintigraphie" : "Scintigraphy"}
+            </Label>
+          </div>
+          <p className="text-sm text-muted-foreground pl-6">
+            {language === "de" 
+              ? "Nuklearmedizinische Untersuchung, häufig bei Schilddrüsendiagnostik und Tumorsuche eingesetzt."
+              : "Nuclear medicine examination, commonly used for thyroid diagnostics and tumor detection."}
+          </p>
+          {formData.unfaelleOperationen?.szintigraphie?.ja && (
+            <>
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg pl-6">
+                <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                  {language === "de" 
+                    ? "⚠️ Wichtiger Hinweis: Nach einer Szintigraphie benötigen wir einen Mindestabstand von 6 Wochen, bevor wir bestimmte Behandlungen und Untersuchungen durchführen können. Dies gewährleistet die Zuverlässigkeit unserer Diagnostik und Therapie."
+                    : "⚠️ Important note: After a scintigraphy, we require a minimum interval of 6 weeks before we can perform certain treatments and examinations. This ensures the reliability of our diagnostics and therapy."}
+                </p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 pl-6">
+                <Input
+                  placeholder={language === "de" ? "Jahr der letzten Untersuchung" : "Year of last examination"}
+                  value={formData.unfaelleOperationen?.szintigraphie?.jahr || ""}
+                  onChange={(e) => updateNestedField("szintigraphie", "jahr", e.target.value)}
+                />
+                <Input
+                  placeholder={language === "de" ? "Grund (z.B. Schilddrüse, Tumorsuche)" : "Reason (e.g. thyroid, tumor detection)"}
+                  value={formData.unfaelleOperationen?.szintigraphie?.grund || ""}
+                  onChange={(e) => updateNestedField("szintigraphie", "grund", e.target.value)}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
