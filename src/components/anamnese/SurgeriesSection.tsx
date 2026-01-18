@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { format, differenceInWeeks, parse, isValid } from "date-fns";
+import { de, enUS } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, CalendarIcon, CheckCircle2, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SurgeriesSectionProps {
   formData: AnamneseFormData;
@@ -354,31 +359,142 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
               : "Nuclear medicine examination, commonly used for thyroid diagnostics and tumor detection."}
           </p>
           {formData.unfaelleOperationen?.szintigraphie?.ja && (
-            <>
-              <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg pl-6">
-                <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                  {language === "de" 
-                    ? "⚠️ Wichtiger Hinweis: Nach einer Szintigraphie benötigen wir einen Mindestabstand von 6 Wochen, bevor wir bestimmte Behandlungen und Untersuchungen durchführen können. Dies gewährleistet die Zuverlässigkeit unserer Diagnostik und Therapie."
-                    : "⚠️ Important note: After a scintigraphy, we require a minimum interval of 6 weeks before we can perform certain treatments and examinations. This ensures the reliability of our diagnostics and therapy."}
-                </p>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 pl-6">
-                <Input
-                  placeholder={language === "de" ? "Jahr der letzten Untersuchung" : "Year of last examination"}
-                  value={formData.unfaelleOperationen?.szintigraphie?.jahr || ""}
-                  onChange={(e) => updateNestedField("szintigraphie", "jahr", e.target.value)}
-                />
-                <Input
-                  placeholder={language === "de" ? "Grund (z.B. Schilddrüse, Tumorsuche)" : "Reason (e.g. thyroid, tumor detection)"}
-                  value={formData.unfaelleOperationen?.szintigraphie?.grund || ""}
-                  onChange={(e) => updateNestedField("szintigraphie", "grund", e.target.value)}
-                />
-              </div>
-            </>
+            <SzintigraphieDetails
+              formData={formData}
+              updateNestedField={updateNestedField}
+              language={language}
+            />
           )}
         </div>
       </div>
     </div>
+  );
+};
+
+// Separate component for Szintigraphie details with date validation
+const SzintigraphieDetails = ({
+  formData,
+  updateNestedField,
+  language,
+}: {
+  formData: AnamneseFormData;
+  updateNestedField: (parentField: string, field: string, value: any) => void;
+  language: string;
+}) => {
+  const [date, setDate] = useState<Date | undefined>(() => {
+    const storedDate = formData.unfaelleOperationen?.szintigraphie?.datum;
+    if (storedDate) {
+      const parsed = new Date(storedDate);
+      return isValid(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  });
+
+  const weeksSinceExamination = useMemo(() => {
+    if (!date || !isValid(date)) return null;
+    return differenceInWeeks(new Date(), date);
+  }, [date]);
+
+  const isSafeInterval = weeksSinceExamination !== null && weeksSinceExamination >= 6;
+
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    if (selectedDate) {
+      updateNestedField("szintigraphie", "datum", selectedDate.toISOString());
+    } else {
+      updateNestedField("szintigraphie", "datum", "");
+    }
+  };
+
+  return (
+    <>
+      {/* Dynamic status message based on date */}
+      {weeksSinceExamination !== null ? (
+        isSafeInterval ? (
+          <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg ml-6">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+              <p className="text-sm text-green-800 dark:text-green-200 font-medium">
+                {language === "de"
+                  ? `✓ Der erforderliche Mindestabstand von 6 Wochen ist erfüllt. Ihre letzte Szintigraphie liegt ${weeksSinceExamination} Wochen zurück. Behandlungen und Untersuchungen können wie geplant durchgeführt werden.`
+                  : `✓ The required minimum interval of 6 weeks is met. Your last scintigraphy was ${weeksSinceExamination} weeks ago. Treatments and examinations can proceed as planned.`}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg ml-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+              <div className="text-sm text-red-800 dark:text-red-200">
+                <p className="font-semibold">
+                  {language === "de"
+                    ? `⚠️ Achtung: Nur ${weeksSinceExamination} Woche${weeksSinceExamination !== 1 ? 'n' : ''} seit der letzten Szintigraphie`
+                    : `⚠️ Warning: Only ${weeksSinceExamination} week${weeksSinceExamination !== 1 ? 's' : ''} since last scintigraphy`}
+                </p>
+                <p className="mt-1">
+                  {language === "de"
+                    ? `Der erforderliche Mindestabstand von 6 Wochen ist noch nicht erreicht. Bitte warten Sie noch ${6 - weeksSinceExamination} Woche${6 - weeksSinceExamination !== 1 ? 'n' : ''}, bevor bestimmte Behandlungen durchgeführt werden können.`
+                    : `The required minimum interval of 6 weeks has not yet been reached. Please wait ${6 - weeksSinceExamination} more week${6 - weeksSinceExamination !== 1 ? 's' : ''} before certain treatments can be performed.`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+      ) : (
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg ml-6">
+          <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+            {language === "de"
+              ? "⚠️ Wichtiger Hinweis: Nach einer Szintigraphie benötigen wir einen Mindestabstand von 6 Wochen, bevor wir bestimmte Behandlungen und Untersuchungen durchführen können. Bitte geben Sie das Datum Ihrer letzten Untersuchung an."
+              : "⚠️ Important note: After a scintigraphy, we require a minimum interval of 6 weeks before we can perform certain treatments and examinations. Please enter the date of your last examination."}
+          </p>
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 ml-6">
+        <div className="space-y-2">
+          <Label>
+            {language === "de" ? "Datum der letzten Untersuchung" : "Date of last examination"}
+          </Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date ? format(date, "PPP", { locale: language === "de" ? de : enUS }) : (
+                  <span>{language === "de" ? "Datum auswählen" : "Pick a date"}</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={handleDateSelect}
+                disabled={(d) => d > new Date()}
+                initialFocus
+                locale={language === "de" ? de : enUS}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="space-y-2">
+          <Label>
+            {language === "de" ? "Grund der Untersuchung" : "Reason for examination"}
+          </Label>
+          <Input
+            placeholder={language === "de" ? "z.B. Schilddrüse, Tumorsuche" : "e.g. thyroid, tumor detection"}
+            value={formData.unfaelleOperationen?.szintigraphie?.grund || ""}
+            onChange={(e) => updateNestedField("szintigraphie", "grund", e.target.value)}
+          />
+        </div>
+      </div>
+    </>
   );
 };
 
