@@ -33,10 +33,12 @@ import {
   Wand2,
   Home,
   PenTool,
+  FileDown,
   type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formSections as formSectionsData, initialFormData, AnamneseFormData } from "@/lib/anamneseFormData";
+import { generateAnamnesePdf } from "@/lib/pdfExport";
 
 // Import section components
 import IntroSection from "@/components/anamnese/IntroSection";
@@ -138,6 +140,25 @@ const Anamnesebogen = () => {
           : "Thank you! We will review your information before the appointment.",
       }
     );
+  };
+
+  const handleExportPdf = () => {
+    try {
+      generateAnamnesePdf({ formData, language: language as "de" | "en" });
+      toast.success(
+        language === "de" ? "PDF erstellt!" : "PDF created!",
+        {
+          description: language === "de"
+            ? "Der Anamnesebogen wurde als PDF heruntergeladen."
+            : "The medical history form has been downloaded as a PDF.",
+        }
+      );
+    } catch (error) {
+      console.error("PDF export error:", error);
+      toast.error(
+        language === "de" ? "PDF-Export fehlgeschlagen" : "PDF export failed"
+      );
+    }
   };
 
   const handleBack = () => {
@@ -398,20 +419,31 @@ const Anamnesebogen = () => {
                     {language === "de" ? "Zurück" : "Back"}
                   </Button>
                   
-                  {wizardStep === formSections.length - 1 ? (
-                    <Button type="submit" className="gap-2">
-                      <Send className="w-4 h-4" />
-                      {language === "de" ? "Absenden" : "Submit"}
-                    </Button>
-                  ) : (
+                  <div className="flex gap-2">
                     <Button
                       type="button"
-                      onClick={() => setWizardStep(Math.min(formSections.length - 1, wizardStep + 1))}
+                      variant="outline"
+                      onClick={handleExportPdf}
+                      className="gap-2"
                     >
-                      {language === "de" ? "Weiter" : "Next"}
-                      <ChevronRight className="w-4 h-4 ml-2" />
+                      <FileDown className="w-4 h-4" />
+                      PDF
                     </Button>
-                  )}
+                    {wizardStep === formSections.length - 1 ? (
+                      <Button type="submit" className="gap-2">
+                        <Send className="w-4 h-4" />
+                        {language === "de" ? "Absenden" : "Submit"}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => setWizardStep(Math.min(formSections.length - 1, wizardStep + 1))}
+                      >
+                        {language === "de" ? "Weiter" : "Next"}
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </form>
             </CardContent>
@@ -464,8 +496,18 @@ const Anamnesebogen = () => {
             })}
           </Accordion>
 
-          {/* Submit Button */}
-          <div className="mt-8 flex justify-center">
+          {/* Action Buttons */}
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={handleExportPdf}
+              className="gap-2"
+            >
+              <FileDown className="w-5 h-5" />
+              {language === "de" ? "Als PDF speichern" : "Save as PDF"}
+            </Button>
             <Button type="submit" size="lg" className="gap-2">
               <Send className="w-5 h-5" />
               {language === "de" ? "Anamnesebogen absenden" : "Submit Medical History Form"}
