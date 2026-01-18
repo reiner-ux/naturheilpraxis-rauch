@@ -187,7 +187,7 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
                 <div key={option.field} className="flex items-center space-x-2">
                   <Checkbox
                     id={`kontakt-${option.field}`}
-                    checked={formData.allergien?.kontakt?.[option.field as keyof typeof formData.allergien.kontakt] || false}
+                    checked={!!formData.allergien?.kontakt?.[option.field as keyof typeof formData.allergien.kontakt]}
                     onCheckedChange={(checked) => updateNestedField("kontakt", option.field, checked)}
                   />
                   <Label htmlFor={`kontakt-${option.field}`} className="font-normal text-sm">
