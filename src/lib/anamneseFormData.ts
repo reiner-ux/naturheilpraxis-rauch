@@ -273,6 +273,8 @@ export const initialFormData = {
     chemotherapie: { ja: false, jahr: "", art: "" },
     strahlentherapie: { ja: false, bereich: "" },
     szintigraphie: { ja: false, datum: "", grund: "" },
+    petCt: { ja: false, datum: "", grund: "" },
+    radioiodtherapie: { ja: false, datum: "", grund: "", dosis: "" },
   },
   
   // VI. Krebserkrankung
