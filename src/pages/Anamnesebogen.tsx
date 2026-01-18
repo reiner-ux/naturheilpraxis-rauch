@@ -96,6 +96,14 @@ const Anamnesebogen = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const isSignatureComplete = () => {
+    return !!(
+      formData.unterschrift?.bestaetigung &&
+      formData.unterschrift?.datum &&
+      formData.unterschrift?.nameInDruckbuchstaben
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -105,8 +113,19 @@ const Anamnesebogen = () => {
       return;
     }
     
-    if (!formData.unterschrift?.bestaetigung) {
-      toast.error(language === "de" ? "Bitte bestätigen Sie die Datenschutzerklärung" : "Please confirm the privacy policy");
+    // Check signature completeness with friendly message
+    if (!isSignatureComplete()) {
+      toast.error(
+        language === "de" 
+          ? "Unterschrift erforderlich" 
+          : "Signature required",
+        {
+          description: language === "de"
+            ? "Liebe Patientin, lieber Patient, für die rechtssichere Übermittlung Ihrer Daten benötigen wir Ihre vollständige Unterschrift am Ende des Formulars. Bitte füllen Sie das Datum, Ihren Namen in Druckbuchstaben aus und bestätigen Sie die Datenschutzerklärung. Vielen Dank für Ihr Verständnis!"
+            : "Dear patient, for the legally secure transmission of your data, we require your complete signature at the end of the form. Please fill in the date, your name in block letters, and confirm the privacy policy. Thank you for your understanding!",
+          duration: 8000,
+        }
+      );
       return;
     }
     
