@@ -342,6 +342,19 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           )}
         </div>
 
+        {/* Nuklearmedizinische Untersuchungen Überschrift */}
+        <div className="mt-6 mb-4">
+          <h4 className="text-base font-medium text-muted-foreground flex items-center gap-2">
+            ☢️ {language === "de" ? "Nuklearmedizinische Untersuchungen" : "Nuclear Medicine Examinations"}
+          </h4>
+          <p className="text-sm text-muted-foreground mt-1">
+            {language === "de"
+              ? "Diese Untersuchungen erfordern bestimmte Wartezeiten vor weiteren Behandlungen."
+              : "These examinations require certain waiting periods before further treatments."}
+          </p>
+        </div>
+
+        {/* Szintigraphie */}
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <Checkbox
@@ -359,10 +372,81 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
               : "Nuclear medicine examination, commonly used for thyroid diagnostics and tumor detection."}
           </p>
           {formData.unfaelleOperationen?.szintigraphie?.ja && (
-            <SzintigraphieDetails
+            <NuclearMedicineDetails
               formData={formData}
               updateNestedField={updateNestedField}
               language={language}
+              fieldName="szintigraphie"
+              requiredWeeks={6}
+              nameDe="Szintigraphie"
+              nameEn="Scintigraphy"
+              placeholderDe="z.B. Schilddrüse, Tumorsuche"
+              placeholderEn="e.g. thyroid, tumor detection"
+            />
+          )}
+        </div>
+
+        {/* PET-CT */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="petCt"
+              checked={formData.unfaelleOperationen?.petCt?.ja || false}
+              onCheckedChange={(checked) => updateNestedField("petCt", "ja", checked)}
+            />
+            <Label htmlFor="petCt">
+              {language === "de" ? "PET-CT (Positronen-Emissions-Tomographie)" : "PET-CT (Positron Emission Tomography)"}
+            </Label>
+          </div>
+          <p className="text-sm text-muted-foreground pl-6">
+            {language === "de" 
+              ? "Kombinierte Bildgebung zur Darstellung von Stoffwechselprozessen, häufig in der Tumordiagnostik und Verlaufskontrolle eingesetzt."
+              : "Combined imaging to visualize metabolic processes, commonly used in tumor diagnostics and follow-up monitoring."}
+          </p>
+          {formData.unfaelleOperationen?.petCt?.ja && (
+            <NuclearMedicineDetails
+              formData={formData}
+              updateNestedField={updateNestedField}
+              language={language}
+              fieldName="petCt"
+              requiredWeeks={4}
+              nameDe="PET-CT"
+              nameEn="PET-CT"
+              placeholderDe="z.B. Tumorsuche, Staging, Verlaufskontrolle"
+              placeholderEn="e.g. tumor detection, staging, follow-up"
+            />
+          )}
+        </div>
+
+        {/* Radioiodtherapie */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="radioiodtherapie"
+              checked={formData.unfaelleOperationen?.radioiodtherapie?.ja || false}
+              onCheckedChange={(checked) => updateNestedField("radioiodtherapie", "ja", checked)}
+            />
+            <Label htmlFor="radioiodtherapie">
+              {language === "de" ? "Radioiodtherapie" : "Radioiodine Therapy"}
+            </Label>
+          </div>
+          <p className="text-sm text-muted-foreground pl-6">
+            {language === "de" 
+              ? "Therapie mit radioaktivem Iod, hauptsächlich bei Schilddrüsenerkrankungen (Überfunktion, Struma, Schilddrüsenkrebs) eingesetzt."
+              : "Therapy with radioactive iodine, mainly used for thyroid conditions (hyperthyroidism, goiter, thyroid cancer)."}
+          </p>
+          {formData.unfaelleOperationen?.radioiodtherapie?.ja && (
+            <NuclearMedicineDetails
+              formData={formData}
+              updateNestedField={updateNestedField}
+              language={language}
+              fieldName="radioiodtherapie"
+              requiredWeeks={12}
+              nameDe="Radioiodtherapie"
+              nameEn="Radioiodine Therapy"
+              placeholderDe="z.B. Schilddrüsenüberfunktion, Struma, Karzinom"
+              placeholderEn="e.g. hyperthyroidism, goiter, carcinoma"
+              showDosisField={true}
             />
           )}
         </div>
@@ -371,18 +455,36 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
   );
 };
 
-// Separate component for Szintigraphie details with date validation
-const SzintigraphieDetails = ({
-  formData,
-  updateNestedField,
-  language,
-}: {
+// Reusable component for nuclear medicine examination details with date validation
+interface NuclearMedicineDetailsProps {
   formData: AnamneseFormData;
   updateNestedField: (parentField: string, field: string, value: any) => void;
   language: string;
-}) => {
+  fieldName: string;
+  requiredWeeks: number;
+  nameDe: string;
+  nameEn: string;
+  placeholderDe: string;
+  placeholderEn: string;
+  showDosisField?: boolean;
+}
+
+const NuclearMedicineDetails = ({
+  formData,
+  updateNestedField,
+  language,
+  fieldName,
+  requiredWeeks,
+  nameDe,
+  nameEn,
+  placeholderDe,
+  placeholderEn,
+  showDosisField = false,
+}: NuclearMedicineDetailsProps) => {
+  const fieldData = formData.unfaelleOperationen?.[fieldName as keyof typeof formData.unfaelleOperationen] as { datum?: string; grund?: string; dosis?: string } | undefined;
+  
   const [date, setDate] = useState<Date | undefined>(() => {
-    const storedDate = formData.unfaelleOperationen?.szintigraphie?.datum;
+    const storedDate = fieldData?.datum;
     if (storedDate) {
       const parsed = new Date(storedDate);
       return isValid(parsed) ? parsed : undefined;
@@ -395,14 +497,15 @@ const SzintigraphieDetails = ({
     return differenceInWeeks(new Date(), date);
   }, [date]);
 
-  const isSafeInterval = weeksSinceExamination !== null && weeksSinceExamination >= 6;
+  const isSafeInterval = weeksSinceExamination !== null && weeksSinceExamination >= requiredWeeks;
+  const name = language === "de" ? nameDe : nameEn;
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
     if (selectedDate) {
-      updateNestedField("szintigraphie", "datum", selectedDate.toISOString());
+      updateNestedField(fieldName, "datum", selectedDate.toISOString());
     } else {
-      updateNestedField("szintigraphie", "datum", "");
+      updateNestedField(fieldName, "datum", "");
     }
   };
 
@@ -416,8 +519,8 @@ const SzintigraphieDetails = ({
               <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
               <p className="text-sm text-green-800 dark:text-green-200 font-medium">
                 {language === "de"
-                  ? `✓ Der erforderliche Mindestabstand von 6 Wochen ist erfüllt. Ihre letzte Szintigraphie liegt ${weeksSinceExamination} Wochen zurück. Behandlungen und Untersuchungen können wie geplant durchgeführt werden.`
-                  : `✓ The required minimum interval of 6 weeks is met. Your last scintigraphy was ${weeksSinceExamination} weeks ago. Treatments and examinations can proceed as planned.`}
+                  ? `✓ Der erforderliche Mindestabstand von ${requiredWeeks} Wochen ist erfüllt. Ihre letzte ${name} liegt ${weeksSinceExamination} Wochen zurück. Behandlungen und Untersuchungen können wie geplant durchgeführt werden.`
+                  : `✓ The required minimum interval of ${requiredWeeks} weeks is met. Your last ${name} was ${weeksSinceExamination} weeks ago. Treatments and examinations can proceed as planned.`}
               </p>
             </div>
           </div>
@@ -428,13 +531,13 @@ const SzintigraphieDetails = ({
               <div className="text-sm text-red-800 dark:text-red-200">
                 <p className="font-semibold">
                   {language === "de"
-                    ? `⚠️ Achtung: Nur ${weeksSinceExamination} Woche${weeksSinceExamination !== 1 ? 'n' : ''} seit der letzten Szintigraphie`
-                    : `⚠️ Warning: Only ${weeksSinceExamination} week${weeksSinceExamination !== 1 ? 's' : ''} since last scintigraphy`}
+                    ? `⚠️ Achtung: Nur ${weeksSinceExamination} Woche${weeksSinceExamination !== 1 ? 'n' : ''} seit der letzten ${name}`
+                    : `⚠️ Warning: Only ${weeksSinceExamination} week${weeksSinceExamination !== 1 ? 's' : ''} since last ${name}`}
                 </p>
                 <p className="mt-1">
                   {language === "de"
-                    ? `Der erforderliche Mindestabstand von 6 Wochen ist noch nicht erreicht. Bitte warten Sie noch ${6 - weeksSinceExamination} Woche${6 - weeksSinceExamination !== 1 ? 'n' : ''}, bevor bestimmte Behandlungen durchgeführt werden können.`
-                    : `The required minimum interval of 6 weeks has not yet been reached. Please wait ${6 - weeksSinceExamination} more week${6 - weeksSinceExamination !== 1 ? 's' : ''} before certain treatments can be performed.`}
+                    ? `Der erforderliche Mindestabstand von ${requiredWeeks} Wochen ist noch nicht erreicht. Bitte warten Sie noch ${requiredWeeks - weeksSinceExamination} Woche${requiredWeeks - weeksSinceExamination !== 1 ? 'n' : ''}, bevor bestimmte Behandlungen durchgeführt werden können.`
+                    : `The required minimum interval of ${requiredWeeks} weeks has not yet been reached. Please wait ${requiredWeeks - weeksSinceExamination} more week${requiredWeeks - weeksSinceExamination !== 1 ? 's' : ''} before certain treatments can be performed.`}
                 </p>
               </div>
             </div>
@@ -444,16 +547,16 @@ const SzintigraphieDetails = ({
         <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg ml-6">
           <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
             {language === "de"
-              ? "⚠️ Wichtiger Hinweis: Nach einer Szintigraphie benötigen wir einen Mindestabstand von 6 Wochen, bevor wir bestimmte Behandlungen und Untersuchungen durchführen können. Bitte geben Sie das Datum Ihrer letzten Untersuchung an."
-              : "⚠️ Important note: After a scintigraphy, we require a minimum interval of 6 weeks before we can perform certain treatments and examinations. Please enter the date of your last examination."}
+              ? `⚠️ Wichtiger Hinweis: Nach einer ${name} benötigen wir einen Mindestabstand von ${requiredWeeks} Wochen, bevor wir bestimmte Behandlungen und Untersuchungen durchführen können. Bitte geben Sie das Datum Ihrer letzten Untersuchung/Therapie an.`
+              : `⚠️ Important note: After a ${name}, we require a minimum interval of ${requiredWeeks} weeks before we can perform certain treatments and examinations. Please enter the date of your last examination/therapy.`}
           </p>
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 ml-6">
+      <div className={`grid gap-4 ${showDosisField ? 'md:grid-cols-3' : 'md:grid-cols-2'} ml-6`}>
         <div className="space-y-2">
           <Label>
-            {language === "de" ? "Datum der letzten Untersuchung" : "Date of last examination"}
+            {language === "de" ? "Datum der letzten Untersuchung/Therapie" : "Date of last examination/therapy"}
           </Label>
           <Popover>
             <PopoverTrigger asChild>
@@ -485,14 +588,26 @@ const SzintigraphieDetails = ({
         </div>
         <div className="space-y-2">
           <Label>
-            {language === "de" ? "Grund der Untersuchung" : "Reason for examination"}
+            {language === "de" ? "Grund" : "Reason"}
           </Label>
           <Input
-            placeholder={language === "de" ? "z.B. Schilddrüse, Tumorsuche" : "e.g. thyroid, tumor detection"}
-            value={formData.unfaelleOperationen?.szintigraphie?.grund || ""}
-            onChange={(e) => updateNestedField("szintigraphie", "grund", e.target.value)}
+            placeholder={language === "de" ? placeholderDe : placeholderEn}
+            value={fieldData?.grund || ""}
+            onChange={(e) => updateNestedField(fieldName, "grund", e.target.value)}
           />
         </div>
+        {showDosisField && (
+          <div className="space-y-2">
+            <Label>
+              {language === "de" ? "Dosis (MBq/mCi)" : "Dose (MBq/mCi)"}
+            </Label>
+            <Input
+              placeholder={language === "de" ? "z.B. 3700 MBq" : "e.g. 3700 MBq"}
+              value={fieldData?.dosis || ""}
+              onChange={(e) => updateNestedField(fieldName, "dosis", e.target.value)}
+            />
+          </div>
+        )}
       </div>
     </>
   );
