@@ -43,7 +43,18 @@ import IntroSection from "@/components/anamnese/IntroSection";
 import PatientDataSection from "@/components/anamnese/PatientDataSection";
 import FamilyHistorySection from "@/components/anamnese/FamilyHistorySection";
 import MedicalHistorySection from "@/components/anamnese/MedicalHistorySection";
+import WomenHealthSection from "@/components/anamnese/WomenHealthSection";
+import SurgeriesSection from "@/components/anamnese/SurgeriesSection";
+import CancerSection from "@/components/anamnese/CancerSection";
+import AllergiesSection from "@/components/anamnese/AllergiesSection";
+import MedicationsSection from "@/components/anamnese/MedicationsSection";
+import LifestyleSection from "@/components/anamnese/LifestyleSection";
+import EnvironmentSection from "@/components/anamnese/EnvironmentSection";
+import InfectionsSection from "@/components/anamnese/InfectionsSection";
+import VaccinationsSection from "@/components/anamnese/VaccinationsSection";
 import ComplaintsSection from "@/components/anamnese/ComplaintsSection";
+import PreferencesSection from "@/components/anamnese/PreferencesSection";
+import SocialSection from "@/components/anamnese/SocialSection";
 import SignatureSection from "@/components/anamnese/SignatureSection";
 
 type LayoutType = "wizard" | "accordion" | null;
@@ -128,26 +139,30 @@ const Anamnesebogen = () => {
         return <MedicalHistorySection formData={formData} updateFormData={updateFormData} />;
       case "complaints":
         return <ComplaintsSection formData={formData} updateFormData={updateFormData} />;
+      case "womenHealth":
+        return <WomenHealthSection formData={formData} updateFormData={updateFormData} />;
+      case "surgeries":
+        return <SurgeriesSection formData={formData} updateFormData={updateFormData} />;
+      case "cancer":
+        return <CancerSection formData={formData} updateFormData={updateFormData} />;
+      case "allergies":
+        return <AllergiesSection formData={formData} updateFormData={updateFormData} />;
+      case "medications":
+        return <MedicationsSection formData={formData} updateFormData={updateFormData} />;
+      case "lifestyle":
+        return <LifestyleSection formData={formData} updateFormData={updateFormData} />;
+      case "environment":
+        return <EnvironmentSection formData={formData} updateFormData={updateFormData} />;
+      case "infections":
+        return <InfectionsSection formData={formData} updateFormData={updateFormData} />;
+      case "vaccinations":
+        return <VaccinationsSection formData={formData} updateFormData={updateFormData} />;
+      case "preferences":
+        return <PreferencesSection formData={formData} updateFormData={updateFormData} />;
+      case "social":
+        return <SocialSection formData={formData} updateFormData={updateFormData} />;
       case "signature":
         return <SignatureSection formData={formData} updateFormData={updateFormData} />;
-      // Placeholder for sections not yet implemented
-      case "womenHealth":
-      case "surgeries":
-      case "cancer":
-      case "allergies":
-      case "medications":
-      case "lifestyle":
-      case "environment":
-      case "infections":
-      case "vaccinations":
-      case "preferences":
-      case "social":
-        return (
-          <div className="py-8 text-center text-muted-foreground">
-            <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>{language === "de" ? "Dieser Abschnitt wird in Kürze verfügbar sein." : "This section will be available soon."}</p>
-          </div>
-        );
       default:
         return null;
     }
