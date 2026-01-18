@@ -25,6 +25,12 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
     });
   };
 
+  // Helper function to safely get boolean value from nested object
+  const getNestedBoolean = (obj: any, key: string): boolean => {
+    const value = obj?.[key];
+    return typeof value === 'boolean' ? value : false;
+  };
+
   const tabs = [
     { id: "kopf", labelDe: "Kopf & Nerven", labelEn: "Head & Nerves", icon: Brain },
     { id: "herz", labelDe: "Herz & Kreislauf", labelEn: "Heart & Circulation", icon: Heart },
@@ -90,7 +96,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
                         ].map((option) => (
                           <div key={option.key} className="flex items-center gap-2">
                             <Checkbox
-                              checked={!!formData.kopfErkrankungen?.augenerkrankung?.[option.key as keyof typeof formData.kopfErkrankungen.augenerkrankung]}
+                              checked={getNestedBoolean(formData.kopfErkrankungen?.augenerkrankung, option.key)}
                               onCheckedChange={(checked) => updateNestedField("kopfErkrankungen", "augenerkrankung", option.key, !!checked)}
                             />
                             <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
@@ -131,7 +137,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
                         ].map((option) => (
                           <div key={option.key} className="flex items-center gap-2">
                             <Checkbox
-                              checked={!!formData.kopfErkrankungen?.kopfschmerzen?.[option.key as keyof typeof formData.kopfErkrankungen.kopfschmerzen]}
+                              checked={getNestedBoolean(formData.kopfErkrankungen?.kopfschmerzen, option.key)}
                               onCheckedChange={(checked) => updateNestedField("kopfErkrankungen", "kopfschmerzen", option.key, !!checked)}
                             />
                             <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
@@ -170,7 +176,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
                         ].map((option) => (
                           <div key={option.key} className="flex items-center gap-2">
                             <Checkbox
-                              checked={!!formData.kopfErkrankungen?.schwindel?.[option.key as keyof typeof formData.kopfErkrankungen.schwindel]}
+                              checked={getNestedBoolean(formData.kopfErkrankungen?.schwindel, option.key)}
                               onCheckedChange={(checked) => updateNestedField("kopfErkrankungen", "schwindel", option.key, !!checked)}
                             />
                             <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
@@ -337,8 +343,8 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
               { key: "inkontinenz", labelDe: "Harninkontinenz", labelEn: "Urinary Incontinence" },
               { key: "prostata", labelDe: "Prostataerkrankung (Männer)", labelEn: "Prostate Disease (Men)" },
             ].map((item) => {
-              const fieldData = formData.niereBlase?.[item.key as keyof typeof formData.niereBlase];
-              const isChecked = typeof fieldData === 'object' && fieldData !== null && 'ja' in fieldData ? fieldData.ja : false;
+              const fieldData = formData.niereBlase?.[item.key as keyof typeof formData.niereBlase] as any;
+              const isChecked = fieldData && typeof fieldData === 'object' && 'ja' in fieldData ? Boolean(fieldData.ja) : false;
               return (
               <div key={item.key} className="border rounded-lg p-4">
                 <div className="flex items-start gap-3">
