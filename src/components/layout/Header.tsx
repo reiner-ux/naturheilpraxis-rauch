@@ -1,16 +1,21 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Leaf } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Leaf, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { translations } from "@/lib/translations";
+import { useToast } from "@/hooks/use-toast";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
   const nav = translations.nav;
   const header = translations.header;
 
@@ -23,6 +28,16 @@ export function Header() {
     { label: t(nav.practice.de, nav.practice.en), href: "/praxis-info" },
     { label: t(nav.faq.de, nav.faq.en), href: "/faq" },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: t("Abgemeldet", "Signed Out"),
+      description: t("Sie wurden erfolgreich abgemeldet.", "You have been successfully signed out."),
+    });
+    navigate("/");
+    setIsMenuOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -56,6 +71,29 @@ export function Header() {
             </Link>
           ))}
           <LanguageSwitcher className="ml-2" />
+          
+          {/* Auth Button Desktop */}
+          {user ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSignOut}
+              className="ml-2 gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              {t("Abmelden", "Logout")}
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => navigate("/auth")}
+              className="ml-2 gap-2"
+            >
+              <LogIn className="h-4 w-4" />
+              {t("Anmelden", "Login")}
+            </Button>
+          )}
         </nav>
 
         {/* Mobile Menu Button */}
@@ -91,6 +129,30 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            
+            {/* Auth Button Mobile */}
+            {user ? (
+              <Button
+                variant="outline"
+                onClick={handleSignOut}
+                className="mt-2 w-full justify-start gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                {t("Abmelden", "Logout")}
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                onClick={() => {
+                  navigate("/auth");
+                  setIsMenuOpen(false);
+                }}
+                className="mt-2 w-full justify-start gap-2"
+              >
+                <LogIn className="h-4 w-4" />
+                {t("Anmelden", "Login")}
+              </Button>
+            )}
           </div>
         </nav>
       )}
