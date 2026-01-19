@@ -74,15 +74,23 @@ export function Header() {
           
           {/* Auth Button Desktop */}
           {user ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-              className="ml-2 gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              {t("Abmelden", "Logout")}
-            </Button>
+            <div className="ml-2 flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-lg bg-sage-50 px-3 py-1.5">
+                <User className="h-4 w-4 text-primary" />
+                <span className="max-w-[150px] truncate text-sm text-muted-foreground">
+                  {user.email}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSignOut}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                {t("Abmelden", "Logout")}
+              </Button>
+            </div>
           ) : (
             <Button
               variant="default"
@@ -132,14 +140,22 @@ export function Header() {
             
             {/* Auth Button Mobile */}
             {user ? (
-              <Button
-                variant="outline"
-                onClick={handleSignOut}
-                className="mt-2 w-full justify-start gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                {t("Abmelden", "Logout")}
-              </Button>
+              <div className="mt-2 space-y-2">
+                <div className="flex items-center gap-2 rounded-lg bg-sage-50 px-4 py-2">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="truncate text-sm text-muted-foreground">
+                    {user.email}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleSignOut}
+                  className="w-full justify-start gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t("Abmelden", "Logout")}
+                </Button>
+              </div>
             ) : (
               <Button
                 variant="default"
