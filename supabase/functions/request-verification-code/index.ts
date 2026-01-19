@@ -30,7 +30,7 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
     connection: {
       hostname: smtpHost,
       port: smtpPort,
-      tls: false,
+      tls: true, // Port 465 requires direct TLS
       auth: {
         username: smtpUser,
         password: smtpPassword,
