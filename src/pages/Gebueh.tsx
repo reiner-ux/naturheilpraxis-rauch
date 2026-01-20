@@ -139,9 +139,8 @@ const Gebueh = () => {
                     Wichtiger Hinweis
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Vor Behandlungsbeginn erhalten Sie einen Kostenvoranschlag, damit Sie die
-                    voraussichtlichen Kosten kennen. Bei Fragen zur Kostenübernahme sprechen
-                    Sie mich gerne an – ich helfe Ihnen bei der Klärung mit Ihrer Versicherung.
+                    Bei Fragen zur Kostenübernahme sprechen Sie mich gerne an – ich helfe 
+                    Ihnen bei der Klärung mit Ihrer Versicherung.
                   </p>
                 </div>
               </div>
