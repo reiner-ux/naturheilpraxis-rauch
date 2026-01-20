@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Anamnesebogen from "./pages/Anamnesebogen";
 import AnamneseDemo from "./pages/AnamneseDemo";
+import Datenschutz from "./pages/Datenschutz";
 import Heilpraktiker from "./pages/Heilpraktiker";
 import Gebueh from "./pages/Gebueh";
 import Ernaehrung from "./pages/Ernaehrung";
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/anamnesebogen" element={<ProtectedRoute><Anamnesebogen /></ProtectedRoute>} />
               <Route path="/anamnesebogen-demo" element={<AnamneseDemo />} />
+              <Route path="/datenschutz" element={<Datenschutz />} />
               <Route path="/heilpraktiker" element={<Heilpraktiker />} />
               <Route path="/gebueh" element={<Gebueh />} />
               <Route path="/ernaehrung" element={<Ernaehrung />} />

@@ -22,6 +22,7 @@ export function Header() {
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
     { label: t(nav.anamnesis.de, nav.anamnesis.en), href: "/anamnesebogen" },
+    { label: t(nav.privacy.de, nav.privacy.en), href: "/datenschutz" },
     { label: t(nav.practitioner.de, nav.practitioner.en), href: "/heilpraktiker" },
     { label: t(nav.fees.de, nav.fees.en), href: "/gebueh" },
     { label: t(nav.nutrition.de, nav.nutrition.en), href: "/ernaehrung" },
