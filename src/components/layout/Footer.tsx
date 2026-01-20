@@ -80,10 +80,18 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-border pt-6">
-          <p className="text-center text-xs text-muted-foreground">
+        <div className="mt-12 border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Naturheilpraxis Peter Rauch. Alle Rechte vorbehalten.
           </p>
+          <div className="flex gap-4">
+            <Link to="/impressum" className="text-xs text-muted-foreground hover:text-primary">
+              Impressum
+            </Link>
+            <Link to="/datenschutz" className="text-xs text-muted-foreground hover:text-primary">
+              Datenschutz
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
