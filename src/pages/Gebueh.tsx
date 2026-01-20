@@ -152,8 +152,8 @@ const Gebueh = () => {
                     Wichtiger Hinweis
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Bei Fragen zur Kostenübernahme sprechen Sie mich gerne an – ich helfe 
-                    Ihnen bei der Klärung mit Ihrer Versicherung.
+                    Bitte klären Sie vor Behandlungsbeginn mit Ihrer Krankenversicherung, ob und 
+                    in welchem Umfang Heilpraktikerleistungen erstattet werden.
                   </p>
                 </div>
               </div>
