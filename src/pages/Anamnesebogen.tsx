@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,11 +34,13 @@ import {
   Home,
   PenTool,
   FileDown,
+  Printer,
   type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formSections as formSectionsData, initialFormData, AnamneseFormData } from "@/lib/anamneseFormData";
 import { generateAnamnesePdf } from "@/lib/pdfExport";
+import PrintView from "@/components/anamnese/PrintView";
 
 // Import section components
 import IntroSection from "@/components/anamnese/IntroSection";
@@ -93,6 +95,8 @@ const Anamnesebogen = () => {
   const [selectedLayout, setSelectedLayout] = useState<LayoutType>(null);
   const [wizardStep, setWizardStep] = useState(0);
   const [formData, setFormData] = useState<AnamneseFormData>(initialFormData);
+  const [showPrintView, setShowPrintView] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -159,6 +163,14 @@ const Anamnesebogen = () => {
         language === "de" ? "PDF-Export fehlgeschlagen" : "PDF export failed"
       );
     }
+  };
+
+  const handlePrint = () => {
+    setShowPrintView(true);
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => setShowPrintView(false), 500);
+    }, 100);
   };
 
   const handleBack = () => {
@@ -423,6 +435,15 @@ const Anamnesebogen = () => {
                     <Button
                       type="button"
                       variant="outline"
+                      onClick={handlePrint}
+                      className="gap-2"
+                    >
+                      <Printer className="w-4 h-4" />
+                      {language === "de" ? "Drucken" : "Print"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={handleExportPdf}
                       className="gap-2"
                     >
@@ -502,6 +523,16 @@ const Anamnesebogen = () => {
               type="button"
               variant="outline"
               size="lg"
+              onClick={handlePrint}
+              className="gap-2"
+            >
+              <Printer className="w-5 h-5" />
+              {language === "de" ? "Drucken" : "Print"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
               onClick={handleExportPdf}
               className="gap-2"
             >
@@ -539,6 +570,17 @@ const Anamnesebogen = () => {
         {selectedLayout === null && <LayoutSelector />}
         {selectedLayout === "wizard" && <WizardLayout />}
         {selectedLayout === "accordion" && <AccordionLayout />}
+
+        {/* Hidden Print View */}
+        {showPrintView && (
+          <div className="fixed inset-0 z-50 bg-white">
+            <PrintView
+              ref={printRef}
+              formData={formData}
+              language={language as "de" | "en"}
+            />
+          </div>
+        )}
       </div>
     </Layout>
   );
