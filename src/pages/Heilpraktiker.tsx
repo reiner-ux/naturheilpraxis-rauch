@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Stethoscope, BookOpen, Heart, Shield, Scale, Leaf } from "lucide-react";
+import { Stethoscope, BookOpen, Heart, Shield, Scale, Leaf, GraduationCap, FileCheck, Users } from "lucide-react";
 
 const Heilpraktiker = () => {
   return (
@@ -12,7 +12,7 @@ const Heilpraktiker = () => {
               Was ist ein Heilpraktiker?
             </h1>
             <p className="text-lg text-muted-foreground">
-              Erfahren Sie mehr über den Beruf des Heilpraktikers und die Naturheilkunde
+              Staatlich geprüfte Fachkräfte für Naturheilkunde und Alternativmedizin in Deutschland mit eigener, klar geregelter Berufsbefugnis
             </p>
           </div>
         </div>
@@ -20,40 +20,48 @@ const Heilpraktiker = () => {
 
       <div className="container py-12 md:py-16">
         <div className="mx-auto max-w-4xl">
-          {/* Introduction */}
+          {/* Was jeder Patient wissen sollte */}
           <Card className="mb-8 shadow-card">
             <CardContent className="p-8">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sage-100">
-                  <Stethoscope className="h-6 w-6 text-primary" />
+                  <Heart className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="mb-4 font-serif text-2xl font-semibold text-foreground">
-                    Der Beruf des Heilpraktikers
+                    Was jeder Patient wissen sollte
                   </h2>
+                  <p className="text-muted-foreground leading-relaxed mb-4">
+                    Heilpraktiker behandeln Beschwerden mit Methoden wie Homöopathie, Akupunktur oder 
+                    Phytotherapie, basierend auf jahrhundertealter Erfahrungsheilkunde. Sie dürfen keine 
+                    verschreibungspflichtigen Medikamente einsetzen und verweisen bei akuten Gefahren 
+                    oder Grenzen immer an Ärzte.
+                  </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    Ein Heilpraktiker ist ein staatlich zugelassener Therapeut, der die Heilkunde ausübt,
-                    ohne Arzt zu sein. Die Berufsbezeichnung ist in Deutschland durch das Heilpraktikergesetz
-                    von 1939 geschützt. Um als Heilpraktiker tätig zu werden, muss eine umfangreiche Prüfung
-                    beim Gesundheitsamt bestanden werden.
+                    Jeder Heilpraktiker hat eine strenge Prüfung beim Gesundheitsamt bestanden 
+                    (Mindestalter 25, Kenntnisse in Anatomie, Pathologie, Hygiene, Diagnostik und Notfallmaßnahmen).
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Key aspects */}
-          <div className="grid gap-6 md:grid-cols-2">
+          {/* Qualifikation und Rechtssicherheit */}
+          <h2 className="mb-6 font-serif text-2xl font-semibold text-foreground text-center">
+            Qualifikation und Rechtssicherheit
+          </h2>
+          
+          <div className="grid gap-6 md:grid-cols-3 mb-8">
             <Card className="shadow-card">
               <CardContent className="p-6">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sage-100">
-                  <BookOpen className="h-6 w-6 text-primary" />
+                  <GraduationCap className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="mb-2 font-serif text-xl font-medium text-foreground">Ausbildung</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Heilpraktiker durchlaufen eine umfassende Ausbildung in Anatomie, Physiologie,
-                  Pathologie, Diagnose und verschiedenen Therapieverfahren. Die staatliche Überprüfung
-                  stellt sicher, dass keine Gefahr für die Volksgesundheit besteht.
+                  Intensive Vorbereitung über 2–4 Jahre an Heilpraktikerschulen mit Vorlesungen, 
+                  Praktika und Fokus auf medizinische Grundlagen plus Naturheilverfahren; 
+                  abschließend die Amtszulassung.
                 </p>
               </CardContent>
             </Card>
@@ -61,13 +69,12 @@ const Heilpraktiker = () => {
             <Card className="shadow-card">
               <CardContent className="p-6">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sage-100">
-                  <Heart className="h-6 w-6 text-primary" />
+                  <FileCheck className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="mb-2 font-serif text-xl font-medium text-foreground">Ganzheitlicher Ansatz</h3>
+                <h3 className="mb-2 font-serif text-xl font-medium text-foreground">Zulassung</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Im Mittelpunkt steht der Mensch als Ganzes – nicht nur einzelne Symptome.
-                  Körper, Geist und Seele werden als Einheit betrachtet, um die Ursachen
-                  von Beschwerden zu finden und zu behandeln.
+                  Offizielle Erlaubnis „zur Ausübung der Heilkunde ohne Bestallung" vom Gesundheitsamt – 
+                  wie bei Peter Rauch in Augsburg, inklusive Nachweis über Intensiv-Ausbildung.
                 </p>
               </CardContent>
             </Card>
@@ -77,11 +84,48 @@ const Heilpraktiker = () => {
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-terracotta/20">
                   <Shield className="h-6 w-6 text-accent" />
                 </div>
-                <h3 className="mb-2 font-serif text-xl font-medium text-foreground">Rechtliche Grundlage</h3>
+                <h3 className="mb-2 font-serif text-xl font-medium text-foreground">Pflichten</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Das Heilpraktikergesetz regelt die Ausübung der Heilkunde. Heilpraktiker
-                  unterliegen der Schweigepflicht und müssen sich an strenge hygienische
-                  und ethische Standards halten.
+                  Gleiche Sorgfaltspflicht wie Hausärzte, lückenlose Dokumentation, 
+                  Berufshaftpflichtversicherung.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Vertrauen in den Beruf */}
+          <Card className="mb-8 shadow-card">
+            <CardContent className="p-8">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sage-100">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="mb-4 font-serif text-2xl font-semibold text-foreground">
+                    Vertrauen in den Beruf
+                  </h2>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Millionen Patienten wählen Heilpraktiker jährlich für effektive, sanfte Ansätze. 
+                    Der Beruf steht seit über 70 Jahren auf solidem rechtlichen Fundament 
+                    (HeilprG 1939, reformiert 2016), bestätigt durch aktuelle Gutachten ohne grundlegende Änderungen.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Ganzheitlicher Ansatz */}
+          <div className="grid gap-6 md:grid-cols-2 mb-8">
+            <Card className="shadow-card">
+              <CardContent className="p-6">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sage-100">
+                  <Stethoscope className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="mb-2 font-serif text-xl font-medium text-foreground">Ganzheitlicher Ansatz</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Im Mittelpunkt steht der Mensch als Ganzes – nicht nur einzelne Symptome.
+                  Körper, Geist und Seele werden als Einheit betrachtet, um die Ursachen
+                  von Beschwerden zu finden und zu behandeln.
                 </p>
               </CardContent>
             </Card>
@@ -101,8 +145,8 @@ const Heilpraktiker = () => {
             </Card>
           </div>
 
-          {/* Treatment methods */}
-          <Card className="mt-8 shadow-card">
+          {/* Behandlungsmethoden */}
+          <Card className="shadow-card">
             <CardContent className="p-8">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sage-100">
