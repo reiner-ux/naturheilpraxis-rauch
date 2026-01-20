@@ -165,8 +165,8 @@ export default function Datenschutz() {
             <CardContent className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
                 {t(
-                  "Ich erlaube, dass meine Gesundheitsdaten (inkl. Messungen Metatron/Vieva Pro/EAV/Trikombin) für meine Behandlung gespeichert werden. E-Mail-Kommunikation (Rechnungen, Termine) ist ok. Ich kann meine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen (per Mail an info@rauch-heilpraktiker.de).",
-                  "I allow my health data (including Metatron/Vieva Pro/EAV/Trikombin measurements) to be stored for my treatment. Email communication (invoices, appointments) is acceptable. I can withdraw my consent at any time with effect for the future (via email to info@rauch-heilpraktiker.de)."
+                  "Ich erlaube, dass meine Gesundheitsdaten (inkl. Messungen Metatron/Vieva Pro/EAV/Trikombin) für meine Behandlung gespeichert werden. E-Mail-Kommunikation (Rechnungen, Termine, Fragen, Anfragen für eine Bewertung) ist ok. Ich kann meine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen (per Mail an info@rauch-heilpraktiker.de).",
+                  "I allow my health data (including Metatron/Vieva Pro/EAV/Trikombin measurements) to be stored for my treatment. Email communication (invoices, appointments, questions, review requests) is acceptable. I can withdraw my consent at any time with effect for the future (via email to info@rauch-heilpraktiker.de)."
                 )}
               </p>
               <p className="text-sm text-muted-foreground italic">
