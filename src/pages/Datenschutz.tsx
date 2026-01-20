@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Shield, Lock, Database, Share2, Clock, UserCheck, Mail, Phone, MapPin } from "lucide-react";
+import { Shield, Lock, Database, Share2, Clock, UserCheck, Mail, Phone, MapPin, Scale, ShieldCheck, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Datenschutz() {
@@ -24,27 +24,51 @@ export default function Datenschutz() {
       ),
     },
     {
+      icon: Scale,
+      title: t("Rechtsgrundlage", "Legal Basis"),
+      content: t(
+        "Die Verarbeitung Ihrer Gesundheitsdaten erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Behandlungsvertrag) sowie Art. 9 Abs. 2 lit. h DSGVO (Gesundheitsversorgung). Für die 2-Faktor-Authentifizierung: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Datensicherheit).",
+        "Processing of your health data is based on Art. 6(1)(b) GDPR (treatment contract) and Art. 9(2)(h) GDPR (healthcare provision). For 2-factor authentication: Art. 6(1)(f) GDPR (legitimate interest in data security)."
+      ),
+    },
+    {
+      icon: ShieldCheck,
+      title: t("Datensicherheit", "Data Security"),
+      content: t(
+        "Ihre Daten werden durch folgende Maßnahmen geschützt: TLS-Verschlüsselung bei der Übertragung, verschlüsselte Speicherung in der Datenbank, Zwei-Faktor-Authentifizierung (2FA) per E-Mail, automatische Sitzungsbeendigung und Zugriffskontrolle nach dem Minimalprinzip (nur Sie und der Behandler haben Zugriff).",
+        "Your data is protected by: TLS encryption during transmission, encrypted database storage, two-factor authentication (2FA) via email, automatic session termination, and access control based on the principle of least privilege (only you and the practitioner have access)."
+      ),
+    },
+    {
       icon: Share2,
       title: t("Wer bekommt Ihre Daten?", "Who Receives Your Data?"),
       content: t(
-        "Nur andere Ärzte/Heilpraktiker (wenn nötig), Krankenkassen oder Steuerberater – sonst niemand ohne Ihre Zustimmung.",
-        "Only other doctors/practitioners (if necessary), health insurance companies or tax advisors – no one else without your consent."
+        "Nur andere Ärzte/Heilpraktiker (wenn nötig und mit Ihrer Zustimmung), Krankenkassen oder Steuerberater – sonst niemand ohne Ihre ausdrückliche Einwilligung. Ihre Daten werden nicht an Drittländer übermittelt.",
+        "Only other doctors/practitioners (if necessary and with your consent), health insurance companies or tax advisors – no one else without your explicit consent. Your data is not transferred to third countries."
       ),
     },
     {
       icon: Clock,
       title: t("Wie lange speichern wir?", "Storage Duration"),
       content: t(
-        "Mindestens 10 Jahre (Gesetz), danach löschen wir alles.",
-        "At least 10 years (legal requirement), after which we delete everything."
+        "Gemäß der berufsrechtlichen Aufbewahrungspflicht für Heilpraktiker: mindestens 10 Jahre nach Abschluss der Behandlung. Danach werden alle Daten sicher gelöscht.",
+        "According to professional retention requirements for naturopaths: at least 10 years after completion of treatment. After that, all data will be securely deleted."
       ),
     },
     {
       icon: UserCheck,
       title: t("Ihre Rechte", "Your Rights"),
       content: t(
-        "Jederzeit fragen, ändern oder löschen lassen (nach 10 Jahren). Einfach per Mail oder Brief an uns – kostenlos. Beschwerde? An die Datenschutzbehörde Bayern.",
-        "You can request, modify or delete your data at any time (after 10 years). Simply contact us by email or letter – free of charge. Complaints can be directed to the Bavarian Data Protection Authority."
+        "Sie haben das Recht auf: Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung nach Ablauf der Aufbewahrungsfrist (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20), Widerspruch (Art. 21) und Widerruf Ihrer Einwilligung jederzeit mit Wirkung für die Zukunft.",
+        "You have the right to: Access (Art. 15 GDPR), Rectification (Art. 16), Deletion after expiry of retention period (Art. 17), Restriction of processing (Art. 18), Data portability (Art. 20), Objection (Art. 21), and withdrawal of your consent at any time with effect for the future."
+      ),
+    },
+    {
+      icon: AlertCircle,
+      title: t("Beschwerderecht", "Right to Complain"),
+      content: t(
+        "Sie haben das Recht, sich bei der zuständigen Aufsichtsbehörde zu beschweren: Bayerisches Landesamt für Datenschutzaufsicht (BayLDA), Promenade 18, 91522 Ansbach, www.lda.bayern.de",
+        "You have the right to lodge a complaint with the supervisory authority: Bavarian State Office for Data Protection Supervision (BayLDA), Promenade 18, 91522 Ansbach, Germany, www.lda.bayern.de"
       ),
     },
   ];
@@ -72,6 +96,9 @@ export default function Datenschutz() {
               <h2 className="font-serif text-xl font-semibold text-foreground">
                 Naturheilpraxis Peter Rauch
               </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("Verantwortlicher gemäß Art. 4 Abs. 7 DSGVO", "Data Controller according to Art. 4(7) GDPR")}
+              </p>
               <div className="mt-3 flex flex-col items-center gap-2 text-muted-foreground sm:flex-row sm:justify-center sm:gap-6">
                 <span className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
@@ -108,7 +135,7 @@ export default function Datenschutz() {
         <div className="mb-8 flex justify-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-sage-100 px-4 py-2 text-sm font-medium text-primary">
             <Lock className="h-4 w-4" />
-            {t("DSGVO-konform", "GDPR Compliant")}
+            {t("DSGVO-konform · TLS-verschlüsselt · 2FA-geschützt", "GDPR Compliant · TLS Encrypted · 2FA Protected")}
           </div>
         </div>
 
@@ -138,14 +165,14 @@ export default function Datenschutz() {
             <CardContent className="space-y-4">
               <p className="text-muted-foreground leading-relaxed">
                 {t(
-                  "Ich erlaube, dass meine Gesundheitsdaten (inkl. Messungen Metatron/Vieva Pro/EAV/Trikombin) für meine Behandlung gespeichert werden. E-Mail-Kommunikation (Rechnungen, Termine) ist ok. Kann jederzeit kündigen (per Mail).",
-                  "I allow my health data (including Metatron/Vieva Pro/EAV/Trikombin measurements) to be stored for my treatment. Email communication (invoices, appointments) is acceptable. I can withdraw consent at any time (via email)."
+                  "Ich erlaube, dass meine Gesundheitsdaten (inkl. Messungen Metatron/Vieva Pro/EAV/Trikombin) für meine Behandlung gespeichert werden. E-Mail-Kommunikation (Rechnungen, Termine) ist ok. Ich kann meine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen (per Mail an info@rauch-heilpraktiker.de).",
+                  "I allow my health data (including Metatron/Vieva Pro/EAV/Trikombin measurements) to be stored for my treatment. Email communication (invoices, appointments) is acceptable. I can withdraw my consent at any time with effect for the future (via email to info@rauch-heilpraktiker.de)."
                 )}
               </p>
               <p className="text-sm text-muted-foreground italic">
                 {t(
-                  "Die Einwilligung erfolgt digital im Rahmen des Anamnesebogens.",
-                  "Consent is given digitally as part of the medical history form."
+                  "Die Einwilligung erfolgt digital im Rahmen des Anamnesebogens mit 2-Faktor-Bestätigung gemäß § 126a BGB.",
+                  "Consent is given digitally as part of the medical history form with 2-factor confirmation according to § 126a BGB."
                 )}
               </p>
             </CardContent>
