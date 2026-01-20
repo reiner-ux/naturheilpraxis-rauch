@@ -210,3 +210,74 @@
     }
   }
 }
+
+/* Print Styles */
+@media print {
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide navigation and non-essential elements */
+  header,
+  footer,
+  nav,
+  .no-print,
+  button,
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Print view styling */
+  .print-view {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+
+  .print-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Reset backgrounds for print */
+  .print-view * {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .print-view h1,
+  .print-view h2,
+  .print-view h3 {
+    color: black !important;
+  }
+
+  .print-view input,
+  .print-view textarea,
+  .print-view select {
+    border: 1px solid #ccc !important;
+    background: white !important;
+  }
+
+  .print-view input[type="checkbox"] {
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+  }
+
+  /* Page margins */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+
+  /* Keep certain backgrounds for print */
+  .print-view .bg-gray-100 {
+    background: #f3f4f6 !important;
+  }
+}
