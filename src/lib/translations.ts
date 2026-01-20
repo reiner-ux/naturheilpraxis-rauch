@@ -3,6 +3,7 @@ export const translations = {
   nav: {
     home: { de: 'Start', en: 'Home' },
     anamnesis: { de: 'Anamnesebogen', en: 'Medical History' },
+    privacy: { de: 'Datenschutzverordnung', en: 'Privacy Policy' },
     practitioner: { de: 'Was ist ein Heilpraktiker?', en: 'What is a Naturopath?' },
     fees: { de: 'GebÜH', en: 'Fee Schedule' },
     nutrition: { de: 'Ernährung', en: 'Nutrition' },
