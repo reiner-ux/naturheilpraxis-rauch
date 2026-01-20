@@ -50,17 +50,17 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-serif text-lg font-medium text-foreground">Kontakt</h3>
             <div className="flex flex-col gap-3">
-              <a href="tel:+49123456789" className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
+              <a href="tel:08212621462" className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
                 <Phone className="h-4 w-4" />
-                <span>Telefon</span>
+                <span>0821-2621462</span>
               </a>
               <a href="mailto:info@rauch-heilpraktiker.de" className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
                 <Mail className="h-4 w-4" />
-                <span>E-Mail</span>
+                <span>info@rauch-heilpraktiker.de</span>
               </a>
               <div className="flex items-start gap-2 text-sm text-muted-foreground">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>Praxisadresse</span>
+                <span>Friedrich-Deffner-Straße 19a, 86163 Augsburg</span>
               </div>
             </div>
           </div>

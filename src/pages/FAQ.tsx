@@ -100,7 +100,7 @@ const FAQ = () => {
               </p>
               <div className="flex flex-col justify-center gap-4 sm:flex-row">
                 <Button asChild>
-                  <a href="tel:+49123456789">
+                  <a href="tel:08212621462">
                     <Phone className="mr-2 h-4 w-4" />
                     {t(tr.call.de, tr.call.en)}
                   </a>
