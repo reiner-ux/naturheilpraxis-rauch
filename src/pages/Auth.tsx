@@ -52,7 +52,15 @@ const Auth: React.FC = () => {
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Fehler beim Senden des Codes');
+        // Supabase returns a generic message for non-2xx; try to extract the JSON body error
+        let message = response.error.message || 'Fehler beim Senden des Codes';
+        try {
+          const body = await response.error.context?.response?.json();
+          if (body?.error) message = body.error;
+        } catch {
+          // ignore parsing errors
+        }
+        throw new Error(message);
       }
 
       if (response.data?.error) {
@@ -141,8 +149,19 @@ const Auth: React.FC = () => {
         body: { email, type: mode },
       });
 
-      if (response.error || response.data?.error) {
-        throw new Error(response.data?.error || 'Fehler beim erneuten Senden');
+      if (response.error) {
+        let message = response.error.message || 'Fehler beim erneuten Senden';
+        try {
+          const body = await response.error.context?.response?.json();
+          if (body?.error) message = body.error;
+        } catch {
+          // ignore
+        }
+        throw new Error(message);
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
       }
 
       toast({
