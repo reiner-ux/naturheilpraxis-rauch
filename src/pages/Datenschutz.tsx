@@ -96,7 +96,7 @@ export default function Datenschutz() {
             <CardContent className="pt-6">
               <p className="text-lg leading-relaxed text-foreground">
                 {t(
-                  "Liebe Patientin, lieber Patient, wir brauchen Ihre Daten, um Sie richtig zu behandeln. Ohne diese Daten dürfen wir Ihnen gesetzlich (DSGVO) nicht behandeln. Hier steht, wofür wir was brauchen und welche Rechte Sie haben.",
+                  "Liebe Patientin, lieber Patient, wir brauchen Ihre Daten, um Sie richtig zu behandeln. Ohne diese Daten dürfen wir Sie gesetzlich (DSGVO) nicht behandeln. Hier steht, wofür wir was brauchen und welche Rechte Sie haben.",
                   "Dear Patient, we need your data to treat you properly. Without this data, we are legally (GDPR) not allowed to treat you. Here you can find what we need your data for and what rights you have."
                 )}
               </p>
