@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Euro, Info, FileText, HelpCircle } from "lucide-react";
+import { Euro, Info, FileText, HelpCircle, ExternalLink } from "lucide-react";
 
 const beispielLeistungen = [
   { ziffer: "1", beschreibung: "Beratung", betrag: "8,74" },
@@ -64,12 +64,14 @@ const Gebueh = () => {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sage-100">
                   <FileText className="h-5 w-5 text-primary" />
                 </div>
-                <CardTitle className="font-serif">Beispiele aus der GebÜH</CardTitle>
+                <CardTitle className="font-serif">Beispiele aus der GebÜH (Stand: 2002)</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <p className="mb-4 text-sm text-muted-foreground">
-                Die folgenden Beträge sind Beispiele und können je nach Aufwand und Region variieren:
+                Die folgenden Beträge sind <strong>unverbindliche Beispiele</strong> aus dem 
+                Gebührenverzeichnis für Heilpraktiker. Die tatsächlichen Kosten können je nach 
+                Aufwand, Zeitdauer und individueller Behandlung variieren.
               </p>
               <div className="overflow-x-auto">
                 <Table>
@@ -90,6 +92,17 @@ const Gebueh = () => {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+              <div className="mt-4 pt-4 border-t border-border">
+                <a 
+                  href="https://www.heilpraktiker.org/gebuehrenverzeichnis-fuer-heilpraktiker" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Offizielles Gebührenverzeichnis beim Berufsverband (BDH)
+                </a>
               </div>
             </CardContent>
           </Card>
