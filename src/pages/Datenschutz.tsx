@@ -1,10 +1,16 @@
 import { Layout } from "@/components/layout/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Shield, Lock, Database, Share2, Clock, UserCheck, Mail, Phone, MapPin, Scale, ShieldCheck, AlertCircle } from "lucide-react";
+import { Shield, Lock, Database, Share2, Clock, UserCheck, Mail, Phone, MapPin, Scale, ShieldCheck, AlertCircle, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { generateDatenschutzPdf } from "@/lib/datenschutzPdfExport";
 
 export default function Datenschutz() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  const handleDownloadPdf = () => {
+    generateDatenschutzPdf({ language });
+  };
 
   const sections = [
     {
@@ -87,6 +93,14 @@ export default function Datenschutz() {
           <p className="mt-4 text-lg text-muted-foreground">
             {t("Ganz einfach erklärt", "Simply explained")}
           </p>
+          <Button 
+            onClick={handleDownloadPdf}
+            variant="outline"
+            className="mt-6 gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {t("Als PDF herunterladen", "Download as PDF")}
+          </Button>
         </div>
 
         {/* Practice Info */}
