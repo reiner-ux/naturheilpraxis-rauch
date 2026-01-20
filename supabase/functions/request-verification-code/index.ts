@@ -26,18 +26,20 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
     throw new Error("SMTP configuration is incomplete");
   }
 
-  // Use STARTTLS on port 587 for better compatibility with shared hosting
-  const useTls = smtpPort === 465;
-  
+  // Port 587 uses STARTTLS, Port 465 uses direct TLS
   const client = new SMTPClient({
     connection: {
       hostname: smtpHost,
       port: smtpPort,
-      tls: useTls,
+      tls: smtpPort === 465,
       auth: {
         username: smtpUser,
         password: smtpPassword,
       },
+    },
+    debug: {
+      log: true,
+      allowUnsecure: true, // Allow STARTTLS upgrade on port 587
     },
   });
 
