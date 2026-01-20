@@ -77,6 +77,14 @@ export default function Datenschutz() {
         "You have the right to lodge a complaint with the supervisory authority: Bavarian State Office for Data Protection Supervision (BayLDA), Promenade 18, 91522 Ansbach, Germany, www.lda.bayern.de"
       ),
     },
+    {
+      icon: Shield,
+      title: t("KI-gestützte Plattform (Lovable)", "AI-Powered Platform (Lovable)"),
+      content: t(
+        "Diese Website wurde mit Lovable erstellt, einer KI-gestützten Entwicklungsplattform. Die Plattform verarbeitet technische Daten zur Bereitstellung und Optimierung der Anwendung. Die Datenverarbeitung erfolgt auf Servern innerhalb der EU. Ihre Gesundheitsdaten werden ausschließlich in unserer eigenen, verschlüsselten Datenbank gespeichert und nicht an Lovable oder Dritte weitergegeben. Lovable hat keinen Zugriff auf Ihre personenbezogenen Daten oder Gesundheitsinformationen. Die KI-Komponenten werden nur für die technische Entwicklung verwendet, nicht für die Verarbeitung Ihrer Patientendaten.",
+        "This website was created with Lovable, an AI-powered development platform. The platform processes technical data to provide and optimize the application. Data processing takes place on servers within the EU. Your health data is stored exclusively in our own encrypted database and is not shared with Lovable or third parties. Lovable has no access to your personal data or health information. AI components are used only for technical development, not for processing your patient data."
+      ),
+    },
   ];
 
   return (
