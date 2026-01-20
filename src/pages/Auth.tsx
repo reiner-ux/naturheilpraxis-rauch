@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Mail, ArrowLeft, Loader2, Shield, UserPlus, LogIn, Info } from 'lucide-react';
+import { Mail, ArrowLeft, Loader2, Shield, UserPlus, LogIn, Info, HelpCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,6 +13,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 const emailSchema = z.string().trim().email({ message: "Ungültige E-Mail-Adresse" }).max(255);
 
@@ -272,6 +277,58 @@ const Auth: React.FC = () => {
                         language === 'de' ? 'Code senden' : 'Send Code'
                       )}
                     </Button>
+                    
+                    {/* Help section for login problems */}
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" className="w-full text-muted-foreground hover:text-primary">
+                          <HelpCircle className="mr-2 h-4 w-4" />
+                          {language === 'de' ? 'Probleme beim Anmelden?' : 'Problems logging in?'}
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2">
+                        <div className="rounded-lg bg-sage-50 p-4 text-sm space-y-3">
+                          <p className="font-medium text-foreground">
+                            {language === 'de' ? 'Tipps zur Anmeldung:' : 'Login tips:'}
+                          </p>
+                          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                            <li>
+                              {language === 'de' 
+                                ? 'Prüfen Sie Ihren Spam-Ordner auf den Bestätigungscode' 
+                                : 'Check your spam folder for the verification code'}
+                            </li>
+                            <li>
+                              {language === 'de' 
+                                ? 'Stellen Sie sicher, dass Sie die richtige E-Mail-Adresse verwenden' 
+                                : 'Make sure you are using the correct email address'}
+                            </li>
+                            <li>
+                              {language === 'de' 
+                                ? 'Der Code ist 10 Minuten gültig – fordern Sie bei Bedarf einen neuen an' 
+                                : 'The code is valid for 10 minutes – request a new one if needed'}
+                            </li>
+                            <li>
+                              {language === 'de' 
+                                ? 'Noch nicht registriert? Wechseln Sie zum Tab "Registrieren"' 
+                                : 'Not registered yet? Switch to the "Register" tab'}
+                            </li>
+                          </ul>
+                          <div className="pt-2 border-t border-sage-200">
+                            <p className="text-muted-foreground">
+                              {language === 'de' 
+                                ? 'Bei weiteren Problemen kontaktieren Sie uns unter:' 
+                                : 'For further issues, contact us at:'}
+                            </p>
+                            <a 
+                              href="mailto:info@rauch-heilpraktiker.de" 
+                              className="text-primary hover:underline font-medium"
+                            >
+                              info@rauch-heilpraktiker.de
+                            </a>
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
                   </form>
                 </TabsContent>
 
