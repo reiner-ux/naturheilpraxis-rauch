@@ -9,6 +9,7 @@ export const translations = {
     nutrition: { de: 'Ernährung', en: 'Nutrition' },
     faq: { de: 'FAQ', en: 'FAQ' },
     practice: { de: 'Praxis-Info', en: 'Practice Info' },
+    impressum: { de: 'Impressum', en: 'Legal Notice' },
   },
   
   // Header
