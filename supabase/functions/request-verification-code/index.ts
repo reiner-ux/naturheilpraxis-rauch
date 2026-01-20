@@ -10,8 +10,12 @@ const corsHeaders = {
 interface VerificationRequest {
   email: string;
   type: "login" | "registration" | "password_reset";
-  userId?: string; // For 2FA after password auth
+  /** Only required for registration */
+  password?: string;
+  /** For login 2FA after password auth */
+  userId?: string;
 }
+
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -119,7 +123,14 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, type, userId: providedUserId }: VerificationRequest = await req.json();
+    const {
+      email: rawEmail,
+      type,
+      password,
+      userId: providedUserId,
+    }: VerificationRequest = await req.json();
+
+    const email = (rawEmail || "").trim().toLowerCase();
 
     if (!email) {
       throw new Error("Email is required");
@@ -129,42 +140,75 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if user exists
-    const { data: usersData } = await supabase.auth.admin.listUsers();
-    const existingUser = usersData?.users?.find(u => u.email === email);
+    // Resolve userId by email using the profiles table (avoids unreliable listUsers scanning)
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error("profile lookup error:", profileError);
+      throw new Error("Benutzerprüfung fehlgeschlagen");
+    }
+
+    const existingUserId = profile?.user_id || null;
 
     let userId: string;
 
     if (type === "login") {
-      // For login 2FA, user must exist and userId should be provided
-      if (!existingUser) {
+      // After password sign-in, frontend should provide the userId; fallback to profile lookup.
+      userId = providedUserId || existingUserId || "";
+      if (!userId) {
         return new Response(
           JSON.stringify({ error: "Benutzer nicht gefunden. Bitte registrieren Sie sich zuerst." }),
           { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
-      userId = providedUserId || existingUser.id;
     } else if (type === "registration") {
-      // For registration, user must NOT exist
-      if (existingUser) {
+      if (existingUserId) {
         return new Response(
           JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
           { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
-      // Don't create user yet - just return success so frontend can collect password
-      // User will be created after password is set and code is verified
-      userId = "pending"; // Placeholder for registration flow
+
+      if (!password || password.length < 8) {
+        return new Response(
+          JSON.stringify({ error: "Passwort muss mindestens 8 Zeichen lang sein" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Create user now (unconfirmed), then verify via code.
+      const { data: created, error: createError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: false,
+      });
+
+      if (createError || !created?.user?.id) {
+        console.error("createUser error:", createError);
+        const msg = createError?.message || "Registrierung fehlgeschlagen";
+        if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("registered")) {
+          return new Response(
+            JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
+            { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+        throw new Error(msg);
+      }
+
+      userId = created.user.id;
     } else if (type === "password_reset") {
-      // For password reset, user must exist
-      if (!existingUser) {
+      if (!existingUserId) {
         // Don't reveal if email exists or not for security
         return new Response(
           JSON.stringify({ success: true, message: "Falls ein Konto existiert, wurde ein Code gesendet." }),
           { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
-      userId = existingUser.id;
+      userId = existingUserId;
     } else {
       throw new Error("Invalid type");
     }
@@ -173,57 +217,26 @@ const handler = async (req: Request): Promise<Response> => {
     const code = generateCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // For registration, we store the code with email as identifier (no user yet)
-    if (type === "registration") {
-      // Delete any existing pending registration codes for this email
-      await supabase
-        .from("verification_codes")
-        .delete()
-        .eq("type", "registration")
-        .eq("used", false);
-      
-      // Store code with a special pending user ID format
-      const { error: insertError } = await supabase
-        .from("verification_codes")
-        .insert({
-          user_id: crypto.randomUUID(), // Temporary ID
-          code,
-          type,
-          expires_at: expiresAt.toISOString(),
-        });
+    // Delete old unused codes for this user + type
+    await supabase
+      .from("verification_codes")
+      .delete()
+      .eq("user_id", userId)
+      .eq("type", type)
+      .eq("used", false);
 
-      if (insertError) {
-        throw insertError;
-      }
+    const { error: insertError } = await supabase
+      .from("verification_codes")
+      .insert({
+        user_id: userId,
+        code,
+        type,
+        expires_at: expiresAt.toISOString(),
+      });
 
-      // Store the email-to-code mapping in the code itself via a workaround
-      // We'll use the type field to store email temporarily
-      await supabase
-        .from("verification_codes")
-        .update({ type: `registration:${email}` })
-        .eq("code", code)
-        .eq("type", "registration");
-
-    } else {
-      // For login and password_reset, user exists
-      await supabase
-        .from("verification_codes")
-        .delete()
-        .eq("user_id", userId)
-        .eq("used", false);
-
-      const { error: insertError } = await supabase
-        .from("verification_codes")
-        .insert({
-          user_id: userId,
-          code,
-          type,
-          expires_at: expiresAt.toISOString(),
-        });
-
-      if (insertError) {
-        throw insertError;
-      }
+    if (insertError) {
+      console.error("insert verification_codes error:", insertError);
+      throw insertError;
     }
 
     // Send verification email
@@ -232,10 +245,10 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Verification code sent to ${email} for ${type}`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: "Bestätigungscode wurde gesendet",
-        userId: type !== "registration" ? userId : undefined
+        userId,
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );

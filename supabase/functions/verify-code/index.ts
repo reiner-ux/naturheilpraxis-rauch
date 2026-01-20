@@ -31,12 +31,33 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     if (type === "registration") {
-      // For registration, find code by the email stored in type field
+      // Resolve userId via profiles table
+      const normalizedEmail = email.trim().toLowerCase();
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("email", normalizedEmail)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("profile lookup error:", profileError);
+        throw new Error("Benutzerprüfung fehlgeschlagen");
+      }
+
+      if (!profile?.user_id) {
+        return new Response(
+          JSON.stringify({ error: "Benutzer nicht gefunden" }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Find valid verification code
       const { data: verificationCode, error: codeError } = await supabase
         .from("verification_codes")
         .select("*")
+        .eq("user_id", profile.user_id)
         .eq("code", code)
-        .like("type", `registration:${email}`)
+        .eq("type", "registration")
         .eq("used", false)
         .gt("expires_at", new Date().toISOString())
         .single();
@@ -48,47 +69,46 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      if (!password || password.length < 8) {
-        return new Response(
-          JSON.stringify({ error: "Passwort muss mindestens 8 Zeichen lang sein" }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-
       // Mark code as used
       await supabase
         .from("verification_codes")
         .update({ used: true })
         .eq("id", verificationCode.id);
 
-      // Now create the user with the password
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true, // Already verified via code
+      // Confirm email
+      const { error: confirmError } = await supabase.auth.admin.updateUserById(profile.user_id, {
+        email_confirm: true,
       });
 
-      if (createError) {
-        throw createError;
+      if (confirmError) {
+        throw confirmError;
       }
 
-      console.log(`User registered successfully: ${email}`);
+      console.log(`User verified successfully: ${normalizedEmail}`);
 
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           message: "Registrierung erfolgreich",
-          userId: newUser.user.id
+          userId: profile.user_id,
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
 
     } else if (type === "login") {
-      // For login 2FA, find the user first
-      const { data: usersData } = await supabase.auth.admin.listUsers();
-      const userData = usersData?.users?.find(u => u.email === email);
-      
-      if (!userData) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("email", normalizedEmail)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("profile lookup error:", profileError);
+        throw new Error("Benutzerprüfung fehlgeschlagen");
+      }
+
+      if (!profile?.user_id) {
         return new Response(
           JSON.stringify({ error: "Benutzer nicht gefunden" }),
           { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -99,7 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: verificationCode, error: codeError } = await supabase
         .from("verification_codes")
         .select("*")
-        .eq("user_id", userData.id)
+        .eq("user_id", profile.user_id)
         .eq("code", code)
         .eq("type", "login")
         .eq("used", false)
@@ -122,7 +142,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Generate a magic link for sign-in
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
-        email,
+        email: normalizedEmail,
       });
 
       if (linkError) {
@@ -131,24 +151,32 @@ const handler = async (req: Request): Promise<Response> => {
 
       const token = linkData.properties.hashed_token;
 
-      console.log(`2FA verified successfully for ${email}`);
+      console.log(`2FA verified successfully for ${normalizedEmail}`);
 
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           message: "2FA erfolgreich verifiziert",
           token,
-          userId: userData.id
+          userId: profile.user_id,
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
 
     } else if (type === "password_reset") {
-      // For password reset
-      const { data: usersData } = await supabase.auth.admin.listUsers();
-      const userData = usersData?.users?.find(u => u.email === email);
-      
-      if (!userData) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("email", normalizedEmail)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("profile lookup error:", profileError);
+        throw new Error("Benutzerprüfung fehlgeschlagen");
+      }
+
+      if (!profile?.user_id) {
         return new Response(
           JSON.stringify({ error: "Benutzer nicht gefunden" }),
           { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -159,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: verificationCode, error: codeError } = await supabase
         .from("verification_codes")
         .select("*")
-        .eq("user_id", userData.id)
+        .eq("user_id", profile.user_id)
         .eq("code", code)
         .eq("type", "password_reset")
         .eq("used", false)
@@ -187,7 +215,7 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("id", verificationCode.id);
 
       // Update password
-      const { error: updateError } = await supabase.auth.admin.updateUserById(userData.id, {
+      const { error: updateError } = await supabase.auth.admin.updateUserById(profile.user_id, {
         password: newPassword,
       });
 
@@ -195,12 +223,12 @@ const handler = async (req: Request): Promise<Response> => {
         throw updateError;
       }
 
-      console.log(`Password reset successfully for ${email}`);
+      console.log(`Password reset successfully for ${normalizedEmail}`);
 
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: "Passwort erfolgreich zurückgesetzt"
+        JSON.stringify({
+          success: true,
+          message: "Passwort erfolgreich zurückgesetzt",
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );

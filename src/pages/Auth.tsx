@@ -129,10 +129,11 @@ const Auth: React.FC = () => {
     setLoading(true);
 
     try {
-      // Request verification code for registration
+      // Request verification code for registration (creates user + sends code)
       const response = await supabase.functions.invoke('request-verification-code', {
-        body: { email, type: 'registration' },
+        body: { email, password, type: 'registration' },
       });
+
 
       if (response.error) {
         let message = response.error.message || 'Fehler beim Senden des Codes';
@@ -170,6 +171,7 @@ const Auth: React.FC = () => {
         throw new Error(response.data.error);
       }
 
+      setUserId(response.data?.userId || null);
       setStep('verification');
       
       toast({
@@ -178,6 +180,7 @@ const Auth: React.FC = () => {
           ? 'Ein Bestätigungscode wurde an Ihre E-Mail gesendet.' 
           : 'A verification code has been sent to your email.',
       });
+
     } catch (error: any) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
@@ -298,8 +301,9 @@ const Auth: React.FC = () => {
 
     try {
       const response = await supabase.functions.invoke('verify-code', {
-        body: { email, code, type: 'registration', password },
+        body: { email, code, type: 'registration' },
       });
+
 
       if (response.error || response.data?.error) {
         throw new Error(response.data?.error || response.error?.message || 'Fehler bei der Verifizierung');
