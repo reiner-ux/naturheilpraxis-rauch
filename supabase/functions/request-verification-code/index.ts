@@ -9,14 +9,15 @@ const corsHeaders = {
 
 interface VerificationRequest {
   email: string;
-  type: "login" | "registration";
+  type: "login" | "registration" | "password_reset";
+  userId?: string; // For 2FA after password auth
 }
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-async function sendVerificationEmail(email: string, code: string, type: "login" | "registration"): Promise<void> {
+async function sendVerificationEmail(email: string, code: string, type: "login" | "registration" | "password_reset"): Promise<void> {
   const smtpHost = Deno.env.get("SMTP_HOST");
   const smtpPort = parseInt(Deno.env.get("SMTP_PORT") || "587");
   const smtpUser = Deno.env.get("SMTP_USER");
@@ -26,13 +27,11 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
     throw new Error("SMTP configuration is incomplete");
   }
 
-  // Use port 587 with STARTTLS - start unencrypted, then upgrade
-  // This avoids SSL certificate hostname mismatch issues on shared hosting
   const client = new SMTPClient({
     connection: {
       hostname: smtpHost,
-      port: 587, // Force port 587 for STARTTLS
-      tls: false, // Start without TLS, will upgrade via STARTTLS
+      port: 587,
+      tls: false,
       auth: {
         username: smtpUser,
         password: smtpPassword,
@@ -40,13 +39,27 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
     },
     debug: {
       log: true,
-      allowUnsecure: true, // Allow the initial unencrypted connection before STARTTLS
+      allowUnsecure: true,
     },
   });
 
-  const subject = type === "registration" 
-    ? "Ihr Bestätigungscode für die Registrierung - Naturheilpraxis Rauch"
-    : "Ihr Anmeldecode - Naturheilpraxis Rauch";
+  let subject: string;
+  let bodyText: string;
+
+  switch (type) {
+    case "registration":
+      subject = "Ihr Bestätigungscode für die Registrierung - Naturheilpraxis Rauch";
+      bodyText = "vielen Dank für Ihre Registrierung. Bitte verwenden Sie den folgenden Code, um Ihre E-Mail-Adresse zu bestätigen:";
+      break;
+    case "login":
+      subject = "Ihr Anmeldecode (2FA) - Naturheilpraxis Rauch";
+      bodyText = "um Ihre Anmeldung abzuschließen, verwenden Sie bitte den folgenden Bestätigungscode:";
+      break;
+    case "password_reset":
+      subject = "Passwort zurücksetzen - Naturheilpraxis Rauch";
+      bodyText = "Sie haben angefordert, Ihr Passwort zurückzusetzen. Verwenden Sie den folgenden Code:";
+      break;
+  }
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -70,9 +83,7 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
         
         <p>Guten Tag,</p>
         
-        <p>${type === "registration" 
-          ? "vielen Dank für Ihre Registrierung. Bitte verwenden Sie den folgenden Code, um Ihre E-Mail-Adresse zu bestätigen:" 
-          : "um Ihre Anmeldung abzuschließen, verwenden Sie bitte den folgenden Bestätigungscode:"}</p>
+        <p>${bodyText}</p>
         
         <div class="code-box">
           <div class="code">${code}</div>
@@ -108,7 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, type }: VerificationRequest = await req.json();
+    const { email, type, userId: providedUserId }: VerificationRequest = await req.json();
 
     if (!email) {
       throw new Error("Email is required");
@@ -118,76 +129,104 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if user exists using listUsers filter
+    // Check if user exists
     const { data: usersData } = await supabase.auth.admin.listUsers();
     const existingUser = usersData?.users?.find(u => u.email === email);
 
-    if (type === "login" && !existingUser) {
-      return new Response(
-        JSON.stringify({ error: "Benutzer nicht gefunden. Bitte registrieren Sie sich zuerst." }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
+    let userId: string;
 
-    if (type === "registration" && existingUser) {
-      return new Response(
-        JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
-        {
-          status: 409,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+    if (type === "login") {
+      // For login 2FA, user must exist and userId should be provided
+      if (!existingUser) {
+        return new Response(
+          JSON.stringify({ error: "Benutzer nicht gefunden. Bitte registrieren Sie sich zuerst." }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      userId = providedUserId || existingUser.id;
+    } else if (type === "registration") {
+      // For registration, user must NOT exist
+      if (existingUser) {
+        return new Response(
+          JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
+          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      // Don't create user yet - just return success so frontend can collect password
+      // User will be created after password is set and code is verified
+      userId = "pending"; // Placeholder for registration flow
+    } else if (type === "password_reset") {
+      // For password reset, user must exist
+      if (!existingUser) {
+        // Don't reveal if email exists or not for security
+        return new Response(
+          JSON.stringify({ success: true, message: "Falls ein Konto existiert, wurde ein Code gesendet." }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      userId = existingUser.id;
+    } else {
+      throw new Error("Invalid type");
     }
 
     // Generate 6-digit code
     const code = generateCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // For registration, create user first (unconfirmed)
-    let userId: string;
-    
+    // For registration, we store the code with email as identifier (no user yet)
     if (type === "registration") {
-      const tempPassword = crypto.randomUUID();
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email,
-        password: tempPassword,
-        email_confirm: false,
-      });
+      // Delete any existing pending registration codes for this email
+      await supabase
+        .from("verification_codes")
+        .delete()
+        .eq("type", "registration")
+        .eq("used", false);
       
-      if (createError) {
-        throw createError;
+      // Store code with a special pending user ID format
+      const { error: insertError } = await supabase
+        .from("verification_codes")
+        .insert({
+          user_id: crypto.randomUUID(), // Temporary ID
+          code,
+          type,
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (insertError) {
+        throw insertError;
       }
-      
-      userId = newUser.user.id;
+
+      // Store the email-to-code mapping in the code itself via a workaround
+      // We'll use the type field to store email temporarily
+      await supabase
+        .from("verification_codes")
+        .update({ type: `registration:${email}` })
+        .eq("code", code)
+        .eq("type", "registration");
+
     } else {
-      userId = existingUser!.id;
+      // For login and password_reset, user exists
+      await supabase
+        .from("verification_codes")
+        .delete()
+        .eq("user_id", userId)
+        .eq("used", false);
+
+      const { error: insertError } = await supabase
+        .from("verification_codes")
+        .insert({
+          user_id: userId,
+          code,
+          type,
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
     }
 
-    // Delete any existing unused codes for this user
-    await supabase
-      .from("verification_codes")
-      .delete()
-      .eq("user_id", userId)
-      .eq("used", false);
-
-    // Insert new verification code
-    const { error: insertError } = await supabase
-      .from("verification_codes")
-      .insert({
-        user_id: userId,
-        code,
-        type,
-        expires_at: expiresAt.toISOString(),
-      });
-
-    if (insertError) {
-      throw insertError;
-    }
-
-    // Send verification email directly
+    // Send verification email
     await sendVerificationEmail(email, code, type);
 
     console.log(`Verification code sent to ${email} for ${type}`);
@@ -196,21 +235,15 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         message: "Bestätigungscode wurde gesendet",
-        userId 
+        userId: type !== "registration" ? userId : undefined
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("Error requesting verification code:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };

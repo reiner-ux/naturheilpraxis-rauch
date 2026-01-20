@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Mail, ArrowLeft, Loader2, Shield, UserPlus, LogIn, Info, HelpCircle } from 'lucide-react';
+import { Mail, ArrowLeft, Loader2, Shield, UserPlus, LogIn, Lock, Eye, EyeOff, KeyRound, HelpCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,16 +13,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 
 const emailSchema = z.string().trim().email({ message: "Ungültige E-Mail-Adresse" }).max(255);
+const passwordSchema = z.string().min(8, { message: "Passwort muss mindestens 8 Zeichen lang sein" });
 
-type AuthStep = 'email' | 'verification';
-type AuthMode = 'login' | 'registration';
+type AuthStep = 'credentials' | 'verification' | 'reset_password';
+type AuthMode = 'login' | 'registration' | 'password_reset';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
@@ -30,13 +26,171 @@ const Auth: React.FC = () => {
   const { language } = useLanguage();
 
   const [mode, setMode] = useState<AuthMode>('login');
-  const [step, setStep] = useState<AuthStep>('email');
+  const [step, setStep] = useState<AuthStep>('credentials');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  // Handle Login with password, then request 2FA code
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      emailSchema.parse(email);
+      passwordSchema.parse(password);
+    } catch (err: any) {
+      toast({
+        title: language === 'de' ? 'Ungültige Eingabe' : 'Invalid Input',
+        description: err.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // First, try to sign in with password
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        throw new Error(
+          language === 'de' 
+            ? 'E-Mail oder Passwort ist falsch' 
+            : 'Email or password is incorrect'
+        );
+      }
+
+      // Password correct, now sign out and request 2FA code
+      await supabase.auth.signOut();
+
+      // Request 2FA code
+      const response = await supabase.functions.invoke('request-verification-code', {
+        body: { email, type: 'login', userId: signInData.user?.id },
+      });
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || 'Fehler beim Senden des Codes');
+      }
+
+      setUserId(signInData.user?.id || null);
+      setStep('verification');
+      
+      toast({
+        title: language === 'de' ? '2FA-Code gesendet' : '2FA Code Sent',
+        description: language === 'de' 
+          ? 'Ein Bestätigungscode wurde an Ihre E-Mail gesendet.' 
+          : 'A verification code has been sent to your email.',
+      });
+    } catch (error: any) {
+      toast({
+        title: language === 'de' ? 'Fehler' : 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Registration - request code first, then set password
+  const handleRegistrationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      emailSchema.parse(email);
+      passwordSchema.parse(password);
+      
+      if (password !== confirmPassword) {
+        throw new Error(
+          language === 'de' 
+            ? 'Passwörter stimmen nicht überein' 
+            : 'Passwords do not match'
+        );
+      }
+    } catch (err: any) {
+      toast({
+        title: language === 'de' ? 'Ungültige Eingabe' : 'Invalid Input',
+        description: err.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Request verification code for registration
+      const response = await supabase.functions.invoke('request-verification-code', {
+        body: { email, type: 'registration' },
+      });
+
+      if (response.error) {
+        let message = response.error.message || 'Fehler beim Senden des Codes';
+        try {
+          const body = await response.error.context?.response?.json();
+          if (body?.error) message = body.error;
+        } catch {
+          // ignore
+        }
+        
+        if (message.includes('bereits registriert')) {
+          toast({
+            title: language === 'de' ? 'Bereits registriert' : 'Already Registered',
+            description: language === 'de' 
+              ? 'Diese E-Mail ist bereits registriert. Wechsel zum Anmelden...' 
+              : 'This email is already registered. Switching to login...',
+          });
+          setTimeout(() => setMode('login'), 1500);
+          return;
+        }
+        throw new Error(message);
+      }
+
+      if (response.data?.error) {
+        if (response.data.error.includes('bereits registriert')) {
+          toast({
+            title: language === 'de' ? 'Bereits registriert' : 'Already Registered',
+            description: language === 'de' 
+              ? 'Diese E-Mail ist bereits registriert. Wechsel zum Anmelden...' 
+              : 'This email is already registered. Switching to login...',
+          });
+          setTimeout(() => setMode('login'), 1500);
+          return;
+        }
+        throw new Error(response.data.error);
+      }
+
+      setStep('verification');
+      
+      toast({
+        title: language === 'de' ? 'Code gesendet' : 'Code Sent',
+        description: language === 'de' 
+          ? 'Ein Bestätigungscode wurde an Ihre E-Mail gesendet.' 
+          : 'A verification code has been sent to your email.',
+      });
+    } catch (error: any) {
+      toast({
+        title: language === 'de' ? 'Fehler' : 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Password Reset Request
+  const handlePasswordResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
@@ -54,62 +208,34 @@ const Auth: React.FC = () => {
 
     try {
       const response = await supabase.functions.invoke('request-verification-code', {
-        body: { email, type: mode },
+        body: { email, type: 'password_reset' },
       });
 
-      if (response.error) {
-        // Supabase returns a generic message for non-2xx; try to extract the JSON body error
-        let message = response.error.message || 'Fehler beim Senden des Codes';
-        try {
-          const body = await response.error.context?.response?.json();
-          if (body?.error) message = body.error;
-        } catch {
-          // ignore parsing errors
-        }
-        throw new Error(message);
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || 'Fehler');
       }
 
-      if (response.data?.error) {
-        throw new Error(response.data.error);
-      }
-
-      setUserId(response.data.userId);
-      setStep('verification');
+      setStep('reset_password');
       
       toast({
         title: language === 'de' ? 'Code gesendet' : 'Code Sent',
         description: language === 'de' 
-          ? 'Ein Bestätigungscode wurde an Ihre E-Mail gesendet.' 
-          : 'A verification code has been sent to your email.',
+          ? 'Falls ein Konto existiert, wurde ein Reset-Code gesendet.' 
+          : 'If an account exists, a reset code has been sent.',
       });
     } catch (error: any) {
-      const errorMessage = error.message || '';
-      
-      // Check if this is a "already registered" error (409) - auto-switch to login
-      if (mode === 'registration' && errorMessage.includes('bereits registriert')) {
-        toast({
-          title: language === 'de' ? 'Bereits registriert' : 'Already Registered',
-          description: language === 'de' 
-            ? 'Diese E-Mail ist bereits registriert. Wechsel zum Anmelden...' 
-            : 'This email is already registered. Switching to login...',
-        });
-        // Auto-switch to login tab after a short delay
-        setTimeout(() => {
-          setMode('login');
-        }, 1500);
-      } else {
-        toast({
-          title: language === 'de' ? 'Fehler' : 'Error',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: language === 'de' ? 'Fehler' : 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCodeVerification = async () => {
+  // Handle 2FA Code Verification for Login
+  const handleLoginCodeVerification = async () => {
     if (code.length !== 6) {
       toast({
         title: language === 'de' ? 'Ungültiger Code' : 'Invalid Code',
@@ -123,19 +249,15 @@ const Auth: React.FC = () => {
 
     try {
       const response = await supabase.functions.invoke('verify-code', {
-        body: { email, code, type: mode },
+        body: { email, code, type: 'login' },
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Fehler bei der Verifizierung');
-      }
-
-      if (response.data?.error) {
-        throw new Error(response.data.error);
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || 'Fehler bei der Verifizierung');
       }
 
       // Use the token to sign in
-      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+      const { error: verifyError } = await supabase.auth.verifyOtp({
         token_hash: response.data.token,
         type: 'magiclink',
       });
@@ -146,12 +268,116 @@ const Auth: React.FC = () => {
 
       toast({
         title: language === 'de' ? 'Erfolgreich' : 'Success',
-        description: mode === 'registration'
-          ? (language === 'de' ? 'Registrierung erfolgreich! Sie sind jetzt angemeldet.' : 'Registration successful! You are now logged in.')
-          : (language === 'de' ? 'Anmeldung erfolgreich!' : 'Login successful!'),
+        description: language === 'de' ? 'Anmeldung erfolgreich!' : 'Login successful!',
       });
 
       navigate('/anamnesebogen');
+    } catch (error: any) {
+      toast({
+        title: language === 'de' ? 'Fehler' : 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Registration Code Verification (creates user with password)
+  const handleRegistrationCodeVerification = async () => {
+    if (code.length !== 6) {
+      toast({
+        title: language === 'de' ? 'Ungültiger Code' : 'Invalid Code',
+        description: language === 'de' ? 'Bitte geben Sie den 6-stelligen Code ein.' : 'Please enter the 6-digit code.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await supabase.functions.invoke('verify-code', {
+        body: { email, code, type: 'registration', password },
+      });
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || 'Fehler bei der Verifizierung');
+      }
+
+      // Now sign in with the new account
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      toast({
+        title: language === 'de' ? 'Erfolgreich' : 'Success',
+        description: language === 'de' ? 'Registrierung erfolgreich! Sie sind jetzt angemeldet.' : 'Registration successful! You are now logged in.',
+      });
+
+      navigate('/anamnesebogen');
+    } catch (error: any) {
+      toast({
+        title: language === 'de' ? 'Fehler' : 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Password Reset with Code
+  const handlePasswordResetVerification = async () => {
+    if (code.length !== 6) {
+      toast({
+        title: language === 'de' ? 'Ungültiger Code' : 'Invalid Code',
+        description: language === 'de' ? 'Bitte geben Sie den 6-stelligen Code ein.' : 'Please enter the 6-digit code.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      passwordSchema.parse(newPassword);
+    } catch {
+      toast({
+        title: language === 'de' ? 'Ungültiges Passwort' : 'Invalid Password',
+        description: language === 'de' ? 'Passwort muss mindestens 8 Zeichen lang sein.' : 'Password must be at least 8 characters.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await supabase.functions.invoke('verify-code', {
+        body: { email, code, type: 'password_reset', newPassword },
+      });
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || 'Fehler');
+      }
+
+      toast({
+        title: language === 'de' ? 'Passwort geändert' : 'Password Changed',
+        description: language === 'de' 
+          ? 'Ihr Passwort wurde erfolgreich geändert. Sie können sich jetzt anmelden.' 
+          : 'Your password has been successfully changed. You can now log in.',
+      });
+
+      // Reset to login
+      setMode('login');
+      setStep('credentials');
+      setCode('');
+      setNewPassword('');
+      setPassword('');
     } catch (error: any) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
@@ -167,23 +393,13 @@ const Auth: React.FC = () => {
     setLoading(true);
 
     try {
+      const type = mode === 'password_reset' ? 'password_reset' : mode;
       const response = await supabase.functions.invoke('request-verification-code', {
-        body: { email, type: mode },
+        body: { email, type, userId },
       });
 
-      if (response.error) {
-        let message = response.error.message || 'Fehler beim erneuten Senden';
-        try {
-          const body = await response.error.context?.response?.json();
-          if (body?.error) message = body.error;
-        } catch {
-          // ignore
-        }
-        throw new Error(message);
-      }
-
-      if (response.data?.error) {
-        throw new Error(response.data.error);
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || 'Fehler');
       }
 
       toast({
@@ -204,16 +420,430 @@ const Auth: React.FC = () => {
   };
 
   const handleBack = () => {
-    setStep('email');
+    setStep('credentials');
     setCode('');
   };
 
   const handleModeChange = (newMode: string) => {
     setMode(newMode as AuthMode);
-    setStep('email');
+    setStep('credentials');
     setCode('');
     setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setNewPassword('');
   };
+
+  const renderCredentialsStep = () => (
+    <Tabs value={mode} onValueChange={handleModeChange} className="w-full">
+      <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsTrigger value="login" className="flex items-center gap-2">
+          <LogIn className="h-4 w-4" />
+          {language === 'de' ? 'Anmelden' : 'Login'}
+        </TabsTrigger>
+        <TabsTrigger value="registration" className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4" />
+          {language === 'de' ? 'Registrieren' : 'Register'}
+        </TabsTrigger>
+      </TabsList>
+
+      {/* Login Tab */}
+      <TabsContent value="login">
+        <form onSubmit={handleLoginSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email-login">
+              {language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="email-login"
+                type="email"
+                placeholder="ihre.email@beispiel.de"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10"
+                required
+                disabled={loading}
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="password-login">
+              {language === 'de' ? 'Passwort' : 'Password'}
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="password-login"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 pr-10"
+                required
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {language === 'de' ? 'Wird geprüft...' : 'Checking...'}
+              </>
+            ) : (
+              language === 'de' ? 'Anmelden' : 'Login'
+            )}
+          </Button>
+
+          <Button
+            type="button"
+            variant="link"
+            className="w-full text-sm"
+            onClick={() => handleModeChange('password_reset')}
+          >
+            <KeyRound className="mr-2 h-4 w-4" />
+            {language === 'de' ? 'Passwort vergessen?' : 'Forgot password?'}
+          </Button>
+        </form>
+      </TabsContent>
+
+      {/* Registration Tab */}
+      <TabsContent value="registration">
+        <form onSubmit={handleRegistrationSubmit} className="space-y-4">
+          <Alert className="bg-sage-50 border-sage-200">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-sm">
+              {language === 'de' 
+                ? 'Bereits registriert? Bitte wechseln Sie zum Tab "Anmelden".' 
+                : 'Already registered? Please switch to the "Login" tab.'}
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-2">
+            <Label htmlFor="email-register">
+              {language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="email-register"
+                type="email"
+                placeholder="ihre.email@beispiel.de"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10"
+                required
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password-register">
+              {language === 'de' ? 'Passwort (mind. 8 Zeichen)' : 'Password (min. 8 characters)'}
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="password-register"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 pr-10"
+                required
+                disabled={loading}
+                minLength={8}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">
+              {language === 'de' ? 'Passwort bestätigen' : 'Confirm Password'}
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="confirm-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pl-10"
+                required
+                disabled={loading}
+                minLength={8}
+              />
+            </div>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            {language === 'de' 
+              ? 'Nach der Registrierung können Sie Ihren Anamnesebogen online ausfüllen.' 
+              : 'After registration, you can fill out your medical history form online.'}
+          </p>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {language === 'de' ? 'Wird gesendet...' : 'Sending...'}
+              </>
+            ) : (
+              language === 'de' ? 'Registrieren' : 'Register'
+            )}
+          </Button>
+        </form>
+      </TabsContent>
+
+      {/* Password Reset Tab */}
+      <TabsContent value="password_reset">
+        <form onSubmit={handlePasswordResetRequest} className="space-y-4">
+          <div className="text-center mb-4">
+            <KeyRound className="mx-auto h-12 w-12 text-primary mb-2" />
+            <h3 className="font-semibold">
+              {language === 'de' ? 'Passwort zurücksetzen' : 'Reset Password'}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {language === 'de' 
+                ? 'Geben Sie Ihre E-Mail-Adresse ein, um einen Reset-Code zu erhalten.' 
+                : 'Enter your email address to receive a reset code.'}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email-reset">
+              {language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="email-reset"
+                type="email"
+                placeholder="ihre.email@beispiel.de"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10"
+                required
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {language === 'de' ? 'Wird gesendet...' : 'Sending...'}
+              </>
+            ) : (
+              language === 'de' ? 'Reset-Code senden' : 'Send Reset Code'
+            )}
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={() => handleModeChange('login')}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {language === 'de' ? 'Zurück zum Login' : 'Back to Login'}
+          </Button>
+        </form>
+      </TabsContent>
+    </Tabs>
+  );
+
+  const renderVerificationStep = () => (
+    <div className="space-y-6">
+      <Button
+        variant="ghost"
+        onClick={handleBack}
+        className="mb-2 -ml-2"
+        disabled={loading}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        {language === 'de' ? 'Zurück' : 'Back'}
+      </Button>
+
+      <div className="text-center space-y-2">
+        <h3 className="font-semibold text-lg">
+          {mode === 'login' 
+            ? (language === 'de' ? '2FA-Bestätigungscode' : '2FA Verification Code')
+            : (language === 'de' ? 'E-Mail bestätigen' : 'Confirm Email')}
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          {language === 'de' 
+            ? `Wir haben einen 6-stelligen Code an ${email} gesendet.` 
+            : `We sent a 6-digit code to ${email}.`}
+        </p>
+      </div>
+
+      <div className="flex justify-center">
+        <InputOTP
+          maxLength={6}
+          value={code}
+          onChange={(value) => setCode(value)}
+          disabled={loading}
+        >
+          <InputOTPGroup>
+            <InputOTPSlot index={0} />
+            <InputOTPSlot index={1} />
+            <InputOTPSlot index={2} />
+            <InputOTPSlot index={3} />
+            <InputOTPSlot index={4} />
+            <InputOTPSlot index={5} />
+          </InputOTPGroup>
+        </InputOTP>
+      </div>
+
+      <Button 
+        onClick={mode === 'login' ? handleLoginCodeVerification : handleRegistrationCodeVerification} 
+        className="w-full" 
+        disabled={loading || code.length !== 6}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {language === 'de' ? 'Wird verifiziert...' : 'Verifying...'}
+          </>
+        ) : (
+          language === 'de' ? 'Bestätigen' : 'Verify'
+        )}
+      </Button>
+
+      <div className="text-center">
+        <Button
+          variant="link"
+          onClick={handleResendCode}
+          disabled={loading}
+          className="text-sm"
+        >
+          {language === 'de' ? 'Code erneut senden' : 'Resend code'}
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderPasswordResetStep = () => (
+    <div className="space-y-6">
+      <Button
+        variant="ghost"
+        onClick={() => {
+          setMode('login');
+          setStep('credentials');
+        }}
+        className="mb-2 -ml-2"
+        disabled={loading}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        {language === 'de' ? 'Zurück' : 'Back'}
+      </Button>
+
+      <div className="text-center space-y-2">
+        <KeyRound className="mx-auto h-12 w-12 text-primary" />
+        <h3 className="font-semibold text-lg">
+          {language === 'de' ? 'Neues Passwort setzen' : 'Set New Password'}
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          {language === 'de' 
+            ? `Geben Sie den Code aus der E-Mail an ${email} ein.` 
+            : `Enter the code from the email sent to ${email}.`}
+        </p>
+      </div>
+
+      <div className="flex justify-center">
+        <InputOTP
+          maxLength={6}
+          value={code}
+          onChange={(value) => setCode(value)}
+          disabled={loading}
+        >
+          <InputOTPGroup>
+            <InputOTPSlot index={0} />
+            <InputOTPSlot index={1} />
+            <InputOTPSlot index={2} />
+            <InputOTPSlot index={3} />
+            <InputOTPSlot index={4} />
+            <InputOTPSlot index={5} />
+          </InputOTPGroup>
+        </InputOTP>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="new-password">
+          {language === 'de' ? 'Neues Passwort (mind. 8 Zeichen)' : 'New Password (min. 8 characters)'}
+        </Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="new-password"
+            type={showNewPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="pl-10 pr-10"
+            required
+            disabled={loading}
+            minLength={8}
+          />
+          <button
+            type="button"
+            onClick={() => setShowNewPassword(!showNewPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+      </div>
+
+      <Button 
+        onClick={handlePasswordResetVerification} 
+        className="w-full" 
+        disabled={loading || code.length !== 6 || newPassword.length < 8}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {language === 'de' ? 'Wird gespeichert...' : 'Saving...'}
+          </>
+        ) : (
+          language === 'de' ? 'Passwort ändern' : 'Change Password'
+        )}
+      </Button>
+
+      <div className="text-center">
+        <Button
+          variant="link"
+          onClick={handleResendCode}
+          disabled={loading}
+          className="text-sm"
+        >
+          {language === 'de' ? 'Code erneut senden' : 'Resend code'}
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <Layout>
@@ -228,226 +858,15 @@ const Auth: React.FC = () => {
             </CardTitle>
             <CardDescription>
               {language === 'de' 
-                ? 'Sichere Anmeldung mit E-Mail-Bestätigung' 
-                : 'Secure login with email verification'}
+                ? 'Sichere Anmeldung mit Passwort und 2FA' 
+                : 'Secure login with password and 2FA'}
             </CardDescription>
           </CardHeader>
 
           <CardContent>
-            {step === 'email' ? (
-              <Tabs value={mode} onValueChange={handleModeChange} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login" className="flex items-center gap-2">
-                    <LogIn className="h-4 w-4" />
-                    {language === 'de' ? 'Anmelden' : 'Login'}
-                  </TabsTrigger>
-                  <TabsTrigger value="registration" className="flex items-center gap-2">
-                    <UserPlus className="h-4 w-4" />
-                    {language === 'de' ? 'Registrieren' : 'Register'}
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="login">
-                  <form onSubmit={handleEmailSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email-login">
-                        {language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="email-login"
-                          type="email"
-                          placeholder="ihre.email@beispiel.de"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {language === 'de' ? 'Wird gesendet...' : 'Sending...'}
-                        </>
-                      ) : (
-                        language === 'de' ? 'Code senden' : 'Send Code'
-                      )}
-                    </Button>
-                    
-                    {/* Help section for login problems */}
-                    <Collapsible>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" className="w-full text-muted-foreground hover:text-primary">
-                          <HelpCircle className="mr-2 h-4 w-4" />
-                          {language === 'de' ? 'Probleme beim Anmelden?' : 'Problems logging in?'}
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-2">
-                        <div className="rounded-lg bg-sage-50 p-4 text-sm space-y-3">
-                          <p className="font-medium text-foreground">
-                            {language === 'de' ? 'Tipps zur Anmeldung:' : 'Login tips:'}
-                          </p>
-                          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                            <li>
-                              {language === 'de' 
-                                ? 'Prüfen Sie Ihren Spam-Ordner auf den Bestätigungscode' 
-                                : 'Check your spam folder for the verification code'}
-                            </li>
-                            <li>
-                              {language === 'de' 
-                                ? 'Stellen Sie sicher, dass Sie die richtige E-Mail-Adresse verwenden' 
-                                : 'Make sure you are using the correct email address'}
-                            </li>
-                            <li>
-                              {language === 'de' 
-                                ? 'Der Code ist 10 Minuten gültig – fordern Sie bei Bedarf einen neuen an' 
-                                : 'The code is valid for 10 minutes – request a new one if needed'}
-                            </li>
-                            <li>
-                              {language === 'de' 
-                                ? 'Noch nicht registriert? Wechseln Sie zum Tab "Registrieren"' 
-                                : 'Not registered yet? Switch to the "Register" tab'}
-                            </li>
-                          </ul>
-                          <div className="pt-2 border-t border-sage-200">
-                            <p className="text-muted-foreground">
-                              {language === 'de' 
-                                ? 'Bei weiteren Problemen kontaktieren Sie uns unter:' 
-                                : 'For further issues, contact us at:'}
-                            </p>
-                            <a 
-                              href="mailto:info@rauch-heilpraktiker.de" 
-                              className="text-primary hover:underline font-medium"
-                            >
-                              info@rauch-heilpraktiker.de
-                            </a>
-                          </div>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="registration">
-                  <form onSubmit={handleEmailSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email-register">
-                        {language === 'de' ? 'E-Mail-Adresse' : 'Email Address'}
-                      </Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="email-register"
-                          type="email"
-                          placeholder="ihre.email@beispiel.de"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
-                    {/* Hint box for already registered users */}
-                    <Alert className="bg-sage-50 border-sage-200">
-                      <Info className="h-4 w-4 text-primary" />
-                      <AlertDescription className="text-sm">
-                        {language === 'de' 
-                          ? 'Bereits registriert? Bitte wechseln Sie zum Tab "Anmelden".' 
-                          : 'Already registered? Please switch to the "Login" tab.'}
-                      </AlertDescription>
-                    </Alert>
-                    
-                    <p className="text-sm text-muted-foreground">
-                      {language === 'de' 
-                        ? 'Nach der Registrierung können Sie Ihren Anamnesebogen online ausfüllen und verwalten.' 
-                        : 'After registration, you can fill out and manage your medical history form online.'}
-                    </p>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {language === 'de' ? 'Wird gesendet...' : 'Sending...'}
-                        </>
-                      ) : (
-                        language === 'de' ? 'Registrieren' : 'Register'
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            ) : (
-              <div className="space-y-6">
-                <Button
-                  variant="ghost"
-                  onClick={handleBack}
-                  className="mb-2 -ml-2"
-                  disabled={loading}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  {language === 'de' ? 'Zurück' : 'Back'}
-                </Button>
-
-                <div className="text-center space-y-2">
-                  <h3 className="font-semibold text-lg">
-                    {language === 'de' ? 'Bestätigungscode eingeben' : 'Enter Verification Code'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {language === 'de' 
-                      ? `Wir haben einen 6-stelligen Code an ${email} gesendet.` 
-                      : `We sent a 6-digit code to ${email}.`}
-                  </p>
-                </div>
-
-                <div className="flex justify-center">
-                  <InputOTP
-                    maxLength={6}
-                    value={code}
-                    onChange={(value) => setCode(value)}
-                    disabled={loading}
-                  >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </div>
-
-                <Button 
-                  onClick={handleCodeVerification} 
-                  className="w-full" 
-                  disabled={loading || code.length !== 6}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {language === 'de' ? 'Wird verifiziert...' : 'Verifying...'}
-                    </>
-                  ) : (
-                    language === 'de' ? 'Bestätigen' : 'Verify'
-                  )}
-                </Button>
-
-                <div className="text-center">
-                  <Button
-                    variant="link"
-                    onClick={handleResendCode}
-                    disabled={loading}
-                    className="text-sm"
-                  >
-                    {language === 'de' ? 'Code erneut senden' : 'Resend code'}
-                  </Button>
-                </div>
-              </div>
-            )}
+            {step === 'credentials' && renderCredentialsStep()}
+            {step === 'verification' && renderVerificationStep()}
+            {step === 'reset_password' && renderPasswordResetStep()}
           </CardContent>
         </Card>
       </div>
