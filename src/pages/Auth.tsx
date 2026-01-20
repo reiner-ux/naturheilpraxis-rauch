@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Mail, ArrowLeft, Loader2, Shield, UserPlus, LogIn } from 'lucide-react';
+import { Mail, ArrowLeft, Loader2, Shield, UserPlus, LogIn, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const emailSchema = z.string().trim().email({ message: "Ungültige E-Mail-Adresse" }).max(255);
 
@@ -77,11 +78,27 @@ const Auth: React.FC = () => {
           : 'A verification code has been sent to your email.',
       });
     } catch (error: any) {
-      toast({
-        title: language === 'de' ? 'Fehler' : 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      const errorMessage = error.message || '';
+      
+      // Check if this is a "already registered" error (409) - auto-switch to login
+      if (mode === 'registration' && errorMessage.includes('bereits registriert')) {
+        toast({
+          title: language === 'de' ? 'Bereits registriert' : 'Already Registered',
+          description: language === 'de' 
+            ? 'Diese E-Mail ist bereits registriert. Wechsel zum Anmelden...' 
+            : 'This email is already registered. Switching to login...',
+        });
+        // Auto-switch to login tab after a short delay
+        setTimeout(() => {
+          setMode('login');
+        }, 1500);
+      } else {
+        toast({
+          title: language === 'de' ? 'Fehler' : 'Error',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -278,6 +295,16 @@ const Auth: React.FC = () => {
                         />
                       </div>
                     </div>
+                    {/* Hint box for already registered users */}
+                    <Alert className="bg-sage-50 border-sage-200">
+                      <Info className="h-4 w-4 text-primary" />
+                      <AlertDescription className="text-sm">
+                        {language === 'de' 
+                          ? 'Bereits registriert? Bitte wechseln Sie zum Tab "Anmelden".' 
+                          : 'Already registered? Please switch to the "Login" tab.'}
+                      </AlertDescription>
+                    </Alert>
+                    
                     <p className="text-sm text-muted-foreground">
                       {language === 'de' 
                         ? 'Nach der Registrierung können Sie Ihren Anamnesebogen online ausfüllen und verwalten.' 
