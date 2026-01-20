@@ -460,6 +460,7 @@ export const initialFormData = {
     datum: "",
     nameInDruckbuchstaben: "",
     bestaetigung: false,
+    datenschutzEinwilligung: false,
     bestaetigung2fa: false,
     erziehungsberechtigter: "",
   },

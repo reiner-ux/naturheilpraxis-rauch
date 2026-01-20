@@ -4,9 +4,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
-import { AlertTriangle, Shield, FileCheck } from "lucide-react";
+import { AlertTriangle, Shield, FileCheck, ExternalLink } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-
+import { Link } from "react-router-dom";
 interface SignatureSectionProps {
   formData: AnamneseFormData;
   updateFormData: (field: string, value: any) => void;
@@ -152,8 +152,47 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
             />
             <Label htmlFor="bestaetigung" className="font-medium cursor-pointer">
               {language === "de"
-                ? "Ich bestätige die Richtigkeit meiner Angaben und stimme der Datenverarbeitung zu. *"
-                : "I confirm the accuracy of my information and consent to data processing. *"}
+                ? "Ich bestätige die Richtigkeit meiner Angaben. *"
+                : "I confirm the accuracy of my information. *"}
+            </Label>
+          </div>
+
+          {/* Datenschutz-Einwilligung mit Link */}
+          <div className="flex items-start space-x-3 pt-2">
+            <Checkbox
+              id="datenschutzEinwilligung"
+              checked={formData.unterschrift?.datenschutzEinwilligung || false}
+              onCheckedChange={(checked) => updateUnterschrift("datenschutzEinwilligung", !!checked)}
+              className="mt-1"
+            />
+            <Label htmlFor="datenschutzEinwilligung" className="font-medium cursor-pointer">
+              {language === "de" ? (
+                <>
+                  Ich erlaube, dass meine Gesundheitsdaten (inkl. Messungen Metatron/Vieva Pro/EAV/Trikombin) für meine Behandlung gespeichert werden. E-Mail-Kommunikation (Rechnungen, Termine) ist ok. Ich habe die{" "}
+                  <Link 
+                    to="/datenschutz" 
+                    target="_blank" 
+                    className="text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    Datenschutzverordnung
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                  {" "}gelesen und stimme zu. *
+                </>
+              ) : (
+                <>
+                  I allow my health data (including Metatron/Vieva Pro/EAV/Trikombin measurements) to be stored for my treatment. Email communication (invoices, appointments) is acceptable. I have read and agree to the{" "}
+                  <Link 
+                    to="/datenschutz" 
+                    target="_blank" 
+                    className="text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    Privacy Policy
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                  . *
+                </>
+              )}
             </Label>
           </div>
         </div>
