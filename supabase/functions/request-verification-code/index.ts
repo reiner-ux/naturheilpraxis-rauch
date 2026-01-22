@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,30 +21,10 @@ function generateCode(): string {
 }
 
 async function sendVerificationEmail(email: string, code: string, type: "login" | "registration" | "password_reset"): Promise<void> {
-  const smtpHost = Deno.env.get("SMTP_HOST");
-  const smtpPort = parseInt(Deno.env.get("SMTP_PORT") || "587");
-  const smtpUser = Deno.env.get("SMTP_USER");
-  const smtpPassword = Deno.env.get("SMTP_PASSWORD");
-
-  if (!smtpHost || !smtpUser || !smtpPassword) {
-    throw new Error("SMTP configuration is incomplete");
+  const relaySecret = Deno.env.get("RELAY_SECRET");
+  if (!relaySecret) {
+    throw new Error("RELAY_SECRET is not configured");
   }
-
-  const client = new SMTPClient({
-    connection: {
-      hostname: smtpHost,
-      port: 587,
-      tls: false,
-      auth: {
-        username: smtpUser,
-        password: smtpPassword,
-      },
-    },
-    debug: {
-      log: true,
-      allowUnsecure: true,
-    },
-  });
 
   let subject: string;
   let bodyText: string;
@@ -106,15 +85,35 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
     </html>
   `;
 
-  await client.send({
-    from: "info@rauch-heilpraktiker.de",
-    to: email,
-    subject: subject,
-    content: "auto",
-    html: htmlContent,
+  // Call the HTTPS relay endpoint on the user's server
+  const relayUrl = "https://rauch-heilpraktiker.de/api/send-email.php";
+  
+  const response = await fetch(relayUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Relay-Token": relaySecret,
+    },
+    body: JSON.stringify({
+      to: email,
+      subject: subject,
+      html: htmlContent,
+      from: "info@rauch-heilpraktiker.de",
+    }),
   });
 
-  await client.close();
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Relay error:", response.status, errorText);
+    throw new Error(`Email relay failed: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || "Email relay returned failure");
+  }
+
+  console.log(`Email sent via relay to ${email}`);
 }
 
 const handler = async (req: Request): Promise<Response> => {
