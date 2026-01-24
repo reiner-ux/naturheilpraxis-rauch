@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CookieBanner from "@/components/CookieBanner";
+import SchemaOrg from "@/components/seo/SchemaOrg";
 import Index from "./pages/Index";
 import Anamnesebogen from "./pages/Anamnesebogen";
 import AnamneseDemo from "./pages/AnamneseDemo";
@@ -19,7 +20,9 @@ import PraxisInfo from "./pages/PraxisInfo";
 import Impressum from "./pages/Impressum";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
+import PatientDashboard from "./pages/PatientDashboard";
 import NotFound from "./pages/NotFound";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -29,6 +32,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <SchemaOrg />
           <BrowserRouter>
             <CookieBanner />
             <Routes>
@@ -44,6 +48,7 @@ const App = () => (
               <Route path="/praxis-info" element={<PraxisInfo />} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/dashboard" element={<ProtectedRoute><PatientDashboard /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

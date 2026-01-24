@@ -39,8 +39,9 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formSections as formSectionsData, initialFormData, AnamneseFormData } from "@/lib/anamneseFormData";
-import { generateAnamnesePdf } from "@/lib/pdfExport";
+import { generateEnhancedAnamnesePdf } from "@/lib/pdfExportEnhanced";
 import PrintView from "@/components/anamnese/PrintView";
+import SEOHead from "@/components/seo/SEOHead";
 
 // Import section components
 import IntroSection from "@/components/anamnese/IntroSection";
@@ -148,7 +149,7 @@ const Anamnesebogen = () => {
 
   const handleExportPdf = () => {
     try {
-      generateAnamnesePdf({ formData, language: language as "de" | "en" });
+      generateEnhancedAnamnesePdf({ formData, language: language as "de" | "en" });
       toast.success(
         language === "de" ? "PDF erstellt!" : "PDF created!",
         {
