@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FileText, Stethoscope, Euro, Apple, HelpCircle, ArrowRight } from "lucide-react";
+import { FileText, Stethoscope, Euro, Zap, HelpCircle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const features = [
@@ -17,18 +17,17 @@ const features = [
     href: "/heilpraktiker",
   },
   {
+    icon: Zap,
+    title: "Frequenztherapie",
+    description: "Moderne Naturheilkunde mit sanften Impulsen für Ihre Gesundheit.",
+    href: "/frequenztherapie",
+  },
+  {
     icon: Euro,
     title: "GebÜH",
     description: "Informationen zur Gebührenordnung und Kostenübersicht für Heilpraktiker.",
     href: "/gebueh",
   },
-  // Ernährung temporär deaktiviert
-  // {
-  //   icon: Apple,
-  //   title: "Ernährungsratschläge",
-  //   description: "Tipps für eine gesunde, ausgewogene Ernährung als Basis Ihrer Gesundheit.",
-  //   href: "/ernaehrung",
-  // },
   {
     icon: HelpCircle,
     title: "Häufige Fragen",

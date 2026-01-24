@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { translations } from "@/lib/translations";
 import { useToast } from "@/hooks/use-toast";
+import { InfothekDropdown } from "./InfothekDropdown";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,11 +26,6 @@ export function Header() {
     { label: t(nav.home.de, nav.home.en), href: "/" },
     { label: t(nav.anamnesis.de, nav.anamnesis.en), href: "/anamnesebogen" },
     { label: t(nav.privacy.de, nav.privacy.en), href: "/datenschutz" },
-    { label: t(nav.practitioner.de, nav.practitioner.en), href: "/heilpraktiker" },
-    { label: t(nav.fees.de, nav.fees.en), href: "/gebueh" },
-    // { label: t(nav.nutrition.de, nav.nutrition.en), href: "/ernaehrung" }, // Temporär deaktiviert
-    // { label: t(nav.practice.de, nav.practice.en), href: "/praxis-info" }, // Temporär deaktiviert
-    { label: t(nav.faq.de, nav.faq.en), href: "/faq" },
   ];
 
   const handleSignOut = async () => {
@@ -73,6 +69,10 @@ export function Header() {
               {item.label}
             </Link>
           ))}
+          
+          {/* Infothek Dropdown */}
+          <InfothekDropdown />
+          
           <LanguageSwitcher className="ml-2" />
           
           {/* Auth Button Desktop */}
@@ -161,9 +161,25 @@ export function Header() {
               </Link>
             ))}
             
+            {/* Infothek Dropdown Mobile */}
+            <InfothekDropdown isMobile onItemClick={() => setIsMenuOpen(false)} />
+            
             {/* Auth Button Mobile */}
             {user ? (
               <div className="mt-2 space-y-2">
+                <Link
+                  to="/dashboard"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+                    location.pathname === "/dashboard"
+                      ? "bg-sage-100 text-primary"
+                      : "text-muted-foreground hover:bg-sage-50 hover:text-primary"
+                  )}
+                >
+                  <User className="h-4 w-4" />
+                  Dashboard
+                </Link>
                 {isAdmin && (
                   <Link
                     to="/admin"
