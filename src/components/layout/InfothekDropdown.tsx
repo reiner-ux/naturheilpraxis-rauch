@@ -20,7 +20,7 @@ const infothekItems: InfothekItem[] = [
     description: { de: "Berufsbild und Behandlungsmethoden", en: "Profession and treatment methods" },
   },
   {
-    label: { de: "Krankheit ist messbar", en: "Disease is Measurable" },
+    label: { de: "Was ist Frequenztherapie?", en: "What is Frequency Therapy?" },
     href: "/krankheit-ist-messbar.html",
     icon: Zap,
     description: { de: "Physikalische Grundlagen der Frequenztherapie", en: "Physical foundations of frequency therapy" },
