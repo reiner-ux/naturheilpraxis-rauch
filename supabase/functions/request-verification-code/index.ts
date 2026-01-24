@@ -102,13 +102,27 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
     }),
   });
 
+  const responseText = await response.text();
+  
+  // Check if response is HTML (error page) instead of JSON
+  if (responseText.trim().startsWith("<!DOCTYPE") || responseText.trim().startsWith("<html")) {
+    console.error("Relay returned HTML instead of JSON - likely 404 or server error");
+    throw new Error("Email relay endpoint not found. Please install the PHP script on your server.");
+  }
+
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Relay error:", response.status, errorText);
+    console.error("Relay error:", response.status, responseText);
     throw new Error(`Email relay failed: ${response.status}`);
   }
 
-  const result = await response.json();
+  let result;
+  try {
+    result = JSON.parse(responseText);
+  } catch (parseError) {
+    console.error("Failed to parse relay response:", responseText);
+    throw new Error("Invalid response from email relay");
+  }
+  
   if (!result.success) {
     throw new Error(result.error || "Email relay returned failure");
   }
