@@ -15,6 +15,7 @@ import Datenschutz from "./pages/Datenschutz";
 import Heilpraktiker from "./pages/Heilpraktiker";
 import Gebueh from "./pages/Gebueh";
 import Ernaehrung from "./pages/Ernaehrung";
+import Frequenztherapie from "./pages/Frequenztherapie";
 import FAQ from "./pages/FAQ";
 import PraxisInfo from "./pages/PraxisInfo";
 import Impressum from "./pages/Impressum";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/heilpraktiker" element={<Heilpraktiker />} />
               <Route path="/gebueh" element={<Gebueh />} />
               <Route path="/ernaehrung" element={<Ernaehrung />} />
+              <Route path="/frequenztherapie" element={<Frequenztherapie />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/praxis-info" element={<PraxisInfo />} />
               <Route path="/impressum" element={<Impressum />} />

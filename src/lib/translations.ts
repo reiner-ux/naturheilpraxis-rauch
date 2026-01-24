@@ -3,9 +3,11 @@ export const translations = {
   nav: {
     home: { de: 'Start', en: 'Home' },
     anamnesis: { de: 'Anamnesebogen', en: 'Medical History' },
-    privacy: { de: 'Datenschutzverordnung', en: 'Privacy Policy' },
+    privacy: { de: 'Datenschutz', en: 'Privacy Policy' },
     practitioner: { de: 'Was ist ein Heilpraktiker?', en: 'What is a Naturopath?' },
     fees: { de: 'GebÜH', en: 'Fee Schedule' },
+    frequencyTherapy: { de: 'Frequenztherapie', en: 'Frequency Therapy' },
+    infothek: { de: 'Infothek', en: 'Info Center' },
     nutrition: { de: 'Ernährung', en: 'Nutrition' },
     faq: { de: 'FAQ', en: 'FAQ' },
     practice: { de: 'Praxis-Info', en: 'Practice Info' },
