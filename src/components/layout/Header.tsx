@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, LogIn, LogOut, User } from "lucide-react";
+import { Menu, X, Leaf, LogIn, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { translations } from "@/lib/translations";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,6 +16,7 @@ export function Header() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminCheck();
   const { toast } = useToast();
   const nav = translations.nav;
   const header = translations.header;
@@ -76,6 +78,20 @@ export function Header() {
           {/* Auth Button Desktop */}
           {user ? (
             <div className="ml-2 flex items-center gap-2">
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={cn(
+                    "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sage-100 hover:text-primary",
+                    location.pathname === "/admin"
+                      ? "bg-sage-100 text-primary"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <Shield className="h-4 w-4" />
+                  Admin
+                </Link>
+              )}
               <div className="flex items-center gap-2 rounded-lg bg-sage-50 px-3 py-1.5">
                 <User className="h-4 w-4 text-primary" />
                 <span className="max-w-[150px] truncate text-sm text-muted-foreground">
@@ -142,6 +158,21 @@ export function Header() {
             {/* Auth Button Mobile */}
             {user ? (
               <div className="mt-2 space-y-2">
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+                      location.pathname === "/admin"
+                        ? "bg-sage-100 text-primary"
+                        : "text-muted-foreground hover:bg-sage-50 hover:text-primary"
+                    )}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin-Dashboard
+                  </Link>
+                )}
                 <div className="flex items-center gap-2 rounded-lg bg-sage-50 px-4 py-2">
                   <User className="h-4 w-4 text-primary" />
                   <span className="truncate text-sm text-muted-foreground">
