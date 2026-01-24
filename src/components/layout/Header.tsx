@@ -78,6 +78,18 @@ export function Header() {
           {/* Auth Button Desktop */}
           {user ? (
             <div className="ml-2 flex items-center gap-2">
+              <Link
+                to="/dashboard"
+                className={cn(
+                  "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sage-100 hover:text-primary",
+                  location.pathname === "/dashboard"
+                    ? "bg-sage-100 text-primary"
+                    : "text-muted-foreground"
+                )}
+              >
+                <User className="h-4 w-4" />
+                {t("Dashboard", "Dashboard")}
+              </Link>
               {isAdmin && (
                 <Link
                   to="/admin"
@@ -92,12 +104,6 @@ export function Header() {
                   Admin
                 </Link>
               )}
-              <div className="flex items-center gap-2 rounded-lg bg-sage-50 px-3 py-1.5">
-                <User className="h-4 w-4 text-primary" />
-                <span className="max-w-[150px] truncate text-sm text-muted-foreground">
-                  {user.email}
-                </span>
-              </div>
               <Button
                 variant="outline"
                 size="sm"
