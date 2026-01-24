@@ -22,12 +22,13 @@ const features = [
     description: "Informationen zur Gebührenordnung und Kostenübersicht für Heilpraktiker.",
     href: "/gebueh",
   },
-  {
-    icon: Apple,
-    title: "Ernährungsratschläge",
-    description: "Tipps für eine gesunde, ausgewogene Ernährung als Basis Ihrer Gesundheit.",
-    href: "/ernaehrung",
-  },
+  // Ernährung temporär deaktiviert
+  // {
+  //   icon: Apple,
+  //   title: "Ernährungsratschläge",
+  //   description: "Tipps für eine gesunde, ausgewogene Ernährung als Basis Ihrer Gesundheit.",
+  //   href: "/ernaehrung",
+  // },
   {
     icon: HelpCircle,
     title: "Häufige Fragen",

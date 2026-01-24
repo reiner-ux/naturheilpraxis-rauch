@@ -25,8 +25,8 @@ export function Header() {
     { label: t(nav.privacy.de, nav.privacy.en), href: "/datenschutz" },
     { label: t(nav.practitioner.de, nav.practitioner.en), href: "/heilpraktiker" },
     { label: t(nav.fees.de, nav.fees.en), href: "/gebueh" },
-    { label: t(nav.nutrition.de, nav.nutrition.en), href: "/ernaehrung" },
-    { label: t(nav.practice.de, nav.practice.en), href: "/praxis-info" },
+    // { label: t(nav.nutrition.de, nav.nutrition.en), href: "/ernaehrung" }, // Temporär deaktiviert
+    // { label: t(nav.practice.de, nav.practice.en), href: "/praxis-info" }, // Temporär deaktiviert
     { label: t(nav.faq.de, nav.faq.en), href: "/faq" },
   ];
 
