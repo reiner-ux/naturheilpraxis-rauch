@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krankheit ist messbar | Naturheilpraxis Rauch</title>
+    <meta name="description" content="Präsentation: Krankheit ist messbar - Die physikalischen Grundlagen der Frequenztherapie.">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Reveal.js & Tailwind -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/simple.min.css" id="theme">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --bg: #f9f7f2;
+            --text: #1f2924;
+            --primary: #46715b;
+            --accent: #c66a51;
+            --secondary: #d9ccb9;
+            --card-bg: #f2ede4;
+        }
+        
+        body { font-family: 'Source Sans 3', sans-serif; color: var(--text); background-color: var(--bg); }
+        .reveal { background-color: var(--bg); }
+        .reveal .slides section {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            text-align: left;
+            border: 1px solid rgba(70, 113, 91, 0.1);
+            
+            /* WICHTIG: Overflow Handling für lange Texte */
+            height: 90vh !important; /* Fast volle Höhe nutzen */
+            max-height: 90vh !important;
+            overflow-y: auto !important; /* Scrollen erlauben */
+            display: block !important; /* Block statt Flex für besseres Scrollen */
+            top: 5vh !important; /* Oben verankern */
+        }
+        /* Intro-Hero (Slide 1) soll ohne Scrollen komplett sichtbar sein */
+        .reveal .slides section.intro-hero {
+            height: auto !important;
+            max-height: none !important;
+            overflow-y: visible !important;
+            top: 0 !important;
+        }
+        
+        /* Scrollbar Styling */
+        .reveal .slides section::-webkit-scrollbar { width: 8px; }
+        .reveal .slides section::-webkit-scrollbar-track { background: transparent; }
+        .reveal .slides section::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 4px; }
+        
+        h1, h2, h3, h4 { font-family: 'Playfair Display', serif !important; color: var(--primary) !important; }
+        .reveal h2 { 
+            font-size: 2rem !important; 
+            margin-bottom: 1.5rem !important; 
+            border-bottom: 2px solid var(--secondary); 
+            padding-bottom: 0.5rem;
+            position: sticky;
+            top: 0;
+            background: var(--card-bg);
+            z-index: 10;
+        }
+        .reveal p, .reveal li { font-size: 1.1rem !important; line-height: 1.5 !important; margin-bottom: 0.5rem; }
+        .reveal ul { margin-left: 1.5rem !important; display: block !important; }
+        .highlight { color: var(--accent); font-weight: bold; }
+
+        /* Design-Hilfsklassen aus Frequenztherapie-Template */
+        .theme-dark {
+            background: var(--primary) !important;
+            color: #ffffff !important;
+            text-align: center !important;
+        }
+        .theme-dark h1,
+        .theme-dark h2,
+        .theme-dark p {
+            color: #ffffff !important;
+        }
+        .terracotta {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* Inhaltliche Hervorhebungen */
+        .formula-box {
+            background: #ffffff;
+            border-left: 6px solid var(--accent);
+            padding: 1.25rem 1.75rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            text-align: center;
+        }
+        .card-accent {
+            background: #ffffff;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-top: 4px solid var(--accent);
+        }
+
+        /* Bilder */
+        .slide-image { 
+            max-height: 50vh; 
+            max-width: 100%; 
+            object-fit: contain; 
+            margin: 1rem auto; 
+            display: block; 
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- Slide 1 -->
+            <section class="theme-dark intro-hero" data-transition="fade">
+                <h1 class="mb-3">Warum Frequenztherapie funktioniert</h1>
+                <p class="text-2xl opacity-90 font-light italic mb-4">Physik trifft Heilung</p>
+
+                <div class="w-24 h-1 bg-[var(--accent)] mx-auto mb-4"></div>
+
+                <h2 style="font-size: 1.8rem !important; color: var(--secondary) !important; border-bottom: none;" class="mb-0">
+                    Von Energie, Masse und Frequenzen
+                </h2>
+            </section>
+
+            <!-- Slide 2 -->
+            <section>
+                <h2>Punkt 1: Energie und Materie – Ein und dasselbe</h2>
+                <div class='space-y-4'>
+                    <p>Nach moderner Physik sind Energie und Materie zwei Erscheinungsformen derselben
+Realität – keine getrennten „Stoffe".</p>
+                    <ul class='list-disc'>
+                        <li>Materie ist „eingefrorene" Energie – fest und greifbar, aber im Grunde</li>
+                        <li>pure Schwingung</li>
+                        <li>Energie ist „fließende" Materie – Licht, Wärme, elektromagnetische Wellen</li>
+                        <li>ständig in Bewegung</li>
+                        <li>Einstein zeigte: Ein Gramm Körper enthält Energie wie 20.000 Tonnen TNT</li>
+                        <li>Deshalb wirken winzige Frequenzänderungen gigantisch auf</li>
+                        <li>Zellen und Organe</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Slide 3 -->
+            <section>
+                <h2>Energie und Materie sind EINE Realität</h2>
+                <div class='space-y-4'>
+                    <p>Energie und Materie sind nach heutiger Physik keine getrennten „Stoffe", sondern zwei verschiedene</p>
+                    <p>Erscheinungsformen derselben Realität. Genau das ist die Grundlage dafür, überhaupt sinnvoll über</p>
+                    <p>Frequenzen, Schwingungen und „energetische" Prozesse im Körper zu sprechen.</p>
+                    <p>ENERGIE = MATERIE IN ANDERER FORM</p>
+                    <p>Albert Einstein hat gezeigt, dass Masse (also Materie) und Energie ineinander umwandelbar sind: E=mc² bedeutet:</p>
+                    <p>Ein Stück Materie ist nichts anderes als „gebundene Energie". Praktisch heißt das:</p>
+                    <p>Selbst ein kleines Stück Materie enthält ungeheuer viel Energie; umgekehrt kann auch reine Strahlung (Licht, andere Felder)</p>
+                    <p>wieder Materie erzeugen.</p>
+                    <p>Für einen Laien: Man kann sich Materie wie „eingefrorene Energie" vorstellen – fest, greifbar – und Energie</p>
+                    <p>wie „fließende Materie", zum Beispiel Licht, Wärme oder elektromagnetische Wellen.</p>
+                </div>
+            </section>
+
+            <!-- Slide 4 -->
+            <section>
+                <h2>Einsteins Grundformel: E = mc²</h2>
+                <div class='space-y-4'>
+                    <div class="formula-box">
+                        <p>E = mc²</p>
+                    </div>
+                    <p>Für Laien erklärt: Masse (m) ist gebundene Energie (E)</p>
+                    <p>Umgestellt für unsere Anwendung:</p>
+                    <p>m = E / c²</p>
+                    <p>Kernbotschaft:
+Dein Körper (Masse) = reine Energie (E),
+nur durch Lichtgeschwindigkeit² „verdichtet"</p>
+                </div>
+            </section>
+
+            <!-- Slide 5 -->
+            <section>
+                <img src='pptx/extracted_data_pdf/images/slide_5_img_1.jpeg' class='slide-image' alt='Slide 5 Bild'>
+            </section>
+
+            <!-- Slide 6 -->
+            <section>
+                <h2>Nun das habe ich natürlich sofort ausprobiert mit
+meinen Patienten und habe Sie auf die heiße Herdplatte
+gesetzt und mal in die Steckdose langen lassen.</h2>
+                <div class='space-y-4'>
+                    <p>Meine Patienten waren vom Ergebnis nicht sehr begeistert.</p>
+                </div>
+            </section>
+
+            <!-- Slide 7 -->
+            <section>
+                <h2>Der missglückte Energie-Versuch</h2>
+                <div class='space-y-4'>
+                    <p>Stell dir vor: „Energie rein! Schnell zur Herdplatte, Stromstoß dazu – nach</p>
+                    <ul class='list-disc'>
+                        <li>m = E / c²</li>
+                    </ul>
+                    <p>muss das heilen!“ Patienten schreien, Haare rauchen, und ich ruf:
+„Mehr Energie</p>
+                    <p>Ergebnis? 
+Statt harmonischer Schwingungen gab's nur Brandblasen und eine
+Klagewelle – rohe Energie ist wie ein Hammer auf einem Glas:
+Zertrümmern statt stimulieren</p>
+                </div>
+            </section>
+
+            <!-- Slide 8 -->
+            <section>
+                <img src='pptx/extracted_data_pdf/images/slide_8_img_1.jpeg' class='slide-image' alt='Slide 8 Bild'>
+            </section>
+
+            <!-- Slide 9 -->
+            <section>
+                <h2>Carlo Rubbia & die Brücke zur Heilung</h2>
+                <div class='space-y-4'>
+                    <p>WAS CARLO RUBBIA DAFÜR BESTÄTIGT:</p>
+                    <p>Carlo Rubbia erhielt 1984 zusammen mit Simon van der Meer den Physik-Nobelpreis, weil ihr Experiment am CERN</p>
+                    <p>die Teilchen W und Z entdeckt hat, die eine der Grundkräfte der Natur (die schwache Wechselwirkung) vermitteln.</p>
+                    <p>Diese Experimente zeigen: Selbst „leerer Raum" im großen Teilchenbeschleuniger kann bei extrem hoher Energie</p>
+                    <p>plötzlich neue Teilchen „ausspucken" – Energie der Kollision verwandelt sich direkt in Teilchen mit Masse. Für Laien:</p>
+                    <p>Man schießt zwei schnell bewegte Teilchen aufeinander, steckt viel Energie in diesen Stoß, und aus dieser Energie</p>
+                    <p>„entstehen" neue schwere Teilchen – so, als würde aus einem heftigen Lichtblitz plötzlich ein Stück Materie werden.</p>
+                    <p>BRÜCKE ZUR FREQUENZTHERAPIE:</p>
+                    <p>Wenn Materie letztlich eine Form von Energie ist, dann sind auch Atome, Moleküle, Zellen und Organe energetische Systeme,</p>
+                    <p>die schwingen und mit Feldern und Frequenzen wechselwirken. Biophysikalische Modelle der Frequenztherapie gehen genau</p>
+                    <p>davon aus: Zellen besitzen elektrische Felder und reagieren auf elektromagnetische Signale; passende Frequenzen können</p>
+                    <p>gestörte Muster wieder in eine stabilere, „ordnendere" Schwingung bringen.</p>
+                    <p>Für Patientinnen und Patienten: Der Körper ist nicht nur „Biochemie", sondern ein geordnetes Feld aus</p>
+                    <p>Schwingungen; Frequenztherapie versucht, dieses Schwingungsfeld sanft zu „stimmen", ähnlich wie man ein</p>
+                    <p>verstimmtes Instrument wieder in Resonanz bringt.</p>
+                </div>
+            </section>
+
+            <!-- Slide 10 -->
+            <section>
+                <h2>Der wissenschaftliche Beweis: Carlo Rubbia 
+(Nobelpreis 1984)</h2>
+                <div class='space-y-4'>
+                    <ul class='list-disc'>
+                        <li>Experiment am CERN: Rubbia und sein Team entdeckten die W- und Z-Teilchen, die die</li>
+                    </ul>
+                    <p>schwache Wechselwirkung vermitteln</p>
+                    <ul class='list-disc'>
+                        <li>Der spektakuläre Beweis: Bei extrem hoher Energie kollidieren Teilchen, und aus dieser</li>
+                    </ul>
+                    <p>reinen Energie entstehen spontan neue Teilchen mit Masse</p>
+                    <ul class='list-disc'>
+                        <li>Praktisch: Man schießt zwei schnelle Teilchen aufeinander, steckt enorme Energie rein, und</li>
+                    </ul>
+                    <p>plötzlich „erscheinen" neue schwere Teilchen – aus reiner Strahlung wird Materie</p>
+                    <ul class='list-disc'>
+                        <li>Konsequenz: Einsteins Vorhersage bestätigt – Energie und Materie sind völlig ineinander</li>
+                    </ul>
+                    <p>umwandelbar</p>
+                </div>
+            </section>
+
+            <!-- Slide 11 -->
+            <section>
+                <h2>Einstein und Rubbia: Energie und Materie im Dialog</h2>
+            </section>
+
+            <!-- Slide 12 -->
+            <section>
+                <h2>m = E / c²</h2>
+                <div class='space-y-4'>
+                    <p>Unsere Formel stimmt, jedoch in der Anwendung
+(Herdplatte, Steckdose) scheint noch ein Denkfehler zu sein.
+Gottseidank gibt es MUHHEIM und mein Elektrostudium der Nachrichtentechnik</p>
+                </div>
+            </section>
+
+            <!-- Slide 13 -->
+            <section>
+                <h2>🔥DIE MUHEIM-KONSTANTE – REVOLUTION IM</h2>
+                <div class='space-y-4 card-accent'>
+                    <p>DENKEN 🔥</p>
+                    <p>Julius T. Muheim (ETH Zürich) berechnete eine bahnbrechende Naturkonstante:</p>
+                    <p>1 Nukleon : 9,746 × 10⁸ Energiequanten</p>
+                    <p>Das bedeutet: Dein Körper = 99,9999999% ENERGIE!</p>
+                    <p>Die feste Masse ist nur 0,0000001% – ein winziger Bruchteil!</p>
+                    <p>Traditionelle Medizin: Behandelt 0,0000001% (die Materie)
+Frequenztherapie: Steuert 99,9999999% (die Energiefelder!)</p>
+                    <p>Das ist die wahre Revolution in der Heilkunst!</p>
+                </div>
+            </section>
+
+            <!-- Slide 14 -->
+            <section>
+                <h2>Stell dir vor:
+•Dein Arm „wiegt“ 1 kg → aber 974 Milliarden Energiequanten formen</h2>
+                <div class='space-y-4'>
+                    <p>und steuern ihn!
+•Rückenschmerzen? Nicht „feste Materie“ schmerzt, sondern
+•Energiefehler in diesem 99,9999%-Feld!</p>
+                </div>
+            </section>
+
+            <!-- Slide 15 -->
+            <section>
+                <h2>🚀PRAKTISCHE BERECHNUNG: ALLIANZ</h2>
+                <div class='space-y-4 card-accent'>
+                    <p>ARENA 🚀</p>
+                    <p>Wenn du energetisch so groß wie die Allianz Arena wärst...</p>
+                    <p>Stadion-Volumen: 2,93 Millionen m³</p>
+                    <p>Energetische Gesamtmasse: ca. 3.500 Tonnen</p>
+                    <p>DEINE KÖRPER-MASSE:</p>
+                    <p>NUR 3,6 GRAMM! 😱</p>
+                    <p>Das ist weniger als ein Teelöffel Zucker!</p>
+                    <p>Das zeigt: 99,9999999% deines Seins ist reine Energie</p>
+                    <p>Deshalb heilt Frequenztherapie so kraftvoll – sie steuert das Stadion!</p>
+                </div>
+            </section>
+
+            <!-- Slide 16 -->
+            <section>
+                <h2>Muheim-Rechnung: Allianz Arena Energie, 3,6 g Masse!</h2>
+            </section>
+
+            <!-- Slide 17 -->
+            <section>
+                <h2>🤯DER PARADIGMEN-WECHSEL: FELD statt</h2>
+                <div class='space-y-4'>
+                    <p>MASSE 🤯</p>
+                    <p>Dein Körper ist wie die Allianz Arena:</p>
+                    <p>99,9999999% ENERGIEFELD</p>
+                    <p>0,0000001% MASSE (3,6 Gramm!)</p>
+                    <p>TRADITIONELLE MEDIZIN: „Behandle die Materie"</p>
+                    <p>Pillen, Spritzen, Operationen – greift nur 0,0000001%</p>
+                    <p>FREQUENZTHERAPIE: „Harmonisiere das FELD"</p>
+                    <p>Steuert 99,9999999% der biologischen Wirklichkeit!</p>
+                </div>
+            </section>
+
+            <!-- Slide 18 -->
+            <section>
+                <img src='pptx/extracted_data_pdf/images/slide_18_img_1.jpeg' class='slide-image' alt='Slide 18 Bild'>
+            </section>
+
+            <!-- Slide 19 -->
+            <section>
+                <img src='pptx/extracted_data_pdf/images/slide_19_img_1.jpeg' class='slide-image' alt='Slide 19 Bild'>
+            </section>
+
+            <!-- Slide 20 -->
+            <section>
+                <h2>Die Revolution: Feld-Therapie statt Masse-Therapie</h2>
+            </section>
+
+            <!-- Slide 21 -->
+            <section>
+                <h2>Muheim beweist: Dein Körper ist kein „Stoff“, sondern ein gigantisches
+Energiefeld mit etwas Masse drin. Deshalb heilt Frequenztherapie: Sie ist 
+das Steuerpult der Biologie!</h2>
+            </section>
+
+            <!-- Slide 22 -->
+            <section>
+                <img src='pptx/extracted_data_pdf/images/slide_22_img_1.jpeg' class='slide-image' alt='Slide 22 Bild'>
+            </section>
+
+            <!-- Slide 23 -->
+            <section>
+                <h2>Nun was haben wir bis jetzt verstanden:</h2>
+                <div class='space-y-4'>
+                    <p>m = E / c²</p>
+                    <p>Das bist Du:</p>
+                    <p>99,9999999% ENERGIEFELD</p>
+                    <p>0,0000001% MASSE</p>
+                </div>
+            </section>
+
+            <!-- Slide 24 -->
+            <section>
+                <h2>Nun fehlt uns nur noch ein wichtiger Punkt. Wenn da die Masse</h2>
+                <div class='space-y-4'>
+                    <p>ist und das Energiefeld wie können daraus verschiedene Formen
+- Strukturen entstehen (Holz, Nase, Nieren, Stein etc.)</p>
+                    <p>Das geht nur in dem Informationen vorhanden sein müssen –
+Und das ist die letzte Zutat für unser Rezept.</p>
+                    <p>Krankheit ist: eine fehlende oder fehlerhafte Information im
+Energiefeld</p>
+                </div>
+            </section>
+
+            <!-- Slide 25 -->
+            <section>
+                <h2>📡FREQUENZEN = INFORMATIONSTRÄGER 📡</h2>
+                <div class='space-y-4 card-accent'>
+                    <p>Wie wir Information im Alltag übermitteln – ÜBER FREQUENZEN:</p>
+                    <p>📱Handy-Nachricht: WhatsApp fliegt als Radiowellen-Frequenz zum Mast
+📶Netflix-Stream: Video-Daten kommen via Mikrowellen-Frequenz (WLAN)</p>
+                    <p>📻Radio-Musik: Lied sendet als UKW-Frequenz durchs Äther</p>
+                    <p>Genau so funktioniert dein Körper:</p>
+                    <p>Frequenztherapie = KÖRPER-WLAN! 📡</p>
+                    <p>Dein Energiefeld empfängt die</p>
+                    <p>„Heilungs-Software" über präzise Heilfrequenzen</p>
+                    <p>„Information über Frequenzen – wie WhatsApp für Zellen!" ✨</p>
+                </div>
+            </section>
+
+            <!-- Slide 26 -->
+            <section>
+                <h2>💾INFORMATION = WAHRES STEUERPULT 💾</h2>
+                <div class='space-y-4 card-accent'>
+                    <p>Dein Körper ist wie eine riesige Smartphone-Arena mit Milliarden Zellen:</p>
+                    <ul class='list-disc'>
+                        <li>🔋MASSE (0,0000001%): Das Gehäuse – 3,6g unnötige Hardware</li>
+                        <li>⚡ENERGIE (99,9999%): Der Strom für alle Funktionen – Stromversorgung</li>
+                        <li>💾INFORMATION (DAS STEUERPULT!): Die Apps, das Betriebssystem,</li>
+                        <li>die Anleitung – was alles zusammen MACHT</li>
+                        <li>💥KRANKHEIT = DREIFACHER SOFTWARE-FEHLER:</li>
+                        <li>❌Zu wenig ODER zu viel Energie (Akku leer oder Überlastung)</li>
+                        <li>❌Fehlende Information („Selbstheilungs-App" nicht installiert)</li>
+                        <li>❌Fehlerhafte Information (Virus-Apps wie „chronischer-Schmerz.exe" laufen)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Slide 27 -->
+            <section>
+                <h2>Die professionellen Werkzeuge für die Frequenztherapie in der Naturheilpraxis Peter Rauch</h2>
+                <div class='space-y-4'>
+                    <ul class='list-disc'>
+                        <li>Trikombin - Das trimensionale System</li>
+                        <li>Metatron Hospital</li>
+                        <li>EAV nach Dr. Voll</li>
+                        <li>150MHZ nach Broehrs</li>
+                        <li>Multiwave Oscillator</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Slide 28 -->
+            <section>
+                <h2>Die professionellen Werkzeuge für die Frequenztherapie in der Naturheilpraxis Peter Rauch</h2>
+                <div class='space-y-4'>
+                    <ul class='list-disc'>
+                        <li>Trikombin - Das trimensionale System</li>
+                        <li>Metatron Hospital</li>
+                        <li>EAV nach Dr. Voll</li>
+                        <li>150MHZ nach Broehrs</li>
+                        <li>Multiwave Oscillator</li>
+                    </ul>
+                    <p>ZUSAMMEN = Komplettes Körper-WLAN! 🚀</p>
+                </div>
+            </section>
+
+            <!-- Slide 29 -->
+            <section class="theme-dark">
+                <h2>✨DIE HEILUNGS-REVOLUTION ✨</h2>
+                <div class='space-y-4'>
+                    <p>99,9999999% ENERGIEFELD</p>
+                    <p>+ RICHTIGE INFORMATION
+= VOLLSTÄNDIGE HEILUNG!</p>
+                    <p>Die Wahrheit: Dein Körper heilt sich SELBST</p>
+                    <p>wenn das Energiefeld richtig schwingt und die Information korrekt ist.</p>
+                    <p>Frequenztherapie dirigiert das STEUERPULT deiner Biologie!</p>
+                </div>
+            </section>
+
+            <!-- Slide 30 -->
+            <section>
+                <h2>Vielen Dank!</h2>
+                <div class='space-y-4'>
+                    <p>Fragen zur Frequenztherapie?</p>
+                    <p>Naturheilpraxis Peter Rauch | Augsburg</p>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            center: false, // WICHTIG: Oben ausrichten für Scroll-Verhalten
+            slideNumber: true,
+            controls: true,
+            progress: true,
+            touch: true,
+            transition: 'slide',
+            margin: 0.05,
+            width: 1200, // Breiteres Layout für mehr Text
+            height: 900
+        });
+    </script>
+</body>
+</html>
