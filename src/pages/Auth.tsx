@@ -37,7 +37,7 @@ const Auth: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Handle Login with password, then request 2FA code
+  // Handle Login with password (2FA temporarily disabled)
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -56,7 +56,7 @@ const Auth: React.FC = () => {
     setLoading(true);
 
     try {
-      // First, try to sign in with password
+      // Direct sign in with password (2FA temporarily disabled for testing)
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -70,27 +70,12 @@ const Auth: React.FC = () => {
         );
       }
 
-      // Password correct, now sign out and request 2FA code
-      await supabase.auth.signOut();
-
-      // Request 2FA code
-      const response = await supabase.functions.invoke('request-verification-code', {
-        body: { email, type: 'login', userId: signInData.user?.id },
-      });
-
-      if (response.error || response.data?.error) {
-        throw new Error(response.data?.error || response.error?.message || 'Fehler beim Senden des Codes');
-      }
-
-      setUserId(signInData.user?.id || null);
-      setStep('verification');
-      
       toast({
-        title: language === 'de' ? '2FA-Code gesendet' : '2FA Code Sent',
-        description: language === 'de' 
-          ? 'Ein Bestätigungscode wurde an Ihre E-Mail gesendet.' 
-          : 'A verification code has been sent to your email.',
+        title: language === 'de' ? 'Erfolgreich' : 'Success',
+        description: language === 'de' ? 'Anmeldung erfolgreich!' : 'Login successful!',
       });
+
+      navigate('/anamnesebogen');
     } catch (error: any) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
@@ -102,7 +87,7 @@ const Auth: React.FC = () => {
     }
   };
 
-  // Handle Registration - request code first, then set password
+  // Handle Registration - direct signup without email verification (temporarily)
   const handleRegistrationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -129,22 +114,14 @@ const Auth: React.FC = () => {
     setLoading(true);
 
     try {
-      // Request verification code for registration (creates user + sends code)
-      const response = await supabase.functions.invoke('request-verification-code', {
-        body: { email, password, type: 'registration' },
+      // Direct signup (email auto-confirmed via Supabase settings)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
       });
 
-
-      if (response.error) {
-        let message = response.error.message || 'Fehler beim Senden des Codes';
-        try {
-          const body = await response.error.context?.response?.json();
-          if (body?.error) message = body.error;
-        } catch {
-          // ignore
-        }
-        
-        if (message.includes('bereits registriert')) {
+      if (error) {
+        if (error.message.includes('already registered') || error.message.includes('User already registered')) {
           toast({
             title: language === 'de' ? 'Bereits registriert' : 'Already Registered',
             description: language === 'de' 
@@ -154,33 +131,25 @@ const Auth: React.FC = () => {
           setTimeout(() => setMode('login'), 1500);
           return;
         }
-        throw new Error(message);
+        throw error;
       }
 
-      if (response.data?.error) {
-        if (response.data.error.includes('bereits registriert')) {
-          toast({
-            title: language === 'de' ? 'Bereits registriert' : 'Already Registered',
-            description: language === 'de' 
-              ? 'Diese E-Mail ist bereits registriert. Wechsel zum Anmelden...' 
-              : 'This email is already registered. Switching to login...',
-          });
-          setTimeout(() => setMode('login'), 1500);
-          return;
-        }
-        throw new Error(response.data.error);
+      // Auto sign in after registration
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        throw signInError;
       }
 
-      setUserId(response.data?.userId || null);
-      setStep('verification');
-      
       toast({
-        title: language === 'de' ? 'Code gesendet' : 'Code Sent',
-        description: language === 'de' 
-          ? 'Ein Bestätigungscode wurde an Ihre E-Mail gesendet.' 
-          : 'A verification code has been sent to your email.',
+        title: language === 'de' ? 'Erfolgreich' : 'Success',
+        description: language === 'de' ? 'Registrierung erfolgreich! Sie sind jetzt angemeldet.' : 'Registration successful! You are now logged in.',
       });
 
+      navigate('/anamnesebogen');
     } catch (error: any) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
