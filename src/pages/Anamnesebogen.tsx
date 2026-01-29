@@ -35,12 +35,14 @@ import {
   PenTool,
   FileDown,
   Printer,
+  ListFilter,
   type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formSections as formSectionsData, initialFormData, AnamneseFormData } from "@/lib/anamneseFormData";
 import { generateEnhancedAnamnesePdf } from "@/lib/pdfExportEnhanced";
 import PrintView from "@/components/anamnese/PrintView";
+import FilteredSummaryView from "@/components/anamnese/FilteredSummaryView";
 import SEOHead from "@/components/seo/SEOHead";
 
 // Import section components
@@ -98,6 +100,7 @@ const Anamnesebogen = () => {
   const [wizardStep, setWizardStep] = useState(0);
   const [formData, setFormData] = useState<AnamneseFormData>(initialFormData);
   const [showPrintView, setShowPrintView] = useState(false);
+  const [showFilteredSummary, setShowFilteredSummary] = useState(false);
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>(["intro"]);
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -436,7 +439,16 @@ const Anamnesebogen = () => {
                     {language === "de" ? "Zurück" : "Back"}
                   </Button>
                   
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowFilteredSummary(true)}
+                      className="gap-2"
+                    >
+                      <ListFilter className="w-4 h-4" />
+                      {language === "de" ? "Zusammenfassung" : "Summary"}
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
@@ -533,6 +545,16 @@ const Anamnesebogen = () => {
               type="button"
               variant="outline"
               size="lg"
+              onClick={() => setShowFilteredSummary(true)}
+              className="gap-2"
+            >
+              <ListFilter className="w-5 h-5" />
+              {language === "de" ? "Zusammenfassung" : "Summary"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
               onClick={handlePrint}
               className="gap-2"
             >
@@ -589,6 +611,29 @@ const Anamnesebogen = () => {
               formData={formData}
               language={language as "de" | "en"}
             />
+          </div>
+        )}
+        {/* Filtered Summary Modal */}
+        {showFilteredSummary && (
+          <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm overflow-auto">
+            <div className="container py-8">
+              <div className="max-w-4xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-semibold">
+                    {language === "de" ? "Gefilterte Zusammenfassung" : "Filtered Summary"}
+                  </h2>
+                  <Button variant="outline" onClick={() => setShowFilteredSummary(false)}>
+                    <ChevronLeft className="w-4 h-4 mr-2" />
+                    {language === "de" ? "Zurück zum Formular" : "Back to Form"}
+                  </Button>
+                </div>
+                <Card>
+                  <CardContent className="pt-6">
+                    <FilteredSummaryView formData={formData} />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
         )}
       </div>
