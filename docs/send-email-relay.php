@@ -16,11 +16,21 @@
  * - Alle Eingaben werden validiert und sanitized
  */
 
+// Erhöhen, wenn Sie eine neue Version deployen (zum Abgleich, ob wirklich das richtige Script live ist)
+$RELAY_VERSION = '2026-01-29-v2';
+
 // CORS Headers für Edge Function Zugriff
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Relay-Token');
+
+// Minimaler Debug-Log (Server-seitig). Datei muss beschreibbar sein.
+function relay_log($message) {
+    $line = '[' . date('c') . '] ' . $message . "\n";
+    // Log im selben Verzeichnis wie das Script
+    @file_put_contents(__DIR__ . '/mail-debug.log', $line, FILE_APPEND);
+}
 
 // OPTIONS Preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -31,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Nur POST erlauben
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed', 'version' => $RELAY_VERSION]);
     exit;
 }
 
@@ -44,7 +54,8 @@ $RELAY_SECRET = '998a476a-cf1c-7443-ea47-3e329d70e934';
 $token = $_SERVER['HTTP_X_RELAY_TOKEN'] ?? '';
 if (empty($token) || !hash_equals($RELAY_SECRET, $token)) {
     http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    relay_log('Unauthorized request: remote=' . ($_SERVER['REMOTE_ADDR'] ?? '-') . ' ua=' . ($_SERVER['HTTP_USER_AGENT'] ?? '-'));
+    echo json_encode(['success' => false, 'error' => 'Unauthorized', 'version' => $RELAY_VERSION]);
     exit;
 }
 
@@ -54,7 +65,8 @@ $data = json_decode($input, true);
 
 if (!$data) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Invalid JSON']);
+    relay_log('Invalid JSON: remote=' . ($_SERVER['REMOTE_ADDR'] ?? '-') . ' raw=' . substr($input, 0, 500));
+    echo json_encode(['success' => false, 'error' => 'Invalid JSON', 'version' => $RELAY_VERSION]);
     exit;
 }
 
@@ -66,9 +78,12 @@ $from = filter_var($data['from'] ?? 'info@rauch-heilpraktiker.de', FILTER_VALIDA
 
 if (!$to || !$subject || !$html) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Missing required fields: to, subject, html']);
+    relay_log('Missing fields: to=' . ($data['to'] ?? '-') . ' subject_len=' . strlen($subject) . ' html_len=' . strlen((string)$html));
+    echo json_encode(['success' => false, 'error' => 'Missing required fields: to, subject, html', 'version' => $RELAY_VERSION]);
     exit;
 }
+
+relay_log('Accepted: to=' . $to . ' from=' . ($from ?: '-') . ' subject=' . $subject);
 
 // E-Mail Header
 $headers = [
@@ -80,11 +95,22 @@ $headers = [
 ];
 
 // E-Mail senden
-$success = mail($to, $subject, $html, implode("\r\n", $headers));
+// Envelope-From explizit setzen, um unerwünschtes Umschreiben zu vermeiden
+$envelopeFrom = $from ?: 'info@rauch-heilpraktiker.de';
+$success = mail($to, $subject, $html, implode("\r\n", $headers), '-f ' . escapeshellarg($envelopeFrom));
 
 if ($success) {
-    echo json_encode(['success' => true, 'message' => 'Email sent']);
+    relay_log('Mail OK: to=' . $to . ' envelopeFrom=' . $envelopeFrom);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Email sent',
+        'version' => $RELAY_VERSION,
+        'received_to' => $to,
+        'received_from' => $from,
+        'envelope_from' => $envelopeFrom,
+    ]);
 } else {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to send email']);
+    relay_log('Mail FAIL: to=' . $to . ' envelopeFrom=' . $envelopeFrom);
+    echo json_encode(['success' => false, 'error' => 'Failed to send email', 'version' => $RELAY_VERSION]);
 }
