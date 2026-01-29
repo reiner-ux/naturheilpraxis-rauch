@@ -108,6 +108,196 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
             />
           )}
         </div>
+
+        {/* Gebärmutterentfernung */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="gebaermutterentfernung"
+              checked={formData.frauengesundheit?.gebaermutterentfernung?.ja || false}
+              onCheckedChange={(checked) => updateNestedField("gebaermutterentfernung", "ja", checked)}
+            />
+            <Label htmlFor="gebaermutterentfernung">
+              {language === "de" ? "Gebärmutterentfernung (Hysterektomie)" : "Hysterectomy"}
+            </Label>
+          </div>
+          {formData.frauengesundheit?.gebaermutterentfernung?.ja && (
+            <div className="grid gap-4 md:grid-cols-2 pl-6">
+              <Input
+                placeholder={language === "de" ? "Jahr" : "Year"}
+                value={formData.frauengesundheit?.gebaermutterentfernung?.jahr || ""}
+                onChange={(e) => updateNestedField("gebaermutterentfernung", "jahr", e.target.value)}
+              />
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="gebaermutter-teilweise"
+                    checked={formData.frauengesundheit?.gebaermutterentfernung?.teilweise || false}
+                    onCheckedChange={(checked) => updateNestedField("gebaermutterentfernung", "teilweise", checked)}
+                  />
+                  <Label htmlFor="gebaermutter-teilweise" className="font-normal text-sm">
+                    {language === "de" ? "Teilweise" : "Partial"}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="gebaermutter-vollstaendig"
+                    checked={formData.frauengesundheit?.gebaermutterentfernung?.vollstaendig || false}
+                    onCheckedChange={(checked) => updateNestedField("gebaermutterentfernung", "vollstaendig", checked)}
+                  />
+                  <Label htmlFor="gebaermutter-vollstaendig" className="font-normal text-sm">
+                    {language === "de" ? "Vollständig" : "Complete"}
+                  </Label>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Eierstockentfernung */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="eierstockentfernung"
+              checked={formData.frauengesundheit?.eierstockentfernung?.ja || false}
+              onCheckedChange={(checked) => updateNestedField("eierstockentfernung", "ja", checked)}
+            />
+            <Label htmlFor="eierstockentfernung">
+              {language === "de" ? "Eierstockentfernung (Oophorektomie)" : "Oophorectomy"}
+            </Label>
+          </div>
+          {formData.frauengesundheit?.eierstockentfernung?.ja && (
+            <div className="grid gap-4 md:grid-cols-2 pl-6">
+              <Input
+                placeholder={language === "de" ? "Jahr" : "Year"}
+                value={formData.frauengesundheit?.eierstockentfernung?.jahr || ""}
+                onChange={(e) => updateNestedField("eierstockentfernung", "jahr", e.target.value)}
+              />
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="eierstock-einseitig"
+                    checked={formData.frauengesundheit?.eierstockentfernung?.einseitig || false}
+                    onCheckedChange={(checked) => updateNestedField("eierstockentfernung", "einseitig", checked)}
+                  />
+                  <Label htmlFor="eierstock-einseitig" className="font-normal text-sm">
+                    {language === "de" ? "Einseitig" : "Unilateral"}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="eierstock-beidseitig"
+                    checked={formData.frauengesundheit?.eierstockentfernung?.beidseitig || false}
+                    onCheckedChange={(checked) => updateNestedField("eierstockentfernung", "beidseitig", checked)}
+                  />
+                  <Label htmlFor="eierstock-beidseitig" className="font-normal text-sm">
+                    {language === "de" ? "Beidseitig" : "Bilateral"}
+                  </Label>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Gebärmutterausschabung */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="gebaermutterausschabung"
+              checked={formData.frauengesundheit?.gebaermutterausschabung?.ja || false}
+              onCheckedChange={(checked) => updateNestedField("gebaermutterausschabung", "ja", checked)}
+            />
+            <Label htmlFor="gebaermutterausschabung">
+              {language === "de" ? "Gebärmutterausschabung (Kürettage)" : "Dilation and Curettage (D&C)"}
+            </Label>
+          </div>
+          {formData.frauengesundheit?.gebaermutterausschabung?.ja && (
+            <div className="grid gap-4 md:grid-cols-2 pl-6">
+              <Input
+                placeholder={language === "de" ? "Jahr" : "Year"}
+                value={formData.frauengesundheit?.gebaermutterausschabung?.jahr || ""}
+                onChange={(e) => updateNestedField("gebaermutterausschabung", "jahr", e.target.value)}
+              />
+              <Input
+                placeholder={language === "de" ? "Grund" : "Reason"}
+                value={formData.frauengesundheit?.gebaermutterausschabung?.grund || ""}
+                onChange={(e) => updateNestedField("gebaermutterausschabung", "grund", e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Eierstockzyste */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="eierstockzyste"
+              checked={formData.frauengesundheit?.eierstockzyste?.ja || false}
+              onCheckedChange={(checked) => updateNestedField("eierstockzyste", "ja", checked)}
+            />
+            <Label htmlFor="eierstockzyste">
+              {language === "de" ? "Eierstockzyste" : "Ovarian Cyst"}
+            </Label>
+          </div>
+          {formData.frauengesundheit?.eierstockzyste?.ja && (
+            <Input
+              placeholder={language === "de" ? "Jahr" : "Year"}
+              value={formData.frauengesundheit?.eierstockzyste?.jahr || ""}
+              onChange={(e) => updateNestedField("eierstockzyste", "jahr", e.target.value)}
+              className="w-32 pl-6"
+            />
+          )}
+        </div>
+
+        {/* Endometriose */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="endometriose"
+              checked={formData.frauengesundheit?.endometriose?.ja || false}
+              onCheckedChange={(checked) => updateNestedField("endometriose", "ja", checked)}
+            />
+            <Label htmlFor="endometriose">
+              {language === "de" ? "Endometriose" : "Endometriosis"}
+            </Label>
+          </div>
+          {formData.frauengesundheit?.endometriose?.ja && (
+            <div className="grid gap-4 md:grid-cols-2 pl-6">
+              <Input
+                placeholder={language === "de" ? "Jahr" : "Year"}
+                value={formData.frauengesundheit?.endometriose?.jahr || ""}
+                onChange={(e) => updateNestedField("endometriose", "jahr", e.target.value)}
+              />
+              <Input
+                placeholder={language === "de" ? "Stadium (falls bekannt)" : "Stage (if known)"}
+                value={formData.frauengesundheit?.endometriose?.stadium || ""}
+                onChange={(e) => updateNestedField("endometriose", "stadium", e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Myome */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="myome"
+              checked={formData.frauengesundheit?.myome?.ja || false}
+              onCheckedChange={(checked) => updateNestedField("myome", "ja", checked)}
+            />
+            <Label htmlFor="myome">
+              {language === "de" ? "Myome (Gebärmuttermyome)" : "Uterine Fibroids"}
+            </Label>
+          </div>
+          {formData.frauengesundheit?.myome?.ja && (
+            <Input
+              placeholder={language === "de" ? "Jahr" : "Year"}
+              value={formData.frauengesundheit?.myome?.jahr || ""}
+              onChange={(e) => updateNestedField("myome", "jahr", e.target.value)}
+              className="w-32 pl-6"
+            />
+          )}
+        </div>
       </div>
 
       <Separator />
@@ -397,6 +587,22 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
             />
           )}
         </div>
+      </div>
+
+      <Separator />
+
+      {/* Sonstige Erkrankungen */}
+      <div className="border rounded-lg p-4 bg-muted/30">
+        <Label className="text-base font-medium">
+          {language === "de" ? "Sonstige Erkrankungen der Frauengesundheit" : "Other Women's Health Conditions"}
+        </Label>
+        <Textarea
+          placeholder={language === "de" ? "Bitte beschreiben Sie weitere Erkrankungen, die hier nicht aufgeführt sind..." : "Please describe any other conditions not listed here..."}
+          value={formData.frauengesundheit?.sonstige || ""}
+          onChange={(e) => updateFrauengesundheit("sonstige", e.target.value)}
+          className="mt-2"
+          rows={2}
+        />
       </div>
     </div>
   );

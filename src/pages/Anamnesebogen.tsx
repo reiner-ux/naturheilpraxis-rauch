@@ -49,6 +49,7 @@ import PatientDataSection from "@/components/anamnese/PatientDataSection";
 import FamilyHistorySection from "@/components/anamnese/FamilyHistorySection";
 import MedicalHistorySection from "@/components/anamnese/MedicalHistorySection";
 import WomenHealthSection from "@/components/anamnese/WomenHealthSection";
+import MensHealthSection from "@/components/anamnese/MensHealthSection";
 import SurgeriesSection from "@/components/anamnese/SurgeriesSection";
 import CancerSection from "@/components/anamnese/CancerSection";
 import AllergiesSection from "@/components/anamnese/AllergiesSection";
@@ -195,6 +196,8 @@ const Anamnesebogen = () => {
         return <ComplaintsSection formData={formData} updateFormData={updateFormData} />;
       case "womenHealth":
         return <WomenHealthSection formData={formData} updateFormData={updateFormData} />;
+      case "mensHealth":
+        return <MensHealthSection formData={formData} updateFormData={updateFormData} />;
       case "surgeries":
         return <SurgeriesSection formData={formData} updateFormData={updateFormData} />;
       case "cancer":

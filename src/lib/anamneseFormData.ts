@@ -15,6 +15,7 @@ export const formSections: FormSection[] = [
   { id: "familyHistory", titleDe: "II. Familiengeschichte", titleEn: "II. Family History", emoji: "👨‍👩‍👧", icon: "Users", color: "bg-cyan-100 dark:bg-cyan-950/30", iconColor: "text-cyan-500" },
   { id: "medicalHistory", titleDe: "III. Eigene Erkrankungen", titleEn: "III. Medical History", emoji: "🩺", icon: "Stethoscope", color: "bg-orange-100 dark:bg-orange-950/30", iconColor: "text-orange-500" },
   { id: "womenHealth", titleDe: "IV. Frauengesundheit", titleEn: "IV. Women's Health", emoji: "👩", icon: "Heart", color: "bg-pink-100 dark:bg-pink-950/30", iconColor: "text-pink-500" },
+  { id: "mensHealth", titleDe: "IV. Männergesundheit", titleEn: "IV. Men's Health", emoji: "👨", icon: "User", color: "bg-blue-100 dark:bg-blue-950/30", iconColor: "text-blue-500" },
   { id: "surgeries", titleDe: "V. Unfälle & Operationen", titleEn: "V. Accidents & Surgeries", emoji: "🏥", icon: "Building2", color: "bg-red-100 dark:bg-red-950/30", iconColor: "text-red-500" },
   { id: "cancer", titleDe: "VI. Krebserkrankung", titleEn: "VI. Cancer", emoji: "⚠️", icon: "AlertTriangle", color: "bg-amber-100 dark:bg-amber-950/30", iconColor: "text-amber-600" },
   { id: "allergies", titleDe: "VII. Allergien", titleEn: "VII. Allergies", emoji: "🤧", icon: "ShieldAlert", color: "bg-yellow-100 dark:bg-yellow-950/30", iconColor: "text-yellow-600" },
@@ -101,13 +102,40 @@ export const initialFormData = {
   
   // III. Eigene Erkrankungen - Kopf, Sinne & Nervensystem
   kopfErkrankungen: {
-    augenerkrankung: { ja: false, jahr: "", netzhaut: false, grauerStar: false, gruenerStar: false, makula: false },
+    augenerkrankung: { 
+      ja: false, jahr: "", 
+      netzhaut: false, grauerStar: false, gruenerStar: false, makula: false,
+      bindehautentzuendung: false, hornhautentzuendung: false, iritis: false, 
+      sehnerventzuendung: false, trockeneAugen: false, sehstoerung: false,
+      sonstige: ""
+    },
     schwerhoerig: { ja: false, jahr: "", links: false, rechts: false, beidseitig: false },
-    ohrenerkrankung: { ja: false, jahr: "", details: "" },
-    sinusitis: { ja: false, jahr: "", chronisch: false, akut: false },
+    ohrenerkrankung: { 
+      ja: false, jahr: "", 
+      tinnitus: false, hoersturz: false, mittelohrentzuendung: false, 
+      morbusMeniere: false, otosklerose: false, gehoergangentzuendung: false,
+      sonstige: "" 
+    },
+    sinusitis: { ja: false, jahr: "", chronisch: false, akut: false, sonstige: "" },
     mandelentzuendung: { ja: false, jahr: "" },
-    kopfschmerzen: { ja: false, seit: "", rechts: false, links: false, hinterkopf: false, stirn: false, migraene: false },
-    schwindel: { ja: false, seit: "", lagerung: false, dreh: false, schwank: false },
+    kopfschmerzen: { 
+      ja: false, seit: "", 
+      rechts: false, links: false, hinterkopf: false, stirn: false, 
+      migraene: false, spannungskopfschmerz: false, clusterkopfschmerz: false,
+      medikamenteninduziert: false, sonstige: ""
+    },
+    schwindel: { 
+      ja: false, seit: "", 
+      lagerung: false, dreh: false, schwank: false,
+      vestibularisausfall: false, phobischerSchwankschwindel: false, sonstige: "" 
+    },
+    geruchsminderung: { ja: false, seit: "", vollverlust: false, teilminderung: false },
+    geschmacksminderung: { ja: false, seit: "" },
+    neuralgien: {
+      ja: false, seit: "",
+      trigeminus: false, glossopharyngeus: false, occipitalis: false,
+      postzoster: false, atypischerGesichtsschmerz: false, sonstige: ""
+    },
   },
   
   // Schlaf & Psychische Symptome
@@ -152,6 +180,7 @@ export const initialFormData = {
     krampfadern: { ja: false, jahr: "", rechts: false, links: false, beidseitig: false },
     thrombose: { ja: false, jahr: "", bein: false, lunge: false, arm: false },
     oedeme: { ja: false, seit: "", morgens: false, abends: false, staendig: false },
+    sonstige: "",
   },
   
   // Lunge & Atmung
@@ -165,6 +194,9 @@ export const initialFormData = {
     husten: { ja: false, seit: "", trocken: false, mitAuswurf: false },
     auswurf: { ja: false, seit: "", farbe: "" },
     atemnot: { ja: false, seit: "", belastung: false, ruhe: false },
+    copd: { ja: false, jahr: "", stadium: "" },
+    lungenembolie: { ja: false, jahr: "" },
+    sonstige: "",
   },
   
   // Magen & Darm
@@ -183,6 +215,7 @@ export const initialFormData = {
     morbusCrohn: { ja: false, jahr: "", stadium: "" },
     colitis: { ja: false, jahr: "", bereich: "" },
     reizdarm: { ja: false, jahr: "", diarrhoe: false, obstipation: false, wechselnd: false },
+    sonstige: "",
   },
   durst: "",
   appetit: "",
@@ -191,9 +224,14 @@ export const initialFormData = {
   // Leber & Gallenblase
   leberGalle: {
     lebererkrankung: { ja: false, jahr: "", hepatitisA: false, hepatitisB: false, hepatitisC: false, fettleber: false },
+    leberzirrhose: { ja: false, jahr: "", stadium: "" },
+    leberkrebs: { ja: false, jahr: "" },
     gelbsucht: { ja: false, jahr: "" },
+    gallensteine: { ja: false, jahr: "" },
     gallenleiden: { ja: false, jahr: "", symptomatisch: false, asymptomatisch: false },
     gallenblasenentfernung: { ja: false, jahr: "", grund: "" },
+    gallengangentzuendung: { ja: false, jahr: "" },
+    sonstige: "",
   },
   
   // Niere & Blase
@@ -204,9 +242,50 @@ export const initialFormData = {
     nykturie: { ja: false, seit: "", anzahlProNacht: "" },
     miktionsbeschwerden: { ja: false, seit: "", brennen: false, schmerz: false, drang: false },
     inkontinenz: { ja: false, seit: "", belastung: false, drang: false, ueberlauf: false },
-    prostata: { ja: false, jahr: "", bph: false, prostatitis: false, krebs: false },
-    psa: "",
     haematurie: { ja: false, seit: "" },
+    nierensteine: { ja: false, jahr: "" },
+    sonstige: "",
+  },
+  
+  // Männergesundheit
+  maennergesundheit: {
+    prostata: { 
+      ja: false, jahr: "", 
+      bph: false, prostatitis: false, prostatakarzinom: false, 
+      psa: "", sonstige: ""
+    },
+    hoden: {
+      ja: false, jahr: "",
+      hodenentzuendung: false, hodentorsion: false, hodenkrebs: false,
+      varikozele: false, hydrozele: false, sonstige: ""
+    },
+    nebenhoden: {
+      ja: false, jahr: "",
+      epididymitis: false, nebenhodenzyste: false, sonstige: ""
+    },
+    erektionsstoerung: { ja: false, seit: "" },
+    sonstige: "",
+  },
+  
+  // Hormongesundheit
+  hormongesundheit: {
+    schilddruese: {
+      ja: false, jahr: "",
+      unterfunktion: false, ueberfunktion: false, hashimoto: false, basedow: false,
+      knoten: false, schilddruesenkrebs: false, schilddruesenop: false, radiojodtherapie: false,
+      sonstige: ""
+    },
+    hypophyse: {
+      ja: false, jahr: "",
+      hypophysenadenom: false, prolaktinom: false, akromegalie: false,
+      hypophyseninsuffizienz: false, diabetesInsipidus: false, sonstige: ""
+    },
+    nebenniere: {
+      ja: false, jahr: "",
+      nebenniereninsuffizienz: false, cushingSyndrom: false, phaeochromozytom: false,
+      nebennierenerschoepfung: false, sonstige: ""
+    },
+    sonstige: "",
   },
   
   // Wirbelsäule & Gelenke
@@ -224,6 +303,7 @@ export const initialFormData = {
     fuss: { ja: false, seit: "", rechts: false, links: false, beidseitig: false },
     zehen: { ja: false, seit: "", rechts: false, links: false, beidseitig: false },
     rheuma: { ja: false, seit: "", stadium: "" },
+    sonstige: "",
   },
   
   // Haut & Infektionen
@@ -247,6 +327,12 @@ export const initialFormData = {
     geburtsgewicht: "",
     fruehgeburt: { ja: false, woche: "" },
     gebaermuttererkrankung: { ja: false, welche: "" },
+    gebaermutterentfernung: { ja: false, jahr: "", teilweise: false, vollstaendig: false },
+    eierstockentfernung: { ja: false, jahr: "", einseitig: false, beidseitig: false },
+    gebaermutterausschabung: { ja: false, jahr: "", grund: "" },
+    eierstockzyste: { ja: false, jahr: "" },
+    endometriose: { ja: false, jahr: "", stadium: "" },
+    myome: { ja: false, jahr: "" },
     pille: { ja: false, von: "", bis: "" },
     hormonbehandlung: { ja: false, welche: "" },
     periodeNormal: { ja: false, zyklusTage: "" },
@@ -259,6 +345,7 @@ export const initialFormData = {
     fehlgeburten: { anzahl: "", wann: "" },
     geburten: { anzahl: "", vaginal: false, kaiserschnitt: false },
     wochenbettdepression: { ja: false, nachGeburt: "" },
+    sonstige: "",
   },
   
   // V. Unfälle, Operationen & Hospitalisierung

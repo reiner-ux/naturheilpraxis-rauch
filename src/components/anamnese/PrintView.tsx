@@ -5,6 +5,7 @@ import PatientDataSection from "./PatientDataSection";
 import FamilyHistorySection from "./FamilyHistorySection";
 import MedicalHistorySection from "./MedicalHistorySection";
 import WomenHealthSection from "./WomenHealthSection";
+import MensHealthSection from "./MensHealthSection";
 import SurgeriesSection from "./SurgeriesSection";
 import CancerSection from "./CancerSection";
 import AllergiesSection from "./AllergiesSection";
@@ -42,6 +43,8 @@ const PrintView = forwardRef<HTMLDivElement, PrintViewProps>(
           return <ComplaintsSection formData={formData} updateFormData={noopUpdate} />;
         case "womenHealth":
           return <WomenHealthSection formData={formData} updateFormData={noopUpdate} />;
+        case "mensHealth":
+          return <MensHealthSection formData={formData} updateFormData={noopUpdate} />;
         case "surgeries":
           return <SurgeriesSection formData={formData} updateFormData={noopUpdate} />;
         case "cancer":
