@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // ============================================
 // WICHTIG: Ersetzen Sie diesen Wert durch Ihr Secret!
 // ============================================
-$RELAY_SECRET = 'IHR_RELAY_SECRET_HIER_EINFUEGEN';
+$RELAY_SECRET = '998a476a-cf1c-7443-ea47-3e329d70e934';
 
 // Token validieren
 $token = $_SERVER['HTTP_X_RELAY_TOKEN'] ?? '';
