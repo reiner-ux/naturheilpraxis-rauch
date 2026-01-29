@@ -37,7 +37,7 @@ const Auth: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Handle Login with password (2FA temporarily disabled)
+  // Handle Login with password + 2FA
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -56,7 +56,7 @@ const Auth: React.FC = () => {
     setLoading(true);
 
     try {
-      // Direct sign in with password (2FA temporarily disabled for testing)
+      // First verify password is correct
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -70,12 +70,27 @@ const Auth: React.FC = () => {
         );
       }
 
-      toast({
-        title: language === 'de' ? 'Erfolgreich' : 'Success',
-        description: language === 'de' ? 'Anmeldung erfolgreich!' : 'Login successful!',
+      // Sign out immediately - we need 2FA verification first
+      await supabase.auth.signOut();
+
+      // Request 2FA code
+      const response = await supabase.functions.invoke('request-verification-code', {
+        body: { email, type: 'login', userId: signInData.user?.id },
       });
 
-      navigate('/anamnesebogen');
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || 'Fehler beim Senden des Codes');
+      }
+
+      setUserId(signInData.user?.id || null);
+      setStep('verification');
+
+      toast({
+        title: language === 'de' ? 'Bestätigungscode gesendet' : 'Verification Code Sent',
+        description: language === 'de' 
+          ? 'Bitte prüfen Sie Ihre E-Mail für den 2FA-Code.' 
+          : 'Please check your email for the 2FA code.',
+      });
     } catch (error: any) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
@@ -87,7 +102,7 @@ const Auth: React.FC = () => {
     }
   };
 
-  // Handle Registration - direct signup without email verification (temporarily)
+  // Handle Registration with email verification
   const handleRegistrationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -114,14 +129,16 @@ const Auth: React.FC = () => {
     setLoading(true);
 
     try {
-      // Direct signup (email auto-confirmed via Supabase settings)
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      // Request verification code - this also creates the unconfirmed user
+      const response = await supabase.functions.invoke('request-verification-code', {
+        body: { email, type: 'registration', password },
       });
 
-      if (error) {
-        if (error.message.includes('already registered') || error.message.includes('User already registered')) {
+      if (response.error || response.data?.error) {
+        const errorMsg = response.data?.error || response.error?.message || 'Fehler';
+        
+        // Check for "already registered" error
+        if (errorMsg.includes('bereits registriert') || errorMsg.includes('already registered')) {
           toast({
             title: language === 'de' ? 'Bereits registriert' : 'Already Registered',
             description: language === 'de' 
@@ -131,25 +148,19 @@ const Auth: React.FC = () => {
           setTimeout(() => setMode('login'), 1500);
           return;
         }
-        throw error;
+        
+        throw new Error(errorMsg);
       }
 
-      // Auto sign in after registration
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        throw signInError;
-      }
+      setUserId(response.data.userId || null);
+      setStep('verification');
 
       toast({
-        title: language === 'de' ? 'Erfolgreich' : 'Success',
-        description: language === 'de' ? 'Registrierung erfolgreich! Sie sind jetzt angemeldet.' : 'Registration successful! You are now logged in.',
+        title: language === 'de' ? 'Bestätigungscode gesendet' : 'Verification Code Sent',
+        description: language === 'de' 
+          ? 'Bitte prüfen Sie Ihre E-Mail für den Bestätigungscode.' 
+          : 'Please check your email for the verification code.',
       });
-
-      navigate('/anamnesebogen');
     } catch (error: any) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
