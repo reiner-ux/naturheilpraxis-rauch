@@ -97,6 +97,7 @@ const Anamnesebogen = () => {
   const [wizardStep, setWizardStep] = useState(0);
   const [formData, setFormData] = useState<AnamneseFormData>(initialFormData);
   const [showPrintView, setShowPrintView] = useState(false);
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>(["intro"]);
   const printRef = useRef<HTMLDivElement>(null);
 
   const updateFormData = (field: string, value: any) => {
@@ -486,7 +487,12 @@ const Anamnesebogen = () => {
         </Button>
 
         <form onSubmit={handleSubmit}>
-          <Accordion type="multiple" defaultValue={["intro"]} className="space-y-4">
+          <Accordion 
+            type="multiple" 
+            value={openAccordionItems} 
+            onValueChange={setOpenAccordionItems}
+            className="space-y-4"
+          >
             {formSections.map((section) => {
               const Icon = section.Icon;
               return (
