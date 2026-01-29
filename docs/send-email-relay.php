@@ -79,20 +79,12 @@ $headers = [
     'X-Mailer: PHP/' . phpversion()
 ];
 
-// Envelope-Sender setzen (5. Parameter) - verhindert Umleitung durch Postfix/Plesk
-// Verwendet 'noreply@rauch-heilpraktiker.de' als technischen Absender
-$envelope_sender = '-f noreply@rauch-heilpraktiker.de';
-
-// E-Mail senden mit explizitem Envelope-Sender
-$success = mail($to, $subject, $html, implode("\r\n", $headers), $envelope_sender);
-
-// Debug-Logging für Fehlersuche
-$log_entry = date('Y-m-d H:i:s') . " | TO: $to | FROM: $from | SUBJECT: $subject | SUCCESS: " . ($success ? 'YES' : 'NO') . "\n";
-@file_put_contents(__DIR__ . '/mail-debug.log', $log_entry, FILE_APPEND);
+// E-Mail senden
+$success = mail($to, $subject, $html, implode("\r\n", $headers));
 
 if ($success) {
-    echo json_encode(['success' => true, 'message' => 'Email sent', 'to' => $to, 'from' => $from]);
+    echo json_encode(['success' => true, 'message' => 'Email sent']);
 } else {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to send email', 'to' => $to]);
+    echo json_encode(['success' => false, 'error' => 'Failed to send email']);
 }
