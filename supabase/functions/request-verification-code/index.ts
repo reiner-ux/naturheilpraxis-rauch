@@ -87,6 +87,10 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
 
   // Call the HTTPS relay endpoint on the user's server
   const relayUrl = "https://rauch-heilpraktiker.de/mail-relay.php";
+
+  // Debug: make it unmistakable which recipient the relay received.
+  // This is safe (contains no secrets) and helps to diagnose server-side rewriting.
+  console.log(`[relay] sending ${type} code to: ${email}`);
   
   const response = await fetch(relayUrl, {
     method: "POST",
@@ -99,6 +103,12 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
       subject: subject,
       html: htmlContent,
       from: "info@rauch-heilpraktiker.de",
+      meta: {
+        intended_to: email,
+        type,
+        // helps verify correct script deployment on server
+        source: "lovable-cloud-request-verification-code",
+      },
     }),
   });
 
@@ -122,6 +132,8 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
     console.error("Failed to parse relay response:", responseText);
     throw new Error("Invalid response from email relay");
   }
+
+  console.log("[relay] response:", result);
   
   if (!result.success) {
     throw new Error(result.error || "Email relay returned failure");
