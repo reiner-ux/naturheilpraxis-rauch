@@ -5,10 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import { useState } from "react";
 
 interface MensHealthSectionProps {
   formData: AnamneseFormData;
@@ -17,11 +13,6 @@ interface MensHealthSectionProps {
 
 const MensHealthSection = ({ formData, updateFormData }: MensHealthSectionProps) => {
   const { language } = useLanguage();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
 
   const updateMaennergesundheit = (field: string, value: any) => {
     updateFormData("maennergesundheit", {
@@ -55,186 +46,156 @@ const MensHealthSection = ({ formData, updateFormData }: MensHealthSectionProps)
       </p>
 
       {/* Prostata */}
-      <Collapsible open={expandedSections.prostata} onOpenChange={() => toggleSection('prostata')}>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
-            <span className="font-medium">{language === "de" ? "🔵 Prostataerkrankungen" : "🔵 Prostate Diseases"}</span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.prostata ? 'rotate-180' : ''}`} />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-4 pt-4">
-          <div className="border rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="prostata"
-                checked={formData.maennergesundheit?.prostata?.ja || false}
-                onCheckedChange={(checked) => updateNestedField("prostata", "ja", checked)}
-              />
-              <div className="space-y-2 flex-1">
-                <Label htmlFor="prostata">
-                  {language === "de" ? "Prostataerkrankung" : "Prostate Disease"}
-                </Label>
-                {formData.maennergesundheit?.prostata?.ja && (
-                  <div className="space-y-3 mt-2">
-                    <Input
-                      placeholder={language === "de" ? "Jahr" : "Year"}
-                      value={formData.maennergesundheit?.prostata?.jahr || ""}
-                      onChange={(e) => updateNestedField("prostata", "jahr", e.target.value)}
-                      className="w-32"
-                    />
-                    <div className="flex flex-wrap gap-4">
-                      {[
-                        { key: "bph", labelDe: "Gutartige Vergrößerung (BPH)", labelEn: "Benign Prostatic Hyperplasia (BPH)" },
-                        { key: "prostatitis", labelDe: "Prostatitis (Entzündung)", labelEn: "Prostatitis (Inflammation)" },
-                        { key: "prostatakarzinom", labelDe: "Prostatakarzinom", labelEn: "Prostate Cancer" },
-                      ].map((option) => (
-                        <div key={option.key} className="flex items-center gap-2">
-                          <Checkbox
-                            checked={getNestedBoolean("prostata", option.key)}
-                            onCheckedChange={(checked) => updateNestedField("prostata", option.key, !!checked)}
-                          />
-                          <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm">{language === "de" ? "PSA-Wert (falls bekannt)" : "PSA value (if known)"}</Label>
-                      <Input
-                        placeholder={language === "de" ? "z.B. 2.5 ng/ml" : "e.g. 2.5 ng/ml"}
-                        value={formData.maennergesundheit?.prostata?.psa || ""}
-                        onChange={(e) => updateNestedField("prostata", "psa", e.target.value)}
-                        className="w-48"
+      <div className="border rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="prostata-ja"
+            checked={formData.maennergesundheit?.prostata?.ja || false}
+            onCheckedChange={(checked) => updateNestedField("prostata", "ja", checked)}
+          />
+          <div className="space-y-2 flex-1">
+            <Label htmlFor="prostata-ja" className="text-lg font-medium cursor-pointer">
+              {language === "de" ? "🔵 Prostataerkrankungen" : "🔵 Prostate Diseases"}
+            </Label>
+            {formData.maennergesundheit?.prostata?.ja && (
+              <div className="space-y-4 mt-4 pl-2 border-l-2 border-primary/20">
+                <Input
+                  placeholder={language === "de" ? "Jahr" : "Year"}
+                  value={formData.maennergesundheit?.prostata?.jahr || ""}
+                  onChange={(e) => updateNestedField("prostata", "jahr", e.target.value)}
+                  className="w-32"
+                />
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { key: "bph", labelDe: "Gutartige Vergrößerung (BPH)", labelEn: "Benign Prostatic Hyperplasia (BPH)" },
+                    { key: "prostatitis", labelDe: "Prostatitis (Entzündung)", labelEn: "Prostatitis (Inflammation)" },
+                    { key: "prostatakarzinom", labelDe: "Prostatakarzinom", labelEn: "Prostate Cancer" },
+                  ].map((option) => (
+                    <div key={option.key} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={getNestedBoolean("prostata", option.key)}
+                        onCheckedChange={(checked) => updateNestedField("prostata", option.key, !!checked)}
                       />
+                      <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
                     </div>
-                    <Input
-                      placeholder={language === "de" ? "Sonstiges (bitte beschreiben)" : "Other (please describe)"}
-                      value={formData.maennergesundheit?.prostata?.sonstige || ""}
-                      onChange={(e) => updateNestedField("prostata", "sonstige", e.target.value)}
-                    />
-                  </div>
-                )}
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm">{language === "de" ? "PSA-Wert (falls bekannt)" : "PSA value (if known)"}</Label>
+                  <Input
+                    placeholder={language === "de" ? "z.B. 2.5 ng/ml" : "e.g. 2.5 ng/ml"}
+                    value={formData.maennergesundheit?.prostata?.psa || ""}
+                    onChange={(e) => updateNestedField("prostata", "psa", e.target.value)}
+                    className="w-48"
+                  />
+                </div>
+                <Input
+                  placeholder={language === "de" ? "Sonstiges (bitte beschreiben)" : "Other (please describe)"}
+                  value={formData.maennergesundheit?.prostata?.sonstige || ""}
+                  onChange={(e) => updateNestedField("prostata", "sonstige", e.target.value)}
+                />
               </div>
-            </div>
+            )}
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+        </div>
+      </div>
 
       <Separator />
 
       {/* Hoden */}
-      <Collapsible open={expandedSections.hoden} onOpenChange={() => toggleSection('hoden')}>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
-            <span className="font-medium">{language === "de" ? "🔴 Hodenerkrankungen" : "🔴 Testicular Diseases"}</span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.hoden ? 'rotate-180' : ''}`} />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-4 pt-4">
-          <div className="border rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="hoden"
-                checked={formData.maennergesundheit?.hoden?.ja || false}
-                onCheckedChange={(checked) => updateNestedField("hoden", "ja", checked)}
-              />
-              <div className="space-y-2 flex-1">
-                <Label htmlFor="hoden">
-                  {language === "de" ? "Hodenerkrankung" : "Testicular Disease"}
-                </Label>
-                {formData.maennergesundheit?.hoden?.ja && (
-                  <div className="space-y-3 mt-2">
-                    <Input
-                      placeholder={language === "de" ? "Jahr" : "Year"}
-                      value={formData.maennergesundheit?.hoden?.jahr || ""}
-                      onChange={(e) => updateNestedField("hoden", "jahr", e.target.value)}
-                      className="w-32"
-                    />
-                    <div className="flex flex-wrap gap-4">
-                      {[
-                        { key: "hodenentzuendung", labelDe: "Hodenentzündung (Orchitis)", labelEn: "Orchitis" },
-                        { key: "hodentorsion", labelDe: "Hodentorsion", labelEn: "Testicular Torsion" },
-                        { key: "hodenkrebs", labelDe: "Hodenkrebs", labelEn: "Testicular Cancer" },
-                        { key: "varikozele", labelDe: "Varikozele (Krampfadern)", labelEn: "Varicocele" },
-                        { key: "hydrozele", labelDe: "Hydrozele (Wasserbruch)", labelEn: "Hydrocele" },
-                      ].map((option) => (
-                        <div key={option.key} className="flex items-center gap-2">
-                          <Checkbox
-                            checked={getNestedBoolean("hoden", option.key)}
-                            onCheckedChange={(checked) => updateNestedField("hoden", option.key, !!checked)}
-                          />
-                          <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
-                        </div>
-                      ))}
+      <div className="border rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="hoden-ja"
+            checked={formData.maennergesundheit?.hoden?.ja || false}
+            onCheckedChange={(checked) => updateNestedField("hoden", "ja", checked)}
+          />
+          <div className="space-y-2 flex-1">
+            <Label htmlFor="hoden-ja" className="text-lg font-medium cursor-pointer">
+              {language === "de" ? "🔴 Hodenerkrankungen" : "🔴 Testicular Diseases"}
+            </Label>
+            {formData.maennergesundheit?.hoden?.ja && (
+              <div className="space-y-4 mt-4 pl-2 border-l-2 border-primary/20">
+                <Input
+                  placeholder={language === "de" ? "Jahr" : "Year"}
+                  value={formData.maennergesundheit?.hoden?.jahr || ""}
+                  onChange={(e) => updateNestedField("hoden", "jahr", e.target.value)}
+                  className="w-32"
+                />
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { key: "hodenentzuendung", labelDe: "Hodenentzündung (Orchitis)", labelEn: "Orchitis" },
+                    { key: "hodentorsion", labelDe: "Hodentorsion", labelEn: "Testicular Torsion" },
+                    { key: "hodenkrebs", labelDe: "Hodenkrebs", labelEn: "Testicular Cancer" },
+                    { key: "varikozele", labelDe: "Varikozele (Krampfadern)", labelEn: "Varicocele" },
+                    { key: "hydrozele", labelDe: "Hydrozele (Wasserbruch)", labelEn: "Hydrocele" },
+                  ].map((option) => (
+                    <div key={option.key} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={getNestedBoolean("hoden", option.key)}
+                        onCheckedChange={(checked) => updateNestedField("hoden", option.key, !!checked)}
+                      />
+                      <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
                     </div>
-                    <Input
-                      placeholder={language === "de" ? "Sonstiges (bitte beschreiben)" : "Other (please describe)"}
-                      value={formData.maennergesundheit?.hoden?.sonstige || ""}
-                      onChange={(e) => updateNestedField("hoden", "sonstige", e.target.value)}
-                    />
-                  </div>
-                )}
+                  ))}
+                </div>
+                <Input
+                  placeholder={language === "de" ? "Sonstiges (bitte beschreiben)" : "Other (please describe)"}
+                  value={formData.maennergesundheit?.hoden?.sonstige || ""}
+                  onChange={(e) => updateNestedField("hoden", "sonstige", e.target.value)}
+                />
               </div>
-            </div>
+            )}
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+        </div>
+      </div>
 
       <Separator />
 
       {/* Nebenhoden */}
-      <Collapsible open={expandedSections.nebenhoden} onOpenChange={() => toggleSection('nebenhoden')}>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
-            <span className="font-medium">{language === "de" ? "🟠 Nebenhodenerkrankungen" : "🟠 Epididymal Diseases"}</span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.nebenhoden ? 'rotate-180' : ''}`} />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-4 pt-4">
-          <div className="border rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="nebenhoden"
-                checked={formData.maennergesundheit?.nebenhoden?.ja || false}
-                onCheckedChange={(checked) => updateNestedField("nebenhoden", "ja", checked)}
-              />
-              <div className="space-y-2 flex-1">
-                <Label htmlFor="nebenhoden">
-                  {language === "de" ? "Nebenhodenerkrankung" : "Epididymal Disease"}
-                </Label>
-                {formData.maennergesundheit?.nebenhoden?.ja && (
-                  <div className="space-y-3 mt-2">
-                    <Input
-                      placeholder={language === "de" ? "Jahr" : "Year"}
-                      value={formData.maennergesundheit?.nebenhoden?.jahr || ""}
-                      onChange={(e) => updateNestedField("nebenhoden", "jahr", e.target.value)}
-                      className="w-32"
-                    />
-                    <div className="flex flex-wrap gap-4">
-                      {[
-                        { key: "epididymitis", labelDe: "Nebenhodenentzündung (Epididymitis)", labelEn: "Epididymitis" },
-                        { key: "nebenhodenzyste", labelDe: "Nebenhodenzyste (Spermatozele)", labelEn: "Spermatocele" },
-                      ].map((option) => (
-                        <div key={option.key} className="flex items-center gap-2">
-                          <Checkbox
-                            checked={getNestedBoolean("nebenhoden", option.key)}
-                            onCheckedChange={(checked) => updateNestedField("nebenhoden", option.key, !!checked)}
-                          />
-                          <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
-                        </div>
-                      ))}
+      <div className="border rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="nebenhoden-ja"
+            checked={formData.maennergesundheit?.nebenhoden?.ja || false}
+            onCheckedChange={(checked) => updateNestedField("nebenhoden", "ja", checked)}
+          />
+          <div className="space-y-2 flex-1">
+            <Label htmlFor="nebenhoden-ja" className="text-lg font-medium cursor-pointer">
+              {language === "de" ? "🟠 Nebenhodenerkrankungen" : "🟠 Epididymal Diseases"}
+            </Label>
+            {formData.maennergesundheit?.nebenhoden?.ja && (
+              <div className="space-y-4 mt-4 pl-2 border-l-2 border-primary/20">
+                <Input
+                  placeholder={language === "de" ? "Jahr" : "Year"}
+                  value={formData.maennergesundheit?.nebenhoden?.jahr || ""}
+                  onChange={(e) => updateNestedField("nebenhoden", "jahr", e.target.value)}
+                  className="w-32"
+                />
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { key: "epididymitis", labelDe: "Nebenhodenentzündung (Epididymitis)", labelEn: "Epididymitis" },
+                    { key: "nebenhodenzyste", labelDe: "Nebenhodenzyste (Spermatozele)", labelEn: "Spermatocele" },
+                  ].map((option) => (
+                    <div key={option.key} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={getNestedBoolean("nebenhoden", option.key)}
+                        onCheckedChange={(checked) => updateNestedField("nebenhoden", option.key, !!checked)}
+                      />
+                      <Label className="font-normal text-sm">{language === "de" ? option.labelDe : option.labelEn}</Label>
                     </div>
-                    <Input
-                      placeholder={language === "de" ? "Sonstiges (bitte beschreiben)" : "Other (please describe)"}
-                      value={formData.maennergesundheit?.nebenhoden?.sonstige || ""}
-                      onChange={(e) => updateNestedField("nebenhoden", "sonstige", e.target.value)}
-                    />
-                  </div>
-                )}
+                  ))}
+                </div>
+                <Input
+                  placeholder={language === "de" ? "Sonstiges (bitte beschreiben)" : "Other (please describe)"}
+                  value={formData.maennergesundheit?.nebenhoden?.sonstige || ""}
+                  onChange={(e) => updateNestedField("nebenhoden", "sonstige", e.target.value)}
+                />
               </div>
-            </div>
+            )}
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+        </div>
+      </div>
 
       <Separator />
 
@@ -242,21 +203,23 @@ const MensHealthSection = ({ formData, updateFormData }: MensHealthSectionProps)
       <div className="border rounded-lg p-4">
         <div className="flex items-start gap-3">
           <Checkbox
-            id="erektionsstoerung"
+            id="erektionsstoerung-ja"
             checked={formData.maennergesundheit?.erektionsstoerung?.ja || false}
             onCheckedChange={(checked) => updateNestedField("erektionsstoerung", "ja", checked)}
           />
           <div className="space-y-2 flex-1">
-            <Label htmlFor="erektionsstoerung">
+            <Label htmlFor="erektionsstoerung-ja" className="text-lg font-medium cursor-pointer">
               {language === "de" ? "Erektionsstörung" : "Erectile Dysfunction"}
             </Label>
             {formData.maennergesundheit?.erektionsstoerung?.ja && (
-              <Input
-                placeholder={language === "de" ? "Seit wann?" : "Since when?"}
-                value={formData.maennergesundheit?.erektionsstoerung?.seit || ""}
-                onChange={(e) => updateNestedField("erektionsstoerung", "seit", e.target.value)}
-                className="w-48 mt-2"
-              />
+              <div className="mt-4 pl-2 border-l-2 border-primary/20">
+                <Input
+                  placeholder={language === "de" ? "Seit wann?" : "Since when?"}
+                  value={formData.maennergesundheit?.erektionsstoerung?.seit || ""}
+                  onChange={(e) => updateNestedField("erektionsstoerung", "seit", e.target.value)}
+                  className="w-48"
+                />
+              </div>
             )}
           </div>
         </div>

@@ -168,7 +168,7 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
             <Label htmlFor="datenschutzEinwilligung" className="font-medium cursor-pointer">
               {language === "de" ? (
                 <>
-                  Ich erlaube, dass meine Gesundheitsdaten (inkl. Messungen Metatron/Vieva Pro/EAV/Trikombin) für meine Behandlung gespeichert werden. E-Mail-Kommunikation (Rechnungen, Termine, Fragen, Anfragen für eine Bewertung) ist ok. Ich habe die{" "}
+                  Ich erlaube, dass meine Gesundheitsdaten für meine Behandlung gespeichert werden. E-Mail-Kommunikation (Rechnungen, Termine, Fragen, Anfragen für eine Bewertung) ist ok. Ich habe die{" "}
                   <Link 
                     to="/datenschutz" 
                     target="_blank" 
@@ -181,7 +181,7 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
                 </>
               ) : (
                 <>
-                  I allow my health data (including Metatron/Vieva Pro/EAV/Trikombin measurements) to be stored for my treatment. Email communication (invoices, appointments, questions, review requests) is acceptable. I have read and agree to the{" "}
+                  I allow my health data to be stored for my treatment. Email communication (invoices, appointments, questions, review requests) is acceptable. I have read and agree to the{" "}
                   <Link 
                     to="/datenschutz" 
                     target="_blank" 
