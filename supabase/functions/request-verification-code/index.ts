@@ -86,7 +86,7 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
   `;
 
   // Call the HTTPS relay endpoint on the user's server
-  const relayUrl = "https://rauch-heilpraktiker.de/api/send-email.php";
+  const relayUrl = "https://rauch-heilpraktiker.de/mail-relay.php";
   
   const response = await fetch(relayUrl, {
     method: "POST",
