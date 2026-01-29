@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -10,6 +10,15 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Development bypass: Add ?dev=true to URL to skip authentication
+  const devBypass = searchParams.get('dev') === 'true';
+
+  if (devBypass) {
+    console.log('🔓 Development mode: Authentication bypassed');
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
