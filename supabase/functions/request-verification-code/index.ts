@@ -1,20 +1,63 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface VerificationRequest {
-  email: string;
-  type: "login" | "registration" | "password_reset";
-  /** Only required for registration */
-  password?: string;
-  /** For login 2FA after password auth */
-  userId?: string;
+// Input validation schema
+const verificationRequestSchema = z.object({
+  email: z.string()
+    .email("Ungültige E-Mail-Adresse")
+    .max(255, "E-Mail-Adresse zu lang")
+    .transform(val => val.trim().toLowerCase()),
+  type: z.enum(["login", "registration", "password_reset"], {
+    errorMap: () => ({ message: "Ungültiger Anfrage-Typ" })
+  }),
+  password: z.string()
+    .min(8, "Passwort muss mindestens 8 Zeichen lang sein")
+    .max(128, "Passwort zu lang")
+    .optional(),
+  userId: z.string()
+    .uuid("Ungültige Benutzer-ID")
+    .optional(),
+});
+
+type VerificationRequest = z.infer<typeof verificationRequestSchema>;
+
+// Simple in-memory rate limiting (per function instance)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_REQUESTS_PER_WINDOW = 5;
+
+function checkRateLimit(identifier: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
 }
 
+// Clean up old entries periodically
+function cleanupRateLimitMap() {
+  const now = Date.now();
+  for (const [key, value] of rateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -23,7 +66,7 @@ function generateCode(): string {
 async function sendVerificationEmail(email: string, code: string, type: "login" | "registration" | "password_reset"): Promise<void> {
   const relaySecret = Deno.env.get("RELAY_SECRET");
   if (!relaySecret) {
-    throw new Error("RELAY_SECRET is not configured");
+    throw new Error("Email service not configured");
   }
 
   let subject: string;
@@ -85,12 +128,9 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
     </html>
   `;
 
-  // Call the HTTPS relay endpoint on the user's server
   const relayUrl = "https://rauch-heilpraktiker.de/mail-relay.php";
 
-  // Debug: make it unmistakable which recipient the relay received.
-  // This is safe (contains no secrets) and helps to diagnose server-side rewriting.
-  console.log(`[relay] sending ${type} code to: ${email}`);
+  console.log(`[relay] sending ${type} code`);
   
   const response = await fetch(relayUrl, {
     method: "POST",
@@ -104,9 +144,7 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
       html: htmlContent,
       from: "info@rauch-heilpraktiker.de",
       meta: {
-        intended_to: email,
         type,
-        // helps verify correct script deployment on server
         source: "lovable-cloud-request-verification-code",
       },
     }),
@@ -114,58 +152,78 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
 
   const responseText = await response.text();
   
-  // Check if response is HTML (error page) instead of JSON
   if (responseText.trim().startsWith("<!DOCTYPE") || responseText.trim().startsWith("<html")) {
-    console.error("Relay returned HTML instead of JSON - likely 404 or server error");
-    throw new Error("Email relay endpoint not found. Please install the PHP script on your server.");
+    console.error("Relay returned HTML instead of JSON");
+    throw new Error("Email service temporarily unavailable");
   }
 
   if (!response.ok) {
-    console.error("Relay error:", response.status, responseText);
-    throw new Error(`Email relay failed: ${response.status}`);
+    console.error("Relay error:", response.status);
+    throw new Error("Email service error");
   }
 
   let result;
   try {
     result = JSON.parse(responseText);
-  } catch (parseError) {
-    console.error("Failed to parse relay response:", responseText);
-    throw new Error("Invalid response from email relay");
+  } catch {
+    console.error("Failed to parse relay response");
+    throw new Error("Email service response error");
   }
 
-  console.log("[relay] response:", result);
-  
   if (!result.success) {
-    throw new Error(result.error || "Email relay returned failure");
+    throw new Error("Email delivery failed");
   }
 
-  console.log(`Email sent via relay to ${email}`);
+  console.log("Email sent successfully");
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  // Periodic cleanup
+  cleanupRateLimitMap();
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const {
-      email: rawEmail,
-      type,
-      password,
-      userId: providedUserId,
-    }: VerificationRequest = await req.json();
+    // Parse and validate request body
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Ungültiges Anfrageformat" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    const email = (rawEmail || "").trim().toLowerCase();
+    const parseResult = verificationRequestSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Ungültige Eingabe";
+      console.error("Validation error:", parseResult.error.errors);
+      return new Response(
+        JSON.stringify({ error: firstError }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    if (!email) {
-      throw new Error("Email is required");
+    const { email, type, password, userId: providedUserId } = parseResult.data;
+
+    // Rate limiting check
+    const rateLimitKey = `${email}:${type}`;
+    if (!checkRateLimit(rateLimitKey)) {
+      console.warn(`Rate limit exceeded for ${rateLimitKey}`);
+      return new Response(
+        JSON.stringify({ error: "Zu viele Anfragen. Bitte warten Sie 15 Minuten." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Resolve userId by email using the profiles table (avoids unreliable listUsers scanning)
+    // Resolve userId by email using the profiles table
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("user_id")
@@ -174,7 +232,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (profileError) {
       console.error("profile lookup error:", profileError);
-      throw new Error("Benutzerprüfung fehlgeschlagen");
+      throw new Error("User verification failed");
     }
 
     const existingUserId = profile?.user_id || null;
@@ -182,7 +240,6 @@ const handler = async (req: Request): Promise<Response> => {
     let userId: string;
 
     if (type === "login") {
-      // After password sign-in, frontend should provide the userId; fallback to profile lookup.
       userId = providedUserId || existingUserId || "";
       if (!userId) {
         return new Response(
@@ -214,14 +271,14 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (createError || !created?.user?.id) {
         console.error("createUser error:", createError);
-        const msg = createError?.message || "Registrierung fehlgeschlagen";
-        if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("registered")) {
+        if (createError?.message?.toLowerCase().includes("already") || 
+            createError?.message?.toLowerCase().includes("registered")) {
           return new Response(
             JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
             { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
           );
         }
-        throw new Error(msg);
+        throw new Error("Registration failed");
       }
 
       userId = created.user.id;
@@ -235,7 +292,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
       userId = existingUserId;
     } else {
-      throw new Error("Invalid type");
+      throw new Error("Invalid request type");
     }
 
     // Generate 6-digit code
@@ -267,7 +324,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send verification email
     await sendVerificationEmail(email, code, type);
 
-    console.log(`Verification code sent to ${email} for ${type}`);
+    console.log(`Verification code sent for ${type}`);
 
     return new Response(
       JSON.stringify({
@@ -277,10 +334,11 @@ const handler = async (req: Request): Promise<Response> => {
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error requesting verification code:", error);
+    // Return generic error message to prevent information leakage
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut." }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
