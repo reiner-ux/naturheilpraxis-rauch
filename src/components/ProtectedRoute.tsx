@@ -12,11 +12,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // Development bypass: Add ?dev=true to URL to skip authentication
-  const devBypass = searchParams.get('dev') === 'true';
+  // Development bypass: Only available in development mode
+  // Add ?dev=true to URL to skip authentication during local development
+  const devBypass = import.meta.env.DEV && searchParams.get('dev') === 'true';
 
   if (devBypass) {
-    console.log('🔓 Development mode: Authentication bypassed');
+    // Development mode bypass - only works in non-production builds
     return <>{children}</>;
   }
 

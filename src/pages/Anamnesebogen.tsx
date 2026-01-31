@@ -141,7 +141,7 @@ const Anamnesebogen = () => {
       return;
     }
     
-    console.log("Anamnesebogen Daten:", formData);
+    // Form data is handled securely - no logging of sensitive medical information
     toast.success(
       language === "de" ? "Anamnesebogen erfolgreich gesendet!" : "Medical history form submitted successfully!", 
       {
