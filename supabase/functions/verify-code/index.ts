@@ -1,29 +1,107 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface VerifyCodeRequest {
-  email: string;
-  code: string;
-  type: "login" | "registration" | "password_reset";
-  password?: string; // Required for registration
-  newPassword?: string; // Required for password_reset
+// Input validation schema
+const verifyCodeSchema = z.object({
+  email: z.string()
+    .email("Ungültige E-Mail-Adresse")
+    .max(255, "E-Mail-Adresse zu lang")
+    .transform(val => val.trim().toLowerCase()),
+  code: z.string()
+    .length(6, "Code muss 6 Ziffern haben")
+    .regex(/^\d{6}$/, "Code muss aus 6 Ziffern bestehen"),
+  type: z.enum(["login", "registration", "password_reset"], {
+    errorMap: () => ({ message: "Ungültiger Anfrage-Typ" })
+  }),
+  password: z.string()
+    .min(8, "Passwort muss mindestens 8 Zeichen lang sein")
+    .max(128, "Passwort zu lang")
+    .optional(),
+  newPassword: z.string()
+    .min(8, "Neues Passwort muss mindestens 8 Zeichen lang sein")
+    .max(128, "Passwort zu lang")
+    .optional(),
+});
+
+type VerifyCodeRequest = z.infer<typeof verifyCodeSchema>;
+
+// Rate limiting for verification attempts (prevents brute force)
+const verifyAttemptMap = new Map<string, { count: number; resetTime: number }>();
+const VERIFY_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_VERIFY_ATTEMPTS_PER_WINDOW = 10;
+
+function checkVerifyRateLimit(identifier: string): boolean {
+  const now = Date.now();
+  const record = verifyAttemptMap.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    verifyAttemptMap.set(identifier, { count: 1, resetTime: now + VERIFY_RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  
+  if (record.count >= MAX_VERIFY_ATTEMPTS_PER_WINDOW) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+}
+
+function cleanupVerifyAttemptMap() {
+  const now = Date.now();
+  for (const [key, value] of verifyAttemptMap.entries()) {
+    if (now > value.resetTime) {
+      verifyAttemptMap.delete(key);
+    }
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  // Periodic cleanup
+  cleanupVerifyAttemptMap();
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, code, type, password, newPassword }: VerifyCodeRequest = await req.json();
+    // Parse and validate request body
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Ungültiges Anfrageformat" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    if (!email || !code) {
-      throw new Error("Email and code are required");
+    const parseResult = verifyCodeSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0]?.message || "Ungültige Eingabe";
+      console.error("Validation error:", parseResult.error.errors);
+      return new Response(
+        JSON.stringify({ error: firstError }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { email, code, type, newPassword } = parseResult.data;
+
+    // Rate limiting check for verification attempts
+    const rateLimitKey = `verify:${email}`;
+    if (!checkVerifyRateLimit(rateLimitKey)) {
+      console.warn(`Verify rate limit exceeded for ${email}`);
+      return new Response(
+        JSON.stringify({ error: "Zu viele Versuche. Bitte warten Sie eine Stunde." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -32,16 +110,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (type === "registration") {
       // Resolve userId via profiles table
-      const normalizedEmail = email.trim().toLowerCase();
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("user_id")
-        .eq("email", normalizedEmail)
+        .eq("email", email)
         .maybeSingle();
 
       if (profileError) {
         console.error("profile lookup error:", profileError);
-        throw new Error("Benutzerprüfung fehlgeschlagen");
+        throw new Error("User verification failed");
       }
 
       if (!profile?.user_id) {
@@ -84,7 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
         throw confirmError;
       }
 
-      console.log(`User verified successfully: ${normalizedEmail}`);
+      console.log("User verified successfully");
 
       return new Response(
         JSON.stringify({
@@ -96,16 +173,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
     } else if (type === "login") {
-      const normalizedEmail = email.trim().toLowerCase();
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("user_id")
-        .eq("email", normalizedEmail)
+        .eq("email", email)
         .maybeSingle();
 
       if (profileError) {
         console.error("profile lookup error:", profileError);
-        throw new Error("Benutzerprüfung fehlgeschlagen");
+        throw new Error("User verification failed");
       }
 
       if (!profile?.user_id) {
@@ -142,7 +218,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Generate a magic link for sign-in
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
-        email: normalizedEmail,
+        email: email,
       });
 
       if (linkError) {
@@ -151,7 +227,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       const token = linkData.properties.hashed_token;
 
-      console.log(`2FA verified successfully for ${normalizedEmail}`);
+      console.log("2FA verified successfully");
 
       return new Response(
         JSON.stringify({
@@ -164,16 +240,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
     } else if (type === "password_reset") {
-      const normalizedEmail = email.trim().toLowerCase();
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("user_id")
-        .eq("email", normalizedEmail)
+        .eq("email", email)
         .maybeSingle();
 
       if (profileError) {
         console.error("profile lookup error:", profileError);
-        throw new Error("Benutzerprüfung fehlgeschlagen");
+        throw new Error("User verification failed");
       }
 
       if (!profile?.user_id) {
@@ -223,7 +298,7 @@ const handler = async (req: Request): Promise<Response> => {
         throw updateError;
       }
 
-      console.log(`Password reset successfully for ${normalizedEmail}`);
+      console.log("Password reset successfully");
 
       return new Response(
         JSON.stringify({
@@ -234,12 +309,13 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
     } else {
-      throw new Error("Invalid type");
+      throw new Error("Invalid request type");
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error verifying code:", error);
+    // Return generic error message to prevent information leakage
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut." }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
