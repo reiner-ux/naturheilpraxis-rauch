@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen } from "lucide-react";
+import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -24,6 +24,13 @@ const infothekItems: InfothekItem[] = [
     href: "/krankheit-ist-messbar.html",
     icon: Zap,
     description: { de: "Physikalische Grundlagen der Frequenztherapie", en: "Physical foundations of frequency therapy" },
+    external: true,
+  },
+  {
+    label: { de: "Diamond Shield Zapper", en: "Diamond Shield Zapper" },
+    href: "/zapper-diamond-shield.html",
+    icon: Radio,
+    description: { de: "Frequenzgerät für Wellness und Erfahrungsheilkunde", en: "Frequency device for wellness" },
     external: true,
   },
   {
