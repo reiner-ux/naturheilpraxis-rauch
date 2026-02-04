@@ -1,9 +1,16 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
+import MultiSelectCheckbox from "./shared/MultiSelectCheckbox";
+import {
+  foodAllergens,
+  medicationAllergens,
+  contactAllergens,
+} from "@/lib/medicalOptions";
+import { Apple, Pill, Hand, Wind } from "lucide-react";
 
 interface AllergiesSectionProps {
   formData: AnamneseFormData;
@@ -34,7 +41,8 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
     <div className="space-y-8">
       {/* Inhalationsallergien */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Wind className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Inhalationsallergien" : "Inhalation Allergies"}
         </h3>
 
@@ -52,10 +60,10 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
           {formData.allergien?.inhalation?.ja && (
             <div className="flex flex-wrap gap-4 pl-6">
               {[
-                { field: "pollen", labelDe: "Pollen", labelEn: "Pollen" },
-                { field: "staub", labelDe: "Hausstaub", labelEn: "House dust" },
-                { field: "tierhaare", labelDe: "Tierhaare", labelEn: "Animal hair" },
-                { field: "schimmel", labelDe: "Schimmel", labelEn: "Mold" },
+                { field: "pollen", labelDe: "Pollen 🌸", labelEn: "Pollen 🌸" },
+                { field: "staub", labelDe: "Hausstaub 🏠", labelEn: "House dust 🏠" },
+                { field: "tierhaare", labelDe: "Tierhaare 🐱", labelEn: "Animal hair 🐱" },
+                { field: "schimmel", labelDe: "Schimmel 🍄", labelEn: "Mold 🍄" },
               ].map((option) => (
                 <div key={option.field} className="flex items-center space-x-2">
                   <Checkbox
@@ -84,16 +92,16 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
             onCheckedChange={(checked) => updateNestedField("tierepithelien", "ja", checked)}
           />
           <Label htmlFor="tierepithelien" className="text-lg font-medium">
-            {language === "de" ? "Tierepithelien-Allergie" : "Animal Epithelium Allergy"}
+            {language === "de" ? "Tierepithelien-Allergie 🐕" : "Animal Epithelium Allergy 🐕"}
           </Label>
         </div>
         {formData.allergien?.tierepithelien?.ja && (
           <div className="space-y-4 pl-6">
             <div className="flex flex-wrap gap-4">
               {[
-                { field: "hund", labelDe: "Hund", labelEn: "Dog" },
-                { field: "katze", labelDe: "Katze", labelEn: "Cat" },
-                { field: "pferd", labelDe: "Pferd", labelEn: "Horse" },
+                { field: "hund", labelDe: "Hund 🐕", labelEn: "Dog 🐕" },
+                { field: "katze", labelDe: "Katze 🐱", labelEn: "Cat 🐱" },
+                { field: "pferd", labelDe: "Pferd 🐴", labelEn: "Horse 🐴" },
               ].map((option) => (
                 <div key={option.field} className="flex items-center space-x-2">
                   <Checkbox
@@ -127,17 +135,25 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
             checked={formData.allergien?.nahrungsmittel?.ja || false}
             onCheckedChange={(checked) => updateNestedField("nahrungsmittel", "ja", checked)}
           />
-          <Label htmlFor="nahrungsmittel" className="text-lg font-medium">
+          <Label htmlFor="nahrungsmittel" className="text-lg font-medium flex items-center gap-2">
+            <Apple className="w-5 h-5 text-muted-foreground" />
             {language === "de" ? "Nahrungsmittelallergie" : "Food Allergy"}
           </Label>
         </div>
         {formData.allergien?.nahrungsmittel?.ja && (
-          <Input
-            className="pl-6 max-w-md"
-            placeholder={language === "de" ? "Welche Nahrungsmittel?" : "Which foods?"}
-            value={formData.allergien?.nahrungsmittel?.details || ""}
-            onChange={(e) => updateNestedField("nahrungsmittel", "details", e.target.value)}
-          />
+          <div className="pl-6 space-y-3">
+            <MultiSelectCheckbox
+              options={foodAllergens}
+              selectedValues={formData.allergien?.nahrungsmittel?.allergene || []}
+              onChange={(values) => updateNestedField("nahrungsmittel", "allergene", values)}
+              allowOther={true}
+              otherValue={formData.allergien?.nahrungsmittel?.details || ""}
+              onOtherChange={(value) => updateNestedField("nahrungsmittel", "details", value)}
+              otherPlaceholderDe="Andere Nahrungsmittel..."
+              otherPlaceholderEn="Other foods..."
+              columns={3}
+            />
+          </div>
         )}
       </div>
 
@@ -149,23 +165,31 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
             checked={formData.allergien?.medikamente?.ja || false}
             onCheckedChange={(checked) => updateNestedField("medikamente", "ja", checked)}
           />
-          <Label htmlFor="medikamente" className="text-lg font-medium">
+          <Label htmlFor="medikamente" className="text-lg font-medium flex items-center gap-2">
+            <Pill className="w-5 h-5 text-muted-foreground" />
             {language === "de" ? "Medikamentenallergie" : "Drug Allergy"}
           </Label>
         </div>
         {formData.allergien?.medikamente?.ja && (
-          <Input
-            className="pl-6 max-w-md"
-            placeholder={language === "de" ? "Welche Medikamente?" : "Which medications?"}
-            value={formData.allergien?.medikamente?.details || ""}
-            onChange={(e) => updateNestedField("medikamente", "details", e.target.value)}
-          />
+          <div className="pl-6 space-y-3">
+            <MultiSelectCheckbox
+              options={medicationAllergens}
+              selectedValues={formData.allergien?.medikamente?.allergene || []}
+              onChange={(values) => updateNestedField("medikamente", "allergene", values)}
+              allowOther={true}
+              otherValue={formData.allergien?.medikamente?.details || ""}
+              onOtherChange={(value) => updateNestedField("medikamente", "details", value)}
+              otherPlaceholderDe="Andere Medikamente..."
+              otherPlaceholderEn="Other medications..."
+              columns={2}
+            />
+          </div>
         )}
       </div>
 
       <Separator />
 
-      {/* Kontaktallergien */}
+      {/* Kontaktallergien - Erweitert */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
           <Checkbox
@@ -173,34 +197,23 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
             checked={formData.allergien?.kontakt?.ja || false}
             onCheckedChange={(checked) => updateNestedField("kontakt", "ja", checked)}
           />
-          <Label htmlFor="kontakt" className="text-lg font-medium">
+          <Label htmlFor="kontakt" className="text-lg font-medium flex items-center gap-2">
+            <Hand className="w-5 h-5 text-muted-foreground" />
             {language === "de" ? "Kontaktallergie" : "Contact Allergy"}
           </Label>
         </div>
         {formData.allergien?.kontakt?.ja && (
-          <div className="space-y-4 pl-6">
-            <div className="flex flex-wrap gap-4">
-              {[
-                { field: "nickel", labelDe: "Nickel", labelEn: "Nickel" },
-                { field: "latex", labelDe: "Latex", labelEn: "Latex" },
-              ].map((option) => (
-                <div key={option.field} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`kontakt-${option.field}`}
-                    checked={!!formData.allergien?.kontakt?.[option.field as keyof typeof formData.allergien.kontakt]}
-                    onCheckedChange={(checked) => updateNestedField("kontakt", option.field, checked)}
-                  />
-                  <Label htmlFor={`kontakt-${option.field}`} className="font-normal text-sm">
-                    {language === "de" ? option.labelDe : option.labelEn}
-                  </Label>
-                </div>
-              ))}
-            </div>
-            <Input
-              placeholder={language === "de" ? "Sonstige Kontaktallergien" : "Other contact allergies"}
-              value={formData.allergien?.kontakt?.sonstige || ""}
-              onChange={(e) => updateNestedField("kontakt", "sonstige", e.target.value)}
-              className="max-w-md"
+          <div className="pl-6 space-y-3">
+            <MultiSelectCheckbox
+              options={contactAllergens}
+              selectedValues={formData.allergien?.kontakt?.allergene || []}
+              onChange={(values) => updateNestedField("kontakt", "allergene", values)}
+              allowOther={true}
+              otherValue={formData.allergien?.kontakt?.sonstige || ""}
+              onOtherChange={(value) => updateNestedField("kontakt", "sonstige", value)}
+              otherPlaceholderDe="Andere Kontaktallergene..."
+              otherPlaceholderEn="Other contact allergens..."
+              columns={3}
             />
           </div>
         )}
@@ -224,7 +237,7 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
                 onCheckedChange={(checked) => updateNestedField("laktose", "ja", checked)}
               />
               <Label htmlFor="laktose">
-                {language === "de" ? "Laktoseintoleranz" : "Lactose intolerance"}
+                {language === "de" ? "Laktoseintoleranz 🥛" : "Lactose intolerance 🥛"}
               </Label>
             </div>
             {formData.allergien?.laktose?.ja && (
@@ -258,7 +271,7 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
                 onCheckedChange={(checked) => updateNestedField("gluten", "ja", checked)}
               />
               <Label htmlFor="gluten">
-                {language === "de" ? "Glutenunverträglichkeit" : "Gluten intolerance"}
+                {language === "de" ? "Glutenunverträglichkeit 🌾" : "Gluten intolerance 🌾"}
               </Label>
             </div>
             {formData.allergien?.gluten?.ja && (
@@ -286,7 +299,7 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
                 onCheckedChange={(checked) => updateNestedField("fruktose", "ja", checked)}
               />
               <Label htmlFor="fruktose">
-                {language === "de" ? "Fruktoseintoleranz" : "Fructose intolerance"}
+                {language === "de" ? "Fruktoseintoleranz 🍎" : "Fructose intolerance 🍎"}
               </Label>
             </div>
             {formData.allergien?.fruktose?.ja && (

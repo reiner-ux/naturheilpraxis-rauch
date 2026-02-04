@@ -1,10 +1,27 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle } from "lucide-react";
+import MultiSelectCheckbox from "./shared/MultiSelectCheckbox";
+import YearMonthSelect from "./shared/YearMonthSelect";
+import MultiEntryField from "./shared/MultiEntryField";
+import {
+  cancerTypes,
+  organs,
+  tumorTherapies,
+  chemotherapyTypes,
+  radiotherapyReasons,
+} from "@/lib/medicalOptions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CancerSectionProps {
   formData: AnamneseFormData;
@@ -40,6 +57,11 @@ const CancerSection = ({ formData, updateFormData }: CancerSectionProps) => {
       }
     });
   };
+
+  // Get birth year for year validation
+  const birthYear = formData.geburtsdatum 
+    ? new Date(formData.geburtsdatum).getFullYear() 
+    : undefined;
 
   return (
     <div className="space-y-8">
@@ -77,38 +99,52 @@ const CancerSection = ({ formData, updateFormData }: CancerSectionProps) => {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="welche">
-                  {language === "de" ? "Art der Krebserkrankung" : "Type of cancer"}
-                </Label>
+                <Label>{language === "de" ? "Art der Krebserkrankung" : "Type of cancer"}</Label>
+                <Select
+                  value={formData.krebserkrankung?.welcheTyp || ""}
+                  onValueChange={(value) => updateKrebserkrankung("welcheTyp", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={language === "de" ? "Bitte auswählen" : "Please select"} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {cancerTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {language === "de" ? type.labelDe : type.labelEn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
-                  id="welche"
+                  placeholder={language === "de" ? "Oder Freitext-Eingabe" : "Or free text entry"}
                   value={formData.krebserkrankung?.welche || ""}
                   onChange={(e) => updateKrebserkrankung("welche", e.target.value)}
-                  placeholder={language === "de" ? "z.B. Brustkrebs, Prostatakrebs" : "e.g. Breast cancer, Prostate cancer"}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="diagnoseJahr">
-                  {language === "de" ? "Jahr der Erstdiagnose" : "Year of initial diagnosis"}
-                </Label>
-                <Input
-                  id="diagnoseJahr"
-                  value={formData.krebserkrankung?.diagnoseJahr || ""}
-                  onChange={(e) => updateKrebserkrankung("diagnoseJahr", e.target.value)}
-                  placeholder="z.B. 2020"
+                <Label>{language === "de" ? "Jahr der Erstdiagnose" : "Year of initial diagnosis"}</Label>
+                <YearMonthSelect
+                  yearValue={formData.krebserkrankung?.diagnoseJahr || ""}
+                  onYearChange={(value) => updateKrebserkrankung("diagnoseJahr", value)}
+                  showMonth={false}
+                  birthYear={birthYear}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="betroffeneOrgane">
-                {language === "de" ? "Betroffene Organe" : "Affected organs"}
-              </Label>
-              <Input
-                id="betroffeneOrgane"
-                value={formData.krebserkrankung?.betroffeneOrgane || ""}
-                onChange={(e) => updateKrebserkrankung("betroffeneOrgane", e.target.value)}
+              <Label>{language === "de" ? "Betroffene Organe" : "Affected organs"}</Label>
+              <MultiSelectCheckbox
+                options={organs}
+                selectedValues={formData.krebserkrankung?.betroffeneOrganeList || []}
+                onChange={(values) => updateKrebserkrankung("betroffeneOrganeList", values)}
+                allowOther={true}
+                otherValue={formData.krebserkrankung?.betroffeneOrgane || ""}
+                onOtherChange={(value) => updateKrebserkrankung("betroffeneOrgane", value)}
+                otherPlaceholderDe="Sonstige Organe..."
+                otherPlaceholderEn="Other organs..."
+                columns={4}
               />
             </div>
           </div>
@@ -129,30 +165,51 @@ const CancerSection = ({ formData, updateFormData }: CancerSectionProps) => {
             <div className="grid gap-4 grid-cols-3 max-w-md">
               <div className="space-y-2">
                 <Label htmlFor="tnm-t">T</Label>
-                <Input
-                  id="tnm-t"
+                <Select
                   value={formData.krebserkrankung?.tnmStadium?.t || ""}
-                  onChange={(e) => updateTNM("t", e.target.value)}
-                  placeholder="z.B. T2"
-                />
+                  onValueChange={(value) => updateTNM("t", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="T" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Tx", "T0", "Tis", "T1", "T2", "T3", "T4"].map((v) => (
+                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tnm-n">N</Label>
-                <Input
-                  id="tnm-n"
+                <Select
                   value={formData.krebserkrankung?.tnmStadium?.n || ""}
-                  onChange={(e) => updateTNM("n", e.target.value)}
-                  placeholder="z.B. N0"
-                />
+                  onValueChange={(value) => updateTNM("n", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="N" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Nx", "N0", "N1", "N2", "N3"].map((v) => (
+                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tnm-m">M</Label>
-                <Input
-                  id="tnm-m"
+                <Select
                   value={formData.krebserkrankung?.tnmStadium?.m || ""}
-                  onChange={(e) => updateTNM("m", e.target.value)}
-                  placeholder="z.B. M0"
-                />
+                  onValueChange={(value) => updateTNM("m", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="M" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Mx", "M0", "M1"].map((v) => (
+                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -165,28 +222,25 @@ const CancerSection = ({ formData, updateFormData }: CancerSectionProps) => {
               {language === "de" ? "Durchgeführte Behandlungen" : "Treatments Received"}
             </h3>
 
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="operationDurchgefuehrt"
-                  checked={formData.krebserkrankung?.operationDurchgefuehrt?.ja || false}
-                  onCheckedChange={(checked) => updateNestedField("operationDurchgefuehrt", "ja", checked)}
-                />
-                <Label htmlFor="operationDurchgefuehrt">
-                  {language === "de" ? "Operation" : "Surgery"}
-                </Label>
-              </div>
-              {formData.krebserkrankung?.operationDurchgefuehrt?.ja && (
-                <Input
-                  className="max-w-md pl-6"
-                  placeholder={language === "de" ? "Welche Operation?" : "Which surgery?"}
-                  value={formData.krebserkrankung?.operationDurchgefuehrt?.welche || ""}
-                  onChange={(e) => updateNestedField("operationDurchgefuehrt", "welche", e.target.value)}
-                />
-              )}
-            </div>
+            {/* Operations - Multiple */}
+            <MultiEntryField
+              entries={formData.krebserkrankung?.operationenList || []}
+              onChange={(entries) => updateKrebserkrankung("operationenList", entries)}
+              fields={[
+                { key: "jahr", labelDe: "Jahr", labelEn: "Year", type: "year" },
+                { key: "art", labelDe: "Art der Operation", labelEn: "Type of surgery", placeholderDe: "z.B. Tumorresektion", placeholderEn: "e.g. Tumor resection" },
+              ]}
+              titleDe="Operationen"
+              titleEn="Surgeries"
+              addLabelDe="Operation hinzufügen"
+              addLabelEn="Add surgery"
+              emptyTextDe="Keine Operationen eingetragen."
+              emptyTextEn="No surgeries recorded."
+              birthYear={birthYear}
+            />
 
-            <div className="space-y-4">
+            {/* Chemotherapy - Multiple */}
+            <div className="space-y-4 mt-6">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="chemotherapieErhalten"
@@ -194,31 +248,51 @@ const CancerSection = ({ formData, updateFormData }: CancerSectionProps) => {
                   onCheckedChange={(checked) => updateNestedField("chemotherapieErhalten", "ja", checked)}
                 />
                 <Label htmlFor="chemotherapieErhalten">
-                  {language === "de" ? "Chemotherapie" : "Chemotherapy"}
+                  {language === "de" ? "Chemotherapie erhalten" : "Received chemotherapy"}
                 </Label>
               </div>
               {formData.krebserkrankung?.chemotherapieErhalten?.ja && (
-                <div className="grid gap-4 md:grid-cols-3 pl-6">
-                  <Input
-                    placeholder={language === "de" ? "Von (Datum/Jahr)" : "From (date/year)"}
-                    value={formData.krebserkrankung?.chemotherapieErhalten?.von || ""}
-                    onChange={(e) => updateNestedField("chemotherapieErhalten", "von", e.target.value)}
-                  />
-                  <Input
-                    placeholder={language === "de" ? "Bis (Datum/Jahr)" : "To (date/year)"}
-                    value={formData.krebserkrankung?.chemotherapieErhalten?.bis || ""}
-                    onChange={(e) => updateNestedField("chemotherapieErhalten", "bis", e.target.value)}
-                  />
-                  <Input
-                    placeholder={language === "de" ? "Welche Medikamente?" : "Which medications?"}
-                    value={formData.krebserkrankung?.chemotherapieErhalten?.welche || ""}
-                    onChange={(e) => updateNestedField("chemotherapieErhalten", "welche", e.target.value)}
-                  />
+                <div className="space-y-4 pl-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{language === "de" ? "Von (Jahr)" : "From (year)"}</Label>
+                      <YearMonthSelect
+                        yearValue={formData.krebserkrankung?.chemotherapieErhalten?.von || ""}
+                        onYearChange={(value) => updateNestedField("chemotherapieErhalten", "von", value)}
+                        showMonth={false}
+                        birthYear={birthYear}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{language === "de" ? "Bis (Jahr)" : "To (year)"}</Label>
+                      <YearMonthSelect
+                        yearValue={formData.krebserkrankung?.chemotherapieErhalten?.bis || ""}
+                        onYearChange={(value) => updateNestedField("chemotherapieErhalten", "bis", value)}
+                        showMonth={false}
+                        birthYear={birthYear}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{language === "de" ? "Art der Chemotherapie" : "Type of chemotherapy"}</Label>
+                    <MultiSelectCheckbox
+                      options={chemotherapyTypes}
+                      selectedValues={formData.krebserkrankung?.chemotherapieErhalten?.typen || []}
+                      onChange={(values) => updateNestedField("chemotherapieErhalten", "typen", values)}
+                      allowOther={true}
+                      otherValue={formData.krebserkrankung?.chemotherapieErhalten?.welche || ""}
+                      onOtherChange={(value) => updateNestedField("chemotherapieErhalten", "welche", value)}
+                      otherPlaceholderDe="Andere Chemotherapie..."
+                      otherPlaceholderEn="Other chemotherapy..."
+                      columns={2}
+                    />
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="space-y-4">
+            {/* Strahlentherapie - Multiple */}
+            <div className="space-y-4 mt-6">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="strahlentherapieErhalten"
@@ -226,21 +300,41 @@ const CancerSection = ({ formData, updateFormData }: CancerSectionProps) => {
                   onCheckedChange={(checked) => updateNestedField("strahlentherapieErhalten", "ja", checked)}
                 />
                 <Label htmlFor="strahlentherapieErhalten">
-                  {language === "de" ? "Strahlentherapie" : "Radiation therapy"}
+                  {language === "de" ? "Strahlentherapie erhalten" : "Received radiation therapy"}
                 </Label>
               </div>
               {formData.krebserkrankung?.strahlentherapieErhalten?.ja && (
-                <div className="grid gap-4 md:grid-cols-2 pl-6">
-                  <Input
-                    placeholder={language === "de" ? "Bestrahlter Bereich" : "Irradiated area"}
-                    value={formData.krebserkrankung?.strahlentherapieErhalten?.bereich || ""}
-                    onChange={(e) => updateNestedField("strahlentherapieErhalten", "bereich", e.target.value)}
-                  />
-                  <Input
-                    placeholder={language === "de" ? "Dauer (Wochen)" : "Duration (weeks)"}
-                    value={formData.krebserkrankung?.strahlentherapieErhalten?.dauerWochen || ""}
-                    onChange={(e) => updateNestedField("strahlentherapieErhalten", "dauerWochen", e.target.value)}
-                  />
+                <div className="space-y-4 pl-6">
+                  <div className="space-y-2">
+                    <Label>{language === "de" ? "Art/Indikation der Strahlentherapie" : "Type/indication of radiotherapy"}</Label>
+                    <MultiSelectCheckbox
+                      options={radiotherapyReasons}
+                      selectedValues={formData.krebserkrankung?.strahlentherapieErhalten?.typen || []}
+                      onChange={(values) => updateNestedField("strahlentherapieErhalten", "typen", values)}
+                      allowOther={true}
+                      otherValue={formData.krebserkrankung?.strahlentherapieErhalten?.bereich || ""}
+                      onOtherChange={(value) => updateNestedField("strahlentherapieErhalten", "bereich", value)}
+                      otherPlaceholderDe="Bestrahlter Bereich..."
+                      otherPlaceholderEn="Irradiated area..."
+                      columns={2}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{language === "de" ? "Dauer (Wochen)" : "Duration (weeks)"}</Label>
+                    <Select
+                      value={formData.krebserkrankung?.strahlentherapieErhalten?.dauerWochen || ""}
+                      onValueChange={(value) => updateNestedField("strahlentherapieErhalten", "dauerWochen", value)}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder={language === "de" ? "Wochen" : "Weeks"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["1", "2", "3", "4", "5", "6", "7", "8", "10", "12", ">12"].map((w) => (
+                          <SelectItem key={w} value={w}>{w}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
             </div>
@@ -266,12 +360,20 @@ const CancerSection = ({ formData, updateFormData }: CancerSectionProps) => {
                 </Label>
               </div>
               {formData.krebserkrankung?.metastasen?.ja && (
-                <Input
-                  className="max-w-md pl-6"
-                  placeholder={language === "de" ? "In welchen Organen?" : "In which organs?"}
-                  value={formData.krebserkrankung?.metastasen?.organe || ""}
-                  onChange={(e) => updateNestedField("metastasen", "organe", e.target.value)}
-                />
+                <div className="pl-6 space-y-2">
+                  <Label>{language === "de" ? "Betroffene Organe" : "Affected organs"}</Label>
+                  <MultiSelectCheckbox
+                    options={organs}
+                    selectedValues={formData.krebserkrankung?.metastasen?.organeList || []}
+                    onChange={(values) => updateNestedField("metastasen", "organeList", values)}
+                    allowOther={true}
+                    otherValue={formData.krebserkrankung?.metastasen?.organe || ""}
+                    onOtherChange={(value) => updateNestedField("metastasen", "organe", value)}
+                    otherPlaceholderDe="Andere Organe..."
+                    otherPlaceholderEn="Other organs..."
+                    columns={4}
+                  />
+                </div>
               )}
             </div>
 
@@ -287,12 +389,20 @@ const CancerSection = ({ formData, updateFormData }: CancerSectionProps) => {
                 </Label>
               </div>
               {formData.krebserkrankung?.aktuelleTumortherapie?.ja && (
-                <Input
-                  className="max-w-md pl-6"
-                  placeholder={language === "de" ? "Welche Therapie?" : "Which therapy?"}
-                  value={formData.krebserkrankung?.aktuelleTumortherapie?.welche || ""}
-                  onChange={(e) => updateNestedField("aktuelleTumortherapie", "welche", e.target.value)}
-                />
+                <div className="pl-6 space-y-2">
+                  <Label>{language === "de" ? "Art der Therapie" : "Type of therapy"}</Label>
+                  <MultiSelectCheckbox
+                    options={tumorTherapies}
+                    selectedValues={formData.krebserkrankung?.aktuelleTumortherapie?.typen || []}
+                    onChange={(values) => updateNestedField("aktuelleTumortherapie", "typen", values)}
+                    allowOther={true}
+                    otherValue={formData.krebserkrankung?.aktuelleTumortherapie?.welche || ""}
+                    onOtherChange={(value) => updateNestedField("aktuelleTumortherapie", "welche", value)}
+                    otherPlaceholderDe="Andere Therapie..."
+                    otherPlaceholderEn="Other therapy..."
+                    columns={2}
+                  />
+                </div>
               )}
             </div>
           </div>
