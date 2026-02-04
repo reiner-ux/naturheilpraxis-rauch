@@ -22,11 +22,14 @@ export function Header() {
   const nav = translations.nav;
   const header = translations.header;
 
+  // Show Test link in non-production environments (preview + local dev)
+  const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('localhost');
+  
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
     { label: t(nav.anamnesis.de, nav.anamnesis.en), href: "/anamnesebogen" },
-    // Development-only test link for testing without login
-    ...(import.meta.env.DEV ? [{ label: "Test", href: "/anamnesebogen?dev=true" }] : []),
+    // Test link visible in preview and local dev, but NOT on published production site
+    ...(isNonProduction ? [{ label: "Test", href: "/anamnesebogen?dev=true" }] : []),
     { label: t(nav.privacy.de, nav.privacy.en), href: "/datenschutz" },
   ];
 
