@@ -14,6 +14,20 @@ interface PatientDataSectionProps {
 const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProps) => {
   const { language } = useLanguage();
 
+  const toggleInfoSource = (value: string, checked: boolean) => {
+    const current = Array.isArray(formData.informationsquelle) ? formData.informationsquelle : [];
+    const next = checked ? Array.from(new Set([...current, value])) : current.filter((v) => v !== value);
+    updateFormData("informationsquelle", next);
+  };
+
+  const sanitizeIntInRange = (raw: string, min: number, max: number) => {
+    const digitsOnly = raw.replace(/\D+/g, "");
+    if (!digitsOnly) return "";
+    const n = Number.parseInt(digitsOnly, 10);
+    if (Number.isNaN(n)) return "";
+    return String(Math.min(max, Math.max(min, n)));
+  };
+
   return (
     <div className="space-y-8">
       {/* A. Personalia */}
@@ -312,18 +326,40 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
             <Input 
               id="koerpergroesse" 
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              min={0}
+              max={210}
+              step={1}
+              list="height-options"
               value={formData.koerpergroesse} 
-              onChange={(e) => updateFormData("koerpergroesse", e.target.value)} 
+              onChange={(e) => updateFormData("koerpergroesse", sanitizeIntInRange(e.target.value, 0, 210))} 
             />
+            <datalist id="height-options">
+              {Array.from({ length: 211 }, (_, i) => (
+                <option key={i} value={i} />
+              ))}
+            </datalist>
           </div>
           <div className="space-y-2">
             <Label htmlFor="gewicht">{language === "de" ? "Gewicht (kg)" : "Weight (kg)"}</Label>
             <Input 
               id="gewicht" 
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              min={1}
+              max={200}
+              step={1}
+              list="weight-options"
               value={formData.gewicht} 
-              onChange={(e) => updateFormData("gewicht", e.target.value)} 
+              onChange={(e) => updateFormData("gewicht", sanitizeIntInRange(e.target.value, 1, 200))} 
             />
+            <datalist id="weight-options">
+              {Array.from({ length: 200 }, (_, i) => (
+                <option key={i + 1} value={i + 1} />
+              ))}
+            </datalist>
           </div>
           <div className="space-y-2">
             <Label>{language === "de" ? "BMI (berechnet)" : "BMI (calculated)"}</Label>
@@ -343,28 +379,33 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
         <h3 className="text-lg font-semibold mb-4">
           {language === "de" ? "F. Wie haben Sie unsere Praxis gefunden?" : "F. How did you find our practice?"}
         </h3>
-        <RadioGroup 
-          value={formData.informationsquelle} 
-          onValueChange={(value) => updateFormData("informationsquelle", value)}
-          className="grid gap-2 md:grid-cols-2"
-        >
+        <div className="grid gap-2 md:grid-cols-2">
           {[
             { value: "presse", labelDe: "Durch Presse/Internet", labelEn: "Through press/internet" },
             { value: "empfehlung", labelDe: "Durch Empfehlung", labelEn: "Through recommendation" },
+            { value: "bni", labelDe: "Durch eine BNI Empfehlung", labelEn: "Through a BNI recommendation" },
             { value: "telefonbuch", labelDe: "Telefonbuch/Branchenbuch", labelEn: "Phone book/directory" },
             { value: "suchmaschine", labelDe: "Suchmaschine", labelEn: "Search engine" },
             { value: "mundpropaganda", labelDe: "Mundpropaganda/Freunde", labelEn: "Word of mouth/friends" },
             { value: "andere", labelDe: "Andere", labelEn: "Other" },
-          ].map((option) => (
-            <div key={option.value} className="flex items-center space-x-2">
-              <RadioGroupItem value={option.value} id={option.value} />
-              <Label htmlFor={option.value} className="font-normal">
-                {language === "de" ? option.labelDe : option.labelEn}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
-        {formData.informationsquelle === "empfehlung" && (
+          ].map((option) => {
+            const checked = (formData.informationsquelle || []).includes(option.value);
+            return (
+              <div key={option.value} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`info-${option.value}`}
+                  checked={checked}
+                  onCheckedChange={(next) => toggleInfoSource(option.value, !!next)}
+                />
+                <Label htmlFor={`info-${option.value}`} className="font-normal">
+                  {language === "de" ? option.labelDe : option.labelEn}
+                </Label>
+              </div>
+            );
+          })}
+        </div>
+
+        {(formData.informationsquelle || []).includes("empfehlung") || (formData.informationsquelle || []).includes("bni") ? (
           <div className="mt-3 space-y-2">
             <Label htmlFor="empfehlungVon">{language === "de" ? "Von wem?" : "From whom?"}</Label>
             <Input 
@@ -373,7 +414,7 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
               onChange={(e) => updateFormData("empfehlungVon", e.target.value)} 
             />
           </div>
-        )}
+        ) : null}
       </div>
 
       <Separator />

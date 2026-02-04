@@ -73,7 +73,7 @@ export const initialFormData = {
   gewicht: "",
   
   // Informationsquelle
-  informationsquelle: "",
+  informationsquelle: [] as string[],
   empfehlungVon: "",
   
   // Vorbehandler
