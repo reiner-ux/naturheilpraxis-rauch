@@ -19,10 +19,20 @@ interface MedicalHistorySectionProps {
 const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySectionProps) => {
   const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState("kopf");
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    augen: false,
+    kopfschmerzen: false,
+    schwindel: false,
+    hoeren: false,
+    neuralgien: false,
+    geruch: false,
+    schilddruese: false,
+    hypophyse: false,
+    nebenniere: false,
+  });
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  const setSectionOpen = (section: string, open: boolean) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: open }));
   };
 
   const updateNestedField = (section: string, field: string, subfield: string, value: any) => {
@@ -70,6 +80,9 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
     const isObject = fieldData && typeof fieldData === 'object';
     const isChecked = isObject && 'ja' in fieldData ? Boolean(fieldData.ja) : false;
 
+    const timeKey: "jahr" | "seit" = isObject && 'seit' in fieldData ? "seit" : "jahr";
+    const timeValue = isObject ? (fieldData?.[timeKey] ?? "") : "";
+
     return (
       <div key={item.key} className="border rounded-lg p-4">
         <div className="flex items-start gap-3">
@@ -83,8 +96,8 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
               <div className="space-y-3 mt-2">
                 <Input
                   placeholder={language === "de" ? (inputPlaceholderDe || "Jahr/Seit") : (inputPlaceholderEn || "Year/Since")}
-                  value={fieldData?.jahr || fieldData?.seit || ""}
-                  onChange={(e) => updateNestedField(section, item.key, "jahr", e.target.value)}
+                  value={timeValue}
+                  onChange={(e) => updateNestedField(section, item.key, timeKey, e.target.value)}
                   className="w-32"
                 />
                 {subOptions && subOptions.length > 0 && (
@@ -164,7 +177,13 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
           <h4 className="font-semibold">{language === "de" ? "Kopf, Sinne & Nervensystem" : "Head, Senses & Nervous System"}</h4>
           
           {/* Augenerkrankungen */}
-          <Collapsible open={expandedSections.augen} onOpenChange={() => toggleSection('augen')}>
+          <Collapsible
+            open={!!expandedSections.augen}
+            onOpenChange={(open) => {
+              setSectionOpen('augen', open);
+              if (open) updateNestedField('kopfErkrankungen', 'augenerkrankung', 'ja', true);
+            }}
+          >
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
                 <span className="font-medium">{language === "de" ? "👁️ Augenerkrankungen" : "👁️ Eye Diseases"}</span>
@@ -191,7 +210,13 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
           </Collapsible>
 
           {/* Kopfschmerzen */}
-          <Collapsible open={expandedSections.kopfschmerzen} onOpenChange={() => toggleSection('kopfschmerzen')}>
+          <Collapsible
+            open={!!expandedSections.kopfschmerzen}
+            onOpenChange={(open) => {
+              setSectionOpen('kopfschmerzen', open);
+              if (open) updateNestedField('kopfErkrankungen', 'kopfschmerzen', 'ja', true);
+            }}
+          >
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
                 <span className="font-medium">{language === "de" ? "🤕 Kopfschmerzen" : "🤕 Headaches"}</span>
@@ -217,7 +242,13 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
           </Collapsible>
 
           {/* Schwindel */}
-          <Collapsible open={expandedSections.schwindel} onOpenChange={() => toggleSection('schwindel')}>
+          <Collapsible
+            open={!!expandedSections.schwindel}
+            onOpenChange={(open) => {
+              setSectionOpen('schwindel', open);
+              if (open) updateNestedField('kopfErkrankungen', 'schwindel', 'ja', true);
+            }}
+          >
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
                 <span className="font-medium">{language === "de" ? "🌀 Schwindel" : "🌀 Dizziness"}</span>
@@ -240,7 +271,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
           </Collapsible>
 
           {/* Hörprobleme */}
-          <Collapsible open={expandedSections.hoeren} onOpenChange={() => toggleSection('hoeren')}>
+          <Collapsible open={!!expandedSections.hoeren} onOpenChange={(open) => setSectionOpen('hoeren', open)}>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
                 <span className="font-medium">{language === "de" ? "👂 Hörprobleme & Ohrerkrankungen" : "👂 Hearing Problems & Ear Diseases"}</span>
@@ -273,7 +304,13 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
           </Collapsible>
 
           {/* Neuralgien */}
-          <Collapsible open={expandedSections.neuralgien} onOpenChange={() => toggleSection('neuralgien')}>
+          <Collapsible
+            open={!!expandedSections.neuralgien}
+            onOpenChange={(open) => {
+              setSectionOpen('neuralgien', open);
+              if (open) updateNestedField('kopfErkrankungen', 'neuralgien', 'ja', true);
+            }}
+          >
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
                 <span className="font-medium">{language === "de" ? "⚡ Neuralgien" : "⚡ Neuralgias"}</span>
@@ -296,7 +333,13 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
           </Collapsible>
 
           {/* Geruch & Geschmack */}
-          <Collapsible open={expandedSections.geruch} onOpenChange={() => toggleSection('geruch')}>
+          <Collapsible
+            open={!!expandedSections.geruch}
+            onOpenChange={(open) => {
+              setSectionOpen('geruch', open);
+              // Geruch/Geschmack sind 2 Items: nichts auto-checken hier.
+            }}
+          >
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
                 <span className="font-medium">{language === "de" ? "👃 Geruch & Geschmack" : "👃 Smell & Taste"}</span>
@@ -593,7 +636,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
           <h4 className="font-semibold">{language === "de" ? "Hormongesundheit" : "Hormonal Health"}</h4>
           
           {/* Schilddrüse */}
-          <Collapsible open={expandedSections.schilddruese} onOpenChange={() => toggleSection('schilddruese')}>
+          <Collapsible open={!!expandedSections.schilddruese} onOpenChange={(open) => setSectionOpen('schilddruese', open)}>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
                 <span className="font-medium">{language === "de" ? "🦋 Schilddrüsenerkrankungen" : "🦋 Thyroid Diseases"}</span>
@@ -618,7 +661,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
           </Collapsible>
 
           {/* Hypophyse */}
-          <Collapsible open={expandedSections.hypophyse} onOpenChange={() => toggleSection('hypophyse')}>
+          <Collapsible open={!!expandedSections.hypophyse} onOpenChange={(open) => setSectionOpen('hypophyse', open)}>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
                 <span className="font-medium">{language === "de" ? "🧠 Hypophysenerkrankungen" : "🧠 Pituitary Diseases"}</span>
@@ -640,7 +683,7 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
           </Collapsible>
 
           {/* Nebenniere */}
-          <Collapsible open={expandedSections.nebenniere} onOpenChange={() => toggleSection('nebenniere')}>
+          <Collapsible open={!!expandedSections.nebenniere} onOpenChange={(open) => setSectionOpen('nebenniere', open)}>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
                 <span className="font-medium">{language === "de" ? "⚡ Nebennierenerkrankungen" : "⚡ Adrenal Diseases"}</span>
