@@ -10,6 +10,7 @@ import { Brain, Heart, Wind, Droplets, Apple, Activity, Ear, FlaskConical } from
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import YearMonthSelect from "./shared/YearMonthSelect";
 
 interface MedicalHistorySectionProps {
   formData: AnamneseFormData;
@@ -57,6 +58,25 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
     return typeof value === 'boolean' ? value : false;
   };
 
+  const birthYear = formData.geburtsdatum ? new Date(formData.geburtsdatum).getFullYear() : undefined;
+
+  const parseYearMonth = (raw: string): { year: string; month: string } => {
+    if (!raw) return { year: "", month: "" };
+    const m = raw.match(/^(\d{4})(?:-(\d{2}))?$/);
+    if (!m) return { year: "", month: "" };
+    return { year: m[1] ?? "", month: m[2] ?? "" };
+  };
+
+  const setYearMonthCombined = (section: string, field: string, timeKey: "jahr" | "seit", next: { year?: string; month?: string }) => {
+    const sectionData = (formData as any)?.[section] || {};
+    const fieldData = sectionData?.[field] || {};
+    const current = parseYearMonth(String(fieldData?.[timeKey] ?? ""));
+    const year = (next.year ?? current.year).slice(0, 4);
+    const month = (next.month ?? current.month).slice(0, 2);
+    const combined = month ? `${year}-${month}` : year;
+    updateNestedField(section, field, timeKey, combined);
+  };
+
   const tabs = [
     { id: "kopf", labelDe: "Kopf & Sinne", labelEn: "Head & Senses", icon: Brain },
     { id: "herz", labelDe: "Herz & Kreislauf", labelEn: "Heart & Circulation", icon: Heart },
@@ -81,7 +101,8 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
     const isChecked = isObject && 'ja' in fieldData ? Boolean(fieldData.ja) : false;
 
     const timeKey: "jahr" | "seit" = isObject && 'seit' in fieldData ? "seit" : "jahr";
-    const timeValue = isObject ? (fieldData?.[timeKey] ?? "") : "";
+    const timeValue = isObject ? String(fieldData?.[timeKey] ?? "") : "";
+    const parsedTime = parseYearMonth(timeValue);
 
     return (
       <div key={item.key} className="border rounded-lg p-4">
@@ -94,12 +115,17 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
             <Label>{language === "de" ? item.labelDe : item.labelEn}</Label>
             {isChecked && (
               <div className="space-y-3 mt-2">
-                <Input
-                  placeholder={language === "de" ? (inputPlaceholderDe || "Jahr/Seit") : (inputPlaceholderEn || "Year/Since")}
-                  value={timeValue}
-                  onChange={(e) => updateNestedField(section, item.key, timeKey, e.target.value)}
-                  className="w-32"
-                />
+                <div className="max-w-xs">
+                  <YearMonthSelect
+                    yearValue={parsedTime.year}
+                    monthValue={parsedTime.month}
+                    onYearChange={(value) => setYearMonthCombined(section, item.key, timeKey, { year: value })}
+                    onMonthChange={(value) => setYearMonthCombined(section, item.key, timeKey, { month: value })}
+                    showMonth={true}
+                    birthYear={birthYear}
+                    placeholder={language === "de" ? (inputPlaceholderDe || "Jahr") : (inputPlaceholderEn || "Year")}
+                  />
+                </div>
                 {subOptions && subOptions.length > 0 && (
                   <div className="flex flex-wrap gap-4">
                     {subOptions.map((option) => (
@@ -402,12 +428,22 @@ const MedicalHistorySection = ({ formData, updateFormData }: MedicalHistorySecti
                   <div className="space-y-2 flex-1">
                     <Label>{language === "de" ? item.labelDe : item.labelEn}</Label>
                     {(formData.schlafSymptome as any)?.[item.key]?.ja && (
-                      <Input
-                        placeholder={language === "de" ? "Seit wann?" : "Since when?"}
-                        value={(formData.schlafSymptome as any)?.[item.key]?.seit || ""}
-                        onChange={(e) => updateNestedField("schlafSymptome", item.key, "seit", e.target.value)}
-                        className="w-48 mt-2"
-                      />
+                      <div className="mt-2 max-w-xs">
+                        {(() => {
+                          const raw = String((formData.schlafSymptome as any)?.[item.key]?.seit || "");
+                          const parsed = parseYearMonth(raw);
+                          return (
+                            <YearMonthSelect
+                              yearValue={parsed.year}
+                              monthValue={parsed.month}
+                              onYearChange={(value) => setYearMonthCombined("schlafSymptome", item.key, "seit", { year: value })}
+                              onMonthChange={(value) => setYearMonthCombined("schlafSymptome", item.key, "seit", { month: value })}
+                              showMonth={true}
+                              birthYear={birthYear}
+                            />
+                          );
+                        })()}
+                      </div>
                     )}
                   </div>
                 </div>
