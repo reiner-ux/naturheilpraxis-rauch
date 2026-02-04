@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +39,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { formSections as formSectionsData, initialFormData, AnamneseFormData } from "@/lib/anamneseFormData";
 import { generateEnhancedAnamnesePdf } from "@/lib/pdfExportEnhanced";
 import PrintView from "@/components/anamnese/PrintView";
@@ -440,6 +441,7 @@ const AccordionLayout = ({
 
 const Anamnesebogen = () => {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [selectedLayout, setSelectedLayout] = useState<LayoutType>(null);
   const [wizardStep, setWizardStep] = useState(0);
   const [formData, setFormData] = useState<AnamneseFormData>(initialFormData);
@@ -447,6 +449,60 @@ const Anamnesebogen = () => {
   const [showFilteredSummary, setShowFilteredSummary] = useState(false);
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>(["intro"]);
   const printRef = useRef<HTMLDivElement>(null);
+
+  const draftStorageKey = useMemo(() => {
+    if (!user?.id) return null;
+    return `anamnesebogen:draft:${user.id}`;
+  }, [user?.id]);
+
+  // Restore draft after (re-)login
+  useEffect(() => {
+    if (!draftStorageKey) return;
+    try {
+      const raw = localStorage.getItem(draftStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        formData?: AnamneseFormData;
+        selectedLayout?: LayoutType;
+        wizardStep?: number;
+        openAccordionItems?: string[];
+      };
+      if (parsed.formData) setFormData(parsed.formData);
+      if (parsed.selectedLayout !== undefined) setSelectedLayout(parsed.selectedLayout);
+      if (typeof parsed.wizardStep === "number") setWizardStep(parsed.wizardStep);
+      if (Array.isArray(parsed.openAccordionItems) && parsed.openAccordionItems.length)
+        setOpenAccordionItems(parsed.openAccordionItems);
+    } catch {
+      // ignore corrupted draft
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftStorageKey]);
+
+  // Autosave draft while typing (prevents losing data on logout)
+  const autosaveTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!draftStorageKey) return;
+    if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = window.setTimeout(() => {
+      try {
+        localStorage.setItem(
+          draftStorageKey,
+          JSON.stringify({
+            formData,
+            selectedLayout,
+            wizardStep,
+            openAccordionItems,
+          })
+        );
+      } catch {
+        // ignore storage errors
+      }
+    }, 300);
+
+    return () => {
+      if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+    };
+  }, [draftStorageKey, formData, selectedLayout, wizardStep, openAccordionItems]);
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -494,6 +550,9 @@ const Anamnesebogen = () => {
           : "Thank you! We will review your information before the appointment.",
       }
     );
+
+    // Keep draft by default; uncomment if you want to clear after successful submission.
+    // if (draftStorageKey) localStorage.removeItem(draftStorageKey);
   };
 
   const handleExportPdf = () => {

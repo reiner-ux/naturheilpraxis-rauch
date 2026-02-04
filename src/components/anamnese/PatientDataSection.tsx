@@ -14,6 +14,15 @@ interface PatientDataSectionProps {
 const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProps) => {
   const { language } = useLanguage();
 
+  const sanitizeName = (raw: string) => {
+    // Letters incl. German umlauts, spaces, hyphen, apostrophe
+    const cleaned = raw
+      .replace(/[^\p{L}\s'\-]/gu, "")
+      .replace(/\s{2,}/g, " ")
+      .trimStart();
+    return cleaned;
+  };
+
   const toggleInfoSource = (value: string, checked: boolean) => {
     const current = Array.isArray(formData.informationsquelle) ? formData.informationsquelle : [];
     const next = checked ? Array.from(new Set([...current, value])) : current.filter((v) => v !== value);
@@ -41,7 +50,7 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
             <Input 
               id="nachname" 
               value={formData.nachname} 
-              onChange={(e) => updateFormData("nachname", e.target.value)} 
+              onChange={(e) => updateFormData("nachname", sanitizeName(e.target.value))} 
               required 
             />
           </div>
@@ -50,7 +59,7 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
             <Input 
               id="vorname" 
               value={formData.vorname} 
-              onChange={(e) => updateFormData("vorname", e.target.value)} 
+              onChange={(e) => updateFormData("vorname", sanitizeName(e.target.value))} 
               required 
             />
           </div>
@@ -430,7 +439,7 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
             <Input 
               id="hausarzt" 
               value={formData.hausarzt} 
-              onChange={(e) => updateFormData("hausarzt", e.target.value)} 
+              onChange={(e) => updateFormData("hausarzt", sanitizeName(e.target.value))} 
             />
           </div>
           <div className="space-y-2">
@@ -446,7 +455,7 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
             <Input 
               id="heilpraktiker" 
               value={formData.heilpraktiker} 
-              onChange={(e) => updateFormData("heilpraktiker", e.target.value)} 
+              onChange={(e) => updateFormData("heilpraktiker", sanitizeName(e.target.value))} 
             />
           </div>
           <div className="space-y-2">
@@ -454,7 +463,7 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
             <Input 
               id="physiotherapeut" 
               value={formData.physiotherapeut} 
-              onChange={(e) => updateFormData("physiotherapeut", e.target.value)} 
+              onChange={(e) => updateFormData("physiotherapeut", sanitizeName(e.target.value))} 
             />
           </div>
           <div className="space-y-2">
@@ -462,7 +471,7 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
             <Input 
               id="psychotherapeut" 
               value={formData.psychotherapeut} 
-              onChange={(e) => updateFormData("psychotherapeut", e.target.value)} 
+              onChange={(e) => updateFormData("psychotherapeut", sanitizeName(e.target.value))} 
             />
           </div>
           <div className="space-y-2">
