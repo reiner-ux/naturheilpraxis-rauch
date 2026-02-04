@@ -13,6 +13,7 @@ import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Trash2, CalendarIcon, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import YearMonthSelect from "./shared/YearMonthSelect";
 
 interface SurgeriesSectionProps {
   formData: AnamneseFormData;
@@ -21,6 +22,10 @@ interface SurgeriesSectionProps {
 
 const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) => {
   const { language } = useLanguage();
+
+  const birthYear = formData.geburtsdatum
+    ? new Date(formData.geburtsdatum).getFullYear()
+    : undefined;
 
   const updateUnfaelleOperationen = (field: string, value: any) => {
     updateFormData("unfaelleOperationen", {
@@ -78,10 +83,11 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           </div>
           {formData.unfaelleOperationen?.unfall?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.unfaelleOperationen?.unfall?.jahr || ""}
-                onChange={(e) => updateNestedField("unfall", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.unfaelleOperationen?.unfall?.jahr || ""}
+                onYearChange={(value) => updateNestedField("unfall", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Lokalisation/Art" : "Location/Type"}
@@ -105,10 +111,11 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           </div>
           {formData.unfaelleOperationen?.knochenbruch?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.unfaelleOperationen?.knochenbruch?.jahr || ""}
-                onChange={(e) => updateNestedField("knochenbruch", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.unfaelleOperationen?.knochenbruch?.jahr || ""}
+                onYearChange={(value) => updateNestedField("knochenbruch", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Welcher Knochen?" : "Which bone?"}
@@ -132,10 +139,11 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           </div>
           {formData.unfaelleOperationen?.kopfverletzung?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.unfaelleOperationen?.kopfverletzung?.jahr || ""}
-                onChange={(e) => updateNestedField("kopfverletzung", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.unfaelleOperationen?.kopfverletzung?.jahr || ""}
+                onYearChange={(value) => updateNestedField("kopfverletzung", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Schweregrad" : "Severity"}
@@ -172,10 +180,11 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
         {(formData.unfaelleOperationen?.operationen || []).map((op, index) => (
           <div key={index} className="flex gap-4 items-start p-4 bg-muted/30 rounded-lg">
             <div className="flex-1 grid gap-4 md:grid-cols-2">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={op.jahr}
-                onChange={(e) => updateOperation(index, "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={op.jahr}
+                onYearChange={(value) => updateOperation(index, "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Grund / Art der Operation" : "Reason / Type of surgery"}
@@ -217,10 +226,11 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           </div>
           {formData.unfaelleOperationen?.krankenhausaufenthalt?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.unfaelleOperationen?.krankenhausaufenthalt?.jahr || ""}
-                onChange={(e) => updateNestedField("krankenhausaufenthalt", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.unfaelleOperationen?.krankenhausaufenthalt?.jahr || ""}
+                onYearChange={(value) => updateNestedField("krankenhausaufenthalt", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Grund" : "Reason"}
@@ -244,10 +254,11 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           </div>
           {formData.unfaelleOperationen?.kuraufenthalt?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.unfaelleOperationen?.kuraufenthalt?.jahr || ""}
-                onChange={(e) => updateNestedField("kuraufenthalt", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.unfaelleOperationen?.kuraufenthalt?.jahr || ""}
+                onYearChange={(value) => updateNestedField("kuraufenthalt", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Art der Kur" : "Type of rehabilitation"}
@@ -280,10 +291,11 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           </div>
           {formData.unfaelleOperationen?.bluttransfusion?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.unfaelleOperationen?.bluttransfusion?.jahr || ""}
-                onChange={(e) => updateNestedField("bluttransfusion", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.unfaelleOperationen?.bluttransfusion?.jahr || ""}
+                onYearChange={(value) => updateNestedField("bluttransfusion", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Grund" : "Reason"}
@@ -307,10 +319,11 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           </div>
           {formData.unfaelleOperationen?.chemotherapie?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.unfaelleOperationen?.chemotherapie?.jahr || ""}
-                onChange={(e) => updateNestedField("chemotherapie", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.unfaelleOperationen?.chemotherapie?.jahr || ""}
+                onYearChange={(value) => updateNestedField("chemotherapie", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Art der Chemotherapie" : "Type of chemotherapy"}
@@ -382,6 +395,7 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
               nameEn="Scintigraphy"
               placeholderDe="z.B. Schilddrüse, Tumorsuche"
               placeholderEn="e.g. thyroid, tumor detection"
+              birthYear={birthYear}
             />
           )}
         </div>
@@ -412,8 +426,9 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
               requiredWeeks={4}
               nameDe="PET-CT"
               nameEn="PET-CT"
-              placeholderDe="z.B. Tumorsuche, Staging, Verlaufskontrolle"
-              placeholderEn="e.g. tumor detection, staging, follow-up"
+              placeholderDe="z.B. Tumorstaging, Metastasensuche"
+              placeholderEn="e.g. tumor staging, metastasis detection"
+              birthYear={birthYear}
             />
           )}
         </div>
@@ -432,8 +447,8 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           </div>
           <p className="text-sm text-muted-foreground pl-6">
             {language === "de" 
-              ? "Therapie mit radioaktivem Iod, hauptsächlich bei Schilddrüsenerkrankungen (Überfunktion, Struma, Schilddrüsenkrebs) eingesetzt."
-              : "Therapy with radioactive iodine, mainly used for thyroid conditions (hyperthyroidism, goiter, thyroid cancer)."}
+              ? "Therapie mit radioaktivem Jod, meist bei Schilddrüsenerkrankungen (Überfunktion, Krebs)."
+              : "Therapy with radioactive iodine, usually for thyroid conditions (hyperthyroidism, cancer)."}
           </p>
           {formData.unfaelleOperationen?.radioiodtherapie?.ja && (
             <NuclearMedicineDetails
@@ -444,9 +459,10 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
               requiredWeeks={12}
               nameDe="Radioiodtherapie"
               nameEn="Radioiodine Therapy"
-              placeholderDe="z.B. Schilddrüsenüberfunktion, Struma, Karzinom"
-              placeholderEn="e.g. hyperthyroidism, goiter, carcinoma"
-              showDosisField={true}
+              placeholderDe="z.B. Schilddrüsenüberfunktion, Schilddrüsenkarzinom"
+              placeholderEn="e.g. hyperthyroidism, thyroid carcinoma"
+              showDosis={true}
+              birthYear={birthYear}
             />
           )}
         </div>
@@ -455,7 +471,7 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
   );
 };
 
-// Reusable component for nuclear medicine examination details with date validation
+// Subkomponente für nuklearmedizinische Details
 interface NuclearMedicineDetailsProps {
   formData: AnamneseFormData;
   updateNestedField: (parentField: string, field: string, value: any) => void;
@@ -466,7 +482,8 @@ interface NuclearMedicineDetailsProps {
   nameEn: string;
   placeholderDe: string;
   placeholderEn: string;
-  showDosisField?: boolean;
+  showDosis?: boolean;
+  birthYear?: number;
 }
 
 const NuclearMedicineDetails = ({
@@ -479,137 +496,116 @@ const NuclearMedicineDetails = ({
   nameEn,
   placeholderDe,
   placeholderEn,
-  showDosisField = false,
+  showDosis = false,
+  birthYear,
 }: NuclearMedicineDetailsProps) => {
-  const fieldData = formData.unfaelleOperationen?.[fieldName as keyof typeof formData.unfaelleOperationen] as { datum?: string; grund?: string; dosis?: string } | undefined;
+  const data = formData.unfaelleOperationen?.[fieldName as keyof typeof formData.unfaelleOperationen] as any;
+  const [calendarOpen, setCalendarOpen] = useState(false);
   
-  const [date, setDate] = useState<Date | undefined>(() => {
-    const storedDate = fieldData?.datum;
-    if (storedDate) {
-      const parsed = new Date(storedDate);
-      return isValid(parsed) ? parsed : undefined;
-    }
-    return undefined;
-  });
+  const dateLocale = language === "de" ? de : enUS;
+  
+  // Parse date and calculate weeks since
+  const parsedDate = useMemo(() => {
+    if (!data?.datum) return null;
+    const parsed = parse(data.datum, "yyyy-MM-dd", new Date());
+    return isValid(parsed) ? parsed : null;
+  }, [data?.datum]);
 
-  const weeksSinceExamination = useMemo(() => {
-    if (!date || !isValid(date)) return null;
-    return differenceInWeeks(new Date(), date);
-  }, [date]);
+  const weeksSince = useMemo(() => {
+    if (!parsedDate) return null;
+    return differenceInWeeks(new Date(), parsedDate);
+  }, [parsedDate]);
 
-  const isSafeInterval = weeksSinceExamination !== null && weeksSinceExamination >= requiredWeeks;
-  const name = language === "de" ? nameDe : nameEn;
-
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    setDate(selectedDate);
-    if (selectedDate) {
-      updateNestedField(fieldName, "datum", selectedDate.toISOString());
-    } else {
-      updateNestedField(fieldName, "datum", "");
-    }
-  };
+  const isWaitComplete = weeksSince !== null && weeksSince >= requiredWeeks;
 
   return (
-    <>
-      {/* Dynamic status message based on date */}
-      {weeksSinceExamination !== null ? (
-        isSafeInterval ? (
-          <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg ml-6">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
-              <p className="text-sm text-green-800 dark:text-green-200 font-medium">
-                {language === "de"
-                  ? `✓ Der erforderliche Mindestabstand von ${requiredWeeks} Wochen ist erfüllt. Ihre letzte ${name} liegt ${weeksSinceExamination} Wochen zurück. Behandlungen und Untersuchungen können wie geplant durchgeführt werden.`
-                  : `✓ The required minimum interval of ${requiredWeeks} weeks is met. Your last ${name} was ${weeksSinceExamination} weeks ago. Treatments and examinations can proceed as planned.`}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg ml-6">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
-              <div className="text-sm text-red-800 dark:text-red-200">
-                <p className="font-semibold">
-                  {language === "de"
-                    ? `⚠️ Achtung: Nur ${weeksSinceExamination} Woche${weeksSinceExamination !== 1 ? 'n' : ''} seit der letzten ${name}`
-                    : `⚠️ Warning: Only ${weeksSinceExamination} week${weeksSinceExamination !== 1 ? 's' : ''} since last ${name}`}
-                </p>
-                <p className="mt-1">
-                  {language === "de"
-                    ? `Der erforderliche Mindestabstand von ${requiredWeeks} Wochen ist noch nicht erreicht. Bitte warten Sie noch ${requiredWeeks - weeksSinceExamination} Woche${requiredWeeks - weeksSinceExamination !== 1 ? 'n' : ''}, bevor bestimmte Behandlungen durchgeführt werden können.`
-                    : `The required minimum interval of ${requiredWeeks} weeks has not yet been reached. Please wait ${requiredWeeks - weeksSinceExamination} more week${requiredWeeks - weeksSinceExamination !== 1 ? 's' : ''} before certain treatments can be performed.`}
-                </p>
-              </div>
-            </div>
-          </div>
-        )
-      ) : (
-        <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg ml-6">
-          <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-            {language === "de"
-              ? `⚠️ Wichtiger Hinweis: Nach einer ${name} benötigen wir einen Mindestabstand von ${requiredWeeks} Wochen, bevor wir bestimmte Behandlungen und Untersuchungen durchführen können. Bitte geben Sie das Datum Ihrer letzten Untersuchung/Therapie an.`
-              : `⚠️ Important note: After a ${name}, we require a minimum interval of ${requiredWeeks} weeks before we can perform certain treatments and examinations. Please enter the date of your last examination/therapy.`}
-          </p>
-        </div>
-      )}
-
-      <div className={`grid gap-4 ${showDosisField ? 'md:grid-cols-3' : 'md:grid-cols-2'} ml-6`}>
+    <div className="space-y-4 pl-6 p-4 bg-muted/30 rounded-lg">
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>
-            {language === "de" ? "Datum der letzten Untersuchung/Therapie" : "Date of last examination/therapy"}
-          </Label>
-          <Popover>
+          <Label>{language === "de" ? "Datum" : "Date"}</Label>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
+                  !data?.datum && "text-muted-foreground"
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, "PPP", { locale: language === "de" ? de : enUS }) : (
-                  <span>{language === "de" ? "Datum auswählen" : "Pick a date"}</span>
-                )}
+                {parsedDate 
+                  ? format(parsedDate, "PPP", { locale: dateLocale })
+                  : (language === "de" ? "Datum wählen" : "Pick a date")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={date}
-                onSelect={handleDateSelect}
-                disabled={(d) => d > new Date()}
+                selected={parsedDate || undefined}
+                onSelect={(date) => {
+                  if (date) {
+                    updateNestedField(fieldName, "datum", format(date, "yyyy-MM-dd"));
+                  }
+                  setCalendarOpen(false);
+                }}
+                disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                 initialFocus
-                locale={language === "de" ? de : enUS}
                 className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
           </Popover>
         </div>
+        
         <div className="space-y-2">
-          <Label>
-            {language === "de" ? "Grund" : "Reason"}
-          </Label>
+          <Label>{language === "de" ? "Grund" : "Reason"}</Label>
           <Input
             placeholder={language === "de" ? placeholderDe : placeholderEn}
-            value={fieldData?.grund || ""}
+            value={data?.grund || ""}
             onChange={(e) => updateNestedField(fieldName, "grund", e.target.value)}
           />
         </div>
-        {showDosisField && (
-          <div className="space-y-2">
-            <Label>
-              {language === "de" ? "Dosis (MBq/mCi)" : "Dose (MBq/mCi)"}
-            </Label>
-            <Input
-              placeholder={language === "de" ? "z.B. 3700 MBq" : "e.g. 3700 MBq"}
-              value={fieldData?.dosis || ""}
-              onChange={(e) => updateNestedField(fieldName, "dosis", e.target.value)}
-            />
-          </div>
-        )}
       </div>
-    </>
+
+      {showDosis && (
+        <div className="space-y-2">
+          <Label>{language === "de" ? "Dosis (falls bekannt)" : "Dosage (if known)"}</Label>
+          <Input
+            placeholder={language === "de" ? "z.B. 3700 MBq" : "e.g. 3700 MBq"}
+            value={data?.dosis || ""}
+            onChange={(e) => updateNestedField(fieldName, "dosis", e.target.value)}
+            className="max-w-xs"
+          />
+        </div>
+      )}
+
+      {/* Wartezeit-Status */}
+      {parsedDate && (
+        <div className={cn(
+          "flex items-center gap-2 p-3 rounded-lg",
+          isWaitComplete ? "bg-green-100 dark:bg-green-950/30" : "bg-amber-100 dark:bg-amber-950/30"
+        )}>
+          {isWaitComplete ? (
+            <>
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <span className="text-sm text-green-800 dark:text-green-200">
+                {language === "de" 
+                  ? `Wartezeit erfüllt (${weeksSince} Wochen seit ${language === "de" ? nameDe : nameEn})`
+                  : `Waiting period complete (${weeksSince} weeks since ${nameEn})`}
+              </span>
+            </>
+          ) : (
+            <>
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <span className="text-sm text-amber-800 dark:text-amber-200">
+                {language === "de" 
+                  ? `Wartezeit: ${requiredWeeks - (weeksSince || 0)} Wochen verbleibend (von ${requiredWeeks} Wochen erforderlich)`
+                  : `Waiting period: ${requiredWeeks - (weeksSince || 0)} weeks remaining (of ${requiredWeeks} weeks required)`}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
