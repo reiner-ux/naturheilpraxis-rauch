@@ -36,6 +36,13 @@ import {
   FileDown,
   Printer,
   ListFilter,
+  Brain,
+  Wind,
+  Apple,
+  FlaskConical,
+  Droplets,
+  Activity,
+  Bone,
   type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -50,7 +57,14 @@ import SEOHead from "@/components/seo/SEOHead";
 import IntroSection from "@/components/anamnese/IntroSection";
 import PatientDataSection from "@/components/anamnese/PatientDataSection";
 import FamilyHistorySection from "@/components/anamnese/FamilyHistorySection";
-import MedicalHistorySection from "@/components/anamnese/MedicalHistorySection";
+import NeurologySection from "@/components/anamnese/NeurologySection";
+import HeartSection from "@/components/anamnese/HeartSection";
+import LungSection from "@/components/anamnese/LungSection";
+import DigestiveSection from "@/components/anamnese/DigestiveSection";
+import LiverSection from "@/components/anamnese/LiverSection";
+import KidneySection from "@/components/anamnese/KidneySection";
+import HormoneSection from "@/components/anamnese/HormoneSection";
+import MusculoskeletalSection from "@/components/anamnese/MusculoskeletalSection";
 import WomenHealthSection from "@/components/anamnese/WomenHealthSection";
 import MensHealthSection from "@/components/anamnese/MensHealthSection";
 import SurgeriesSection from "@/components/anamnese/SurgeriesSection";
@@ -87,6 +101,13 @@ const iconMap: Record<string, LucideIcon> = {
   Wand2,
   Home,
   PenTool,
+  Brain,
+  Wind,
+  Apple,
+  FlaskConical,
+  Droplets,
+  Activity,
+  Bone,
 };
 
 // Form sections with components
@@ -596,10 +617,22 @@ const Anamnesebogen = () => {
         return <PatientDataSection formData={formData} updateFormData={updateFormData} />;
       case "familyHistory":
         return <FamilyHistorySection formData={formData} updateFormData={updateFormData} />;
-      case "medicalHistory":
-        return <MedicalHistorySection formData={formData} updateFormData={updateFormData} />;
-      case "complaints":
-        return <ComplaintsSection formData={formData} updateFormData={updateFormData} />;
+      case "neurology":
+        return <NeurologySection formData={formData} updateFormData={updateFormData} />;
+      case "heart":
+        return <HeartSection formData={formData} updateFormData={updateFormData} />;
+      case "lung":
+        return <LungSection formData={formData} updateFormData={updateFormData} />;
+      case "digestive":
+        return <DigestiveSection formData={formData} updateFormData={updateFormData} />;
+      case "liver":
+        return <LiverSection formData={formData} updateFormData={updateFormData} />;
+      case "kidney":
+        return <KidneySection formData={formData} updateFormData={updateFormData} />;
+      case "hormone":
+        return <HormoneSection formData={formData} updateFormData={updateFormData} />;
+      case "musculoskeletal":
+        return <MusculoskeletalSection formData={formData} updateFormData={updateFormData} />;
       case "womenHealth":
         return <WomenHealthSection formData={formData} updateFormData={updateFormData} />;
       case "mensHealth":
@@ -620,6 +653,8 @@ const Anamnesebogen = () => {
         return <InfectionsSection formData={formData} updateFormData={updateFormData} />;
       case "vaccinations":
         return <VaccinationsSection formData={formData} updateFormData={updateFormData} />;
+      case "complaints":
+        return <ComplaintsSection formData={formData} updateFormData={updateFormData} />;
       case "preferences":
         return <PreferencesSection formData={formData} updateFormData={updateFormData} />;
       case "social":
