@@ -25,6 +25,8 @@ export function Header() {
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
     { label: t(nav.anamnesis.de, nav.anamnesis.en), href: "/anamnesebogen" },
+    // Development-only test link for testing without login
+    ...(import.meta.env.DEV ? [{ label: "Test", href: "/anamnesebogen?dev=true" }] : []),
     { label: t(nav.privacy.de, nav.privacy.en), href: "/datenschutz" },
   ];
 
