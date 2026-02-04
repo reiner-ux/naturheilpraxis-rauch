@@ -1,9 +1,10 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
+import YearMonthSelect from "./shared/YearMonthSelect";
 
 interface VaccinationsSectionProps {
   formData: AnamneseFormData;
@@ -12,6 +13,10 @@ interface VaccinationsSectionProps {
 
 const VaccinationsSection = ({ formData, updateFormData }: VaccinationsSectionProps) => {
   const { language } = useLanguage();
+
+  const birthYear = formData.geburtsdatum
+    ? new Date(formData.geburtsdatum).getFullYear()
+    : undefined;
 
   const updateImpfungen = (field: string, value: any) => {
     updateFormData("impfungen", {
@@ -94,12 +99,15 @@ const VaccinationsSection = ({ formData, updateFormData }: VaccinationsSectionPr
                   </Label>
                 </div>
                 {data?.ja && (
-                  <Input
-                    className="pl-6"
-                    placeholder={language === "de" ? "Jahr (ca.)" : "Year (approx.)"}
-                    value={data?.jahr || ""}
-                    onChange={(e) => updateNestedField(impfung.field, "jahr", e.target.value)}
-                  />
+                  <div className="pl-6">
+                    <YearMonthSelect
+                      yearValue={data?.jahr || ""}
+                      onYearChange={(value) => updateNestedField(impfung.field, "jahr", value)}
+                      showMonth={false}
+                      birthYear={birthYear}
+                      placeholder={language === "de" ? "Jahr (ca.)" : "Year (approx.)"}
+                    />
+                  </div>
                 )}
               </div>
             );
@@ -119,12 +127,15 @@ const VaccinationsSection = ({ formData, updateFormData }: VaccinationsSectionPr
             </Label>
           </div>
           {formData.impfungen?.influenza?.ja && (
-            <Input
-              className="pl-6"
-              placeholder={language === "de" ? "Zuletzt geimpft (Jahr)" : "Last vaccinated (year)"}
-              value={formData.impfungen?.influenza?.zuletzt || ""}
-              onChange={(e) => updateNestedField("influenza", "zuletzt", e.target.value)}
-            />
+            <div className="pl-6">
+              <YearMonthSelect
+                yearValue={formData.impfungen?.influenza?.zuletzt || ""}
+                onYearChange={(value) => updateNestedField("influenza", "zuletzt", value)}
+                showMonth={false}
+                birthYear={birthYear}
+                placeholder={language === "de" ? "Zuletzt" : "Last"}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -167,10 +178,19 @@ const VaccinationsSection = ({ formData, updateFormData }: VaccinationsSectionPr
                   </div>
                   {dosisData?.ja && (
                     <div className="grid gap-4 md:grid-cols-2 pl-6">
-                      <Input
-                        placeholder={language === "de" ? "Datum" : "Date"}
-                        value={dosisData?.datum || ""}
-                        onChange={(e) => updateCovidDose(dosis, "datum", e.target.value)}
+                      <YearMonthSelect
+                        yearValue={dosisData?.datum?.slice(0, 4) || ""}
+                        monthValue={dosisData?.datum?.slice(5, 7) || ""}
+                        onYearChange={(value) => {
+                          const month = dosisData?.datum?.slice(5, 7) || "";
+                          updateCovidDose(dosis, "datum", month ? `${value}-${month}` : value);
+                        }}
+                        onMonthChange={(value) => {
+                          const year = dosisData?.datum?.slice(0, 4) || "";
+                          updateCovidDose(dosis, "datum", year ? `${year}-${value}` : value);
+                        }}
+                        showMonth={true}
+                        birthYear={birthYear}
                       />
                       <Input
                         placeholder={language === "de" ? "Hersteller (z.B. BioNTech)" : "Manufacturer (e.g. Pfizer)"}
@@ -234,10 +254,19 @@ const VaccinationsSection = ({ formData, updateFormData }: VaccinationsSectionPr
           </div>
           {formData.impfungen?.covid?.infiziert?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Wann (Monat/Jahr)?" : "When (month/year)?"}
-                value={formData.impfungen?.covid?.infiziert?.wann || ""}
-                onChange={(e) => updateCovidDose("infiziert", "wann", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.impfungen?.covid?.infiziert?.wann?.slice(0, 4) || ""}
+                monthValue={formData.impfungen?.covid?.infiziert?.wann?.slice(5, 7) || ""}
+                onYearChange={(value) => {
+                  const month = formData.impfungen?.covid?.infiziert?.wann?.slice(5, 7) || "";
+                  updateCovidDose("infiziert", "wann", month ? `${value}-${month}` : value);
+                }}
+                onMonthChange={(value) => {
+                  const year = formData.impfungen?.covid?.infiziert?.wann?.slice(0, 4) || "";
+                  updateCovidDose("infiziert", "wann", year ? `${year}-${value}` : value);
+                }}
+                showMonth={true}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Schweregrad (leicht/mittel/schwer)" : "Severity (mild/moderate/severe)"}

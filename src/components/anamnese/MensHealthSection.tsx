@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
+import YearMonthSelect from "./shared/YearMonthSelect";
 
 interface MensHealthSectionProps {
   formData: AnamneseFormData;
@@ -13,6 +14,10 @@ interface MensHealthSectionProps {
 
 const MensHealthSection = ({ formData, updateFormData }: MensHealthSectionProps) => {
   const { language } = useLanguage();
+
+  const birthYear = formData.geburtsdatum
+    ? new Date(formData.geburtsdatum).getFullYear()
+    : undefined;
 
   const updateMaennergesundheit = (field: string, value: any) => {
     updateFormData("maennergesundheit", {
@@ -59,11 +64,11 @@ const MensHealthSection = ({ formData, updateFormData }: MensHealthSectionProps)
             </Label>
             {formData.maennergesundheit?.prostata?.ja && (
               <div className="space-y-4 mt-4 pl-2 border-l-2 border-primary/20">
-                <Input
-                  placeholder={language === "de" ? "Jahr" : "Year"}
-                  value={formData.maennergesundheit?.prostata?.jahr || ""}
-                  onChange={(e) => updateNestedField("prostata", "jahr", e.target.value)}
-                  className="w-32"
+                <YearMonthSelect
+                  yearValue={formData.maennergesundheit?.prostata?.jahr || ""}
+                  onYearChange={(value) => updateNestedField("prostata", "jahr", value)}
+                  showMonth={false}
+                  birthYear={birthYear}
                 />
                 <div className="flex flex-wrap gap-4">
                   {[
@@ -116,11 +121,11 @@ const MensHealthSection = ({ formData, updateFormData }: MensHealthSectionProps)
             </Label>
             {formData.maennergesundheit?.hoden?.ja && (
               <div className="space-y-4 mt-4 pl-2 border-l-2 border-primary/20">
-                <Input
-                  placeholder={language === "de" ? "Jahr" : "Year"}
-                  value={formData.maennergesundheit?.hoden?.jahr || ""}
-                  onChange={(e) => updateNestedField("hoden", "jahr", e.target.value)}
-                  className="w-32"
+                <YearMonthSelect
+                  yearValue={formData.maennergesundheit?.hoden?.jahr || ""}
+                  onYearChange={(value) => updateNestedField("hoden", "jahr", value)}
+                  showMonth={false}
+                  birthYear={birthYear}
                 />
                 <div className="flex flex-wrap gap-4">
                   {[
@@ -166,11 +171,11 @@ const MensHealthSection = ({ formData, updateFormData }: MensHealthSectionProps)
             </Label>
             {formData.maennergesundheit?.nebenhoden?.ja && (
               <div className="space-y-4 mt-4 pl-2 border-l-2 border-primary/20">
-                <Input
-                  placeholder={language === "de" ? "Jahr" : "Year"}
-                  value={formData.maennergesundheit?.nebenhoden?.jahr || ""}
-                  onChange={(e) => updateNestedField("nebenhoden", "jahr", e.target.value)}
-                  className="w-32"
+                <YearMonthSelect
+                  yearValue={formData.maennergesundheit?.nebenhoden?.jahr || ""}
+                  onYearChange={(value) => updateNestedField("nebenhoden", "jahr", value)}
+                  showMonth={false}
+                  birthYear={birthYear}
                 />
                 <div className="flex flex-wrap gap-4">
                   {[
@@ -213,11 +218,12 @@ const MensHealthSection = ({ formData, updateFormData }: MensHealthSectionProps)
             </Label>
             {formData.maennergesundheit?.erektionsstoerung?.ja && (
               <div className="mt-4 pl-2 border-l-2 border-primary/20">
-                <Input
-                  placeholder={language === "de" ? "Seit wann?" : "Since when?"}
-                  value={formData.maennergesundheit?.erektionsstoerung?.seit || ""}
-                  onChange={(e) => updateNestedField("erektionsstoerung", "seit", e.target.value)}
-                  className="w-48"
+                <Label className="text-sm mb-2 block">{language === "de" ? "Seit wann?" : "Since when?"}</Label>
+                <YearMonthSelect
+                  yearValue={formData.maennergesundheit?.erektionsstoerung?.seit || ""}
+                  onYearChange={(value) => updateNestedField("erektionsstoerung", "seit", value)}
+                  showMonth={true}
+                  birthYear={birthYear}
                 />
               </div>
             )}

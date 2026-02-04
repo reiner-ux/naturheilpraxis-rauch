@@ -6,6 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
+import YearMonthSelect from "./shared/YearMonthSelect";
+import NumericInput from "./shared/NumericInput";
 
 interface WomenHealthSectionProps {
   formData: AnamneseFormData;
@@ -14,6 +16,10 @@ interface WomenHealthSectionProps {
 
 const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProps) => {
   const { language } = useLanguage();
+
+  const birthYear = formData.geburtsdatum
+    ? new Date(formData.geburtsdatum).getFullYear()
+    : undefined;
 
   const updateFrauengesundheit = (field: string, value: any) => {
     updateFormData("frauengesundheit", {
@@ -71,10 +77,12 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
               </Label>
             </div>
             {formData.frauengesundheit?.fruehgeburt?.ja && (
-              <Input
+              <NumericInput
                 placeholder={language === "de" ? "Welche Woche?" : "Which week?"}
                 value={formData.frauengesundheit?.fruehgeburt?.woche || ""}
-                onChange={(e) => updateNestedField("fruehgeburt", "woche", e.target.value)}
+                onChange={(val) => updateNestedField("fruehgeburt", "woche", val)}
+                min={20}
+                max={42}
               />
             )}
           </div>
@@ -123,10 +131,11 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
           </div>
           {formData.frauengesundheit?.gebaermutterentfernung?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.frauengesundheit?.gebaermutterentfernung?.jahr || ""}
-                onChange={(e) => updateNestedField("gebaermutterentfernung", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.frauengesundheit?.gebaermutterentfernung?.jahr || ""}
+                onYearChange={(value) => updateNestedField("gebaermutterentfernung", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2">
@@ -168,10 +177,11 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
           </div>
           {formData.frauengesundheit?.eierstockentfernung?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.frauengesundheit?.eierstockentfernung?.jahr || ""}
-                onChange={(e) => updateNestedField("eierstockentfernung", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.frauengesundheit?.eierstockentfernung?.jahr || ""}
+                onYearChange={(value) => updateNestedField("eierstockentfernung", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2">
@@ -213,10 +223,11 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
           </div>
           {formData.frauengesundheit?.gebaermutterausschabung?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.frauengesundheit?.gebaermutterausschabung?.jahr || ""}
-                onChange={(e) => updateNestedField("gebaermutterausschabung", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.frauengesundheit?.gebaermutterausschabung?.jahr || ""}
+                onYearChange={(value) => updateNestedField("gebaermutterausschabung", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Grund" : "Reason"}
@@ -240,12 +251,14 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
             </Label>
           </div>
           {formData.frauengesundheit?.eierstockzyste?.ja && (
-            <Input
-              placeholder={language === "de" ? "Jahr" : "Year"}
-              value={formData.frauengesundheit?.eierstockzyste?.jahr || ""}
-              onChange={(e) => updateNestedField("eierstockzyste", "jahr", e.target.value)}
-              className="w-32 pl-6"
-            />
+            <div className="pl-6">
+              <YearMonthSelect
+                yearValue={formData.frauengesundheit?.eierstockzyste?.jahr || ""}
+                onYearChange={(value) => updateNestedField("eierstockzyste", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
+              />
+            </div>
           )}
         </div>
 
@@ -263,10 +276,11 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
           </div>
           {formData.frauengesundheit?.endometriose?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.frauengesundheit?.endometriose?.jahr || ""}
-                onChange={(e) => updateNestedField("endometriose", "jahr", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.frauengesundheit?.endometriose?.jahr || ""}
+                onYearChange={(value) => updateNestedField("endometriose", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
               />
               <Input
                 placeholder={language === "de" ? "Stadium (falls bekannt)" : "Stage (if known)"}
@@ -290,12 +304,14 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
             </Label>
           </div>
           {formData.frauengesundheit?.myome?.ja && (
-            <Input
-              placeholder={language === "de" ? "Jahr" : "Year"}
-              value={formData.frauengesundheit?.myome?.jahr || ""}
-              onChange={(e) => updateNestedField("myome", "jahr", e.target.value)}
-              className="w-32 pl-6"
-            />
+            <div className="pl-6">
+              <YearMonthSelect
+                yearValue={formData.frauengesundheit?.myome?.jahr || ""}
+                onYearChange={(value) => updateNestedField("myome", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -322,15 +338,19 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
             </div>
             {formData.frauengesundheit?.pille?.ja && (
               <div className="grid gap-2 grid-cols-2 pl-6">
-                <Input
-                  placeholder={language === "de" ? "Von (Jahr)" : "From (year)"}
-                  value={formData.frauengesundheit?.pille?.von || ""}
-                  onChange={(e) => updateNestedField("pille", "von", e.target.value)}
+                <YearMonthSelect
+                  yearValue={formData.frauengesundheit?.pille?.von || ""}
+                  onYearChange={(value) => updateNestedField("pille", "von", value)}
+                  showMonth={false}
+                  birthYear={birthYear}
+                  placeholder={language === "de" ? "Von" : "From"}
                 />
-                <Input
-                  placeholder={language === "de" ? "Bis (Jahr)" : "To (year)"}
-                  value={formData.frauengesundheit?.pille?.bis || ""}
-                  onChange={(e) => updateNestedField("pille", "bis", e.target.value)}
+                <YearMonthSelect
+                  yearValue={formData.frauengesundheit?.pille?.bis || ""}
+                  onYearChange={(value) => updateNestedField("pille", "bis", value)}
+                  showMonth={false}
+                  birthYear={birthYear}
+                  placeholder={language === "de" ? "Bis" : "To"}
                 />
               </div>
             )}
@@ -379,12 +399,30 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
             </Label>
           </div>
           {formData.frauengesundheit?.periodeNormal?.ja && (
-            <Input
-              className="max-w-xs"
-              placeholder={language === "de" ? "Zykluslänge in Tagen" : "Cycle length in days"}
-              value={formData.frauengesundheit?.periodeNormal?.zyklusTage || ""}
-              onChange={(e) => updateNestedField("periodeNormal", "zyklusTage", e.target.value)}
-            />
+            <div className="space-y-2 max-w-xs">
+              <Label>{language === "de" ? "Zykluslänge in Tagen (normal: 23-38)" : "Cycle length in days (normal: 23-38)"}</Label>
+              <NumericInput
+                value={formData.frauengesundheit?.periodeNormal?.zyklusTage || ""}
+                onChange={(val) => updateNestedField("periodeNormal", "zyklusTage", val)}
+                min={1}
+                max={99}
+              />
+              {formData.frauengesundheit?.periodeNormal?.zyklusTage && (
+                (() => {
+                  const days = Number(formData.frauengesundheit.periodeNormal.zyklusTage);
+                  if (days < 23 || days > 38) {
+                    return (
+                      <p className="text-xs text-amber-600">
+                        {language === "de"
+                          ? "Hinweis: Ein Zyklus außerhalb von 23-38 Tagen wird bei der Auswertung extra vermerkt."
+                          : "Note: A cycle outside 23-38 days will be noted in the evaluation."}
+                      </p>
+                    );
+                  }
+                  return null;
+                })()
+              )}
+            </div>
           )}
 
           <div className="flex flex-wrap gap-4">
@@ -422,7 +460,27 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
             </div>
           </div>
 
-          {/* Periodenbeschwerden */}
+          {formData.frauengesundheit?.periodeSchwach?.ja && (
+            <div className="space-y-2 max-w-xs">
+              <Label>{language === "de" ? "Dauer der Blutung (Tage)" : "Duration of bleeding (days)"}</Label>
+              <NumericInput
+                value={formData.frauengesundheit?.periodeSchwach?.tageBlutung || ""}
+                onChange={(val) => updateNestedField("periodeSchwach", "tageBlutung", val)}
+                min={1}
+                max={14}
+              />
+            </div>
+          )}
+
+          {formData.frauengesundheit?.periodeUnregelmaessig?.ja && (
+            <Input
+              className="max-w-md"
+              placeholder={language === "de" ? "Muster beschreiben" : "Describe pattern"}
+              value={formData.frauengesundheit?.periodeUnregelmaessig?.muster || ""}
+              onChange={(e) => updateNestedField("periodeUnregelmaessig", "muster", e.target.value)}
+            />
+          )}
+
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -473,25 +531,33 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
             {language === "de" ? "Menopause / Wechseljahre" : "Menopause"}
           </Label>
         </div>
+
         {formData.frauengesundheit?.menopause?.ja && (
           <div className="grid gap-4 md:grid-cols-2 pl-6">
-            <Input
-              placeholder={language === "de" ? "Beginn (Jahr/Alter)" : "Onset (year/age)"}
-              value={formData.frauengesundheit?.menopause?.beginn || ""}
-              onChange={(e) => updateNestedField("menopause", "beginn", e.target.value)}
-            />
-            <Input
-              placeholder={language === "de" ? "Symptome (z.B. Hitzewallungen)" : "Symptoms (e.g. hot flashes)"}
-              value={formData.frauengesundheit?.menopause?.symptome || ""}
-              onChange={(e) => updateNestedField("menopause", "symptome", e.target.value)}
-            />
+            <div className="space-y-2">
+              <Label>{language === "de" ? "Beginn (Jahr)" : "Onset (year)"}</Label>
+              <YearMonthSelect
+                yearValue={formData.frauengesundheit?.menopause?.beginn || ""}
+                onYearChange={(value) => updateNestedField("menopause", "beginn", value)}
+                showMonth={false}
+                birthYear={birthYear}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "de" ? "Symptome" : "Symptoms"}</Label>
+              <Input
+                placeholder={language === "de" ? "z.B. Hitzewallungen, Schlafstörungen" : "e.g. hot flashes, sleep problems"}
+                value={formData.frauengesundheit?.menopause?.symptome || ""}
+                onChange={(e) => updateNestedField("menopause", "symptome", e.target.value)}
+              />
+            </div>
           </div>
         )}
       </div>
 
       <Separator />
 
-      {/* Schwangerschaften & Geburten */}
+      {/* Schwangerschaften */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium">
           {language === "de" ? "Schwangerschaften & Geburten" : "Pregnancies & Births"}
@@ -499,74 +565,79 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label>{language === "de" ? "Anzahl Schwangerschaften" : "Number of pregnancies"}</Label>
-            <Input
+            <Label>{language === "de" ? "Anzahl Schwangerschaften (max. 10)" : "Number of pregnancies (max 10)"}</Label>
+            <NumericInput
               value={formData.frauengesundheit?.schwangerschaften?.anzahl || ""}
-              onChange={(e) => updateNestedField("schwangerschaften", "anzahl", e.target.value)}
-              placeholder="0"
+              onChange={(val) => updateNestedField("schwangerschaften", "anzahl", val)}
+              min={0}
+              max={10}
             />
           </div>
+
           <div className="space-y-2">
             <Label>{language === "de" ? "Letzte Schwangerschaft (Jahr)" : "Last pregnancy (year)"}</Label>
-            <Input
-              value={formData.frauengesundheit?.schwangerschaften?.letzte || ""}
-              onChange={(e) => updateNestedField("schwangerschaften", "letzte", e.target.value)}
+            <YearMonthSelect
+              yearValue={formData.frauengesundheit?.schwangerschaften?.letzte || ""}
+              onYearChange={(value) => updateNestedField("schwangerschaften", "letzte", value)}
+              showMonth={false}
+              birthYear={birthYear}
             />
           </div>
-        </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label>{language === "de" ? "Anzahl Fehlgeburten" : "Number of miscarriages"}</Label>
-            <Input
+            <Label>{language === "de" ? "Anzahl Fehlgeburten (max. 10)" : "Number of miscarriages (max 10)"}</Label>
+            <NumericInput
               value={formData.frauengesundheit?.fehlgeburten?.anzahl || ""}
-              onChange={(e) => updateNestedField("fehlgeburten", "anzahl", e.target.value)}
-              placeholder="0"
+              onChange={(val) => updateNestedField("fehlgeburten", "anzahl", val)}
+              min={0}
+              max={10}
             />
           </div>
+
           <div className="space-y-2">
-            <Label>{language === "de" ? "Wann (Jahr)" : "When (year)"}</Label>
-            <Input
-              value={formData.frauengesundheit?.fehlgeburten?.wann || ""}
-              onChange={(e) => updateNestedField("fehlgeburten", "wann", e.target.value)}
+            <Label>{language === "de" ? "Wann (Jahr)?" : "When (year)?"}</Label>
+            <YearMonthSelect
+              yearValue={formData.frauengesundheit?.fehlgeburten?.wann || ""}
+              onYearChange={(value) => updateNestedField("fehlgeburten", "wann", value)}
+              showMonth={false}
+              birthYear={birthYear}
             />
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label>{language === "de" ? "Anzahl Geburten" : "Number of births"}</Label>
-            <Input
+        <div className="space-y-2">
+          <Label>{language === "de" ? "Anzahl Geburten" : "Number of births"}</Label>
+          <div className="flex flex-wrap gap-4">
+            <NumericInput
+              className="w-24"
               value={formData.frauengesundheit?.geburten?.anzahl || ""}
-              onChange={(e) => updateNestedField("geburten", "anzahl", e.target.value)}
-              placeholder="0"
+              onChange={(val) => updateNestedField("geburten", "anzahl", val)}
+              min={0}
+              max={15}
             />
-          </div>
-          <div className="flex flex-wrap gap-4 items-end">
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="vaginal"
+                id="geburten-vaginal"
                 checked={formData.frauengesundheit?.geburten?.vaginal || false}
                 onCheckedChange={(checked) => updateNestedField("geburten", "vaginal", checked)}
               />
-              <Label htmlFor="vaginal" className="font-normal">
+              <Label htmlFor="geburten-vaginal" className="font-normal text-sm">
                 {language === "de" ? "Vaginal" : "Vaginal"}
               </Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="kaiserschnitt"
+                id="geburten-kaiserschnitt"
                 checked={formData.frauengesundheit?.geburten?.kaiserschnitt || false}
                 onCheckedChange={(checked) => updateNestedField("geburten", "kaiserschnitt", checked)}
               />
-              <Label htmlFor="kaiserschnitt" className="font-normal">
+              <Label htmlFor="geburten-kaiserschnitt" className="font-normal text-sm">
                 {language === "de" ? "Kaiserschnitt" : "C-section"}
               </Label>
             </div>
           </div>
         </div>
 
-        {/* Wochenbettdepression */}
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <Checkbox
@@ -579,29 +650,32 @@ const WomenHealthSection = ({ formData, updateFormData }: WomenHealthSectionProp
             </Label>
           </div>
           {formData.frauengesundheit?.wochenbettdepression?.ja && (
-            <Input
-              className="max-w-xs"
-              placeholder={language === "de" ? "Nach welcher Geburt?" : "After which birth?"}
-              value={formData.frauengesundheit?.wochenbettdepression?.nachGeburt || ""}
-              onChange={(e) => updateNestedField("wochenbettdepression", "nachGeburt", e.target.value)}
-            />
+            <div className="pl-6">
+              <Label>{language === "de" ? "Nach welcher Geburt?" : "After which birth?"}</Label>
+              <NumericInput
+                className="w-24 mt-1"
+                value={formData.frauengesundheit?.wochenbettdepression?.nachGeburt || ""}
+                onChange={(val) => updateNestedField("wochenbettdepression", "nachGeburt", val)}
+                min={1}
+                max={15}
+              />
+            </div>
           )}
         </div>
       </div>
 
       <Separator />
 
-      {/* Sonstige Erkrankungen */}
-      <div className="border rounded-lg p-4 bg-muted/30">
-        <Label className="text-base font-medium">
-          {language === "de" ? "Sonstige Erkrankungen der Frauengesundheit" : "Other Women's Health Conditions"}
+      {/* Sonstiges */}
+      <div className="space-y-2">
+        <Label htmlFor="sonstige-frauen">
+          {language === "de" ? "Sonstige gynäkologische Angaben" : "Other gynecological information"}
         </Label>
         <Textarea
-          placeholder={language === "de" ? "Bitte beschreiben Sie weitere Erkrankungen, die hier nicht aufgeführt sind..." : "Please describe any other conditions not listed here..."}
+          id="sonstige-frauen"
           value={formData.frauengesundheit?.sonstige || ""}
           onChange={(e) => updateFrauengesundheit("sonstige", e.target.value)}
-          className="mt-2"
-          rows={2}
+          rows={3}
         />
       </div>
     </div>
