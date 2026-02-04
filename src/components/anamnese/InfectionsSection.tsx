@@ -1,9 +1,16 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
+import MultiSelectCheckbox from "./shared/MultiSelectCheckbox";
+import YearMonthSelect from "./shared/YearMonthSelect";
+import MultiEntryField from "./shared/MultiEntryField";
+import {
+  tropicalCountries,
+} from "@/lib/medicalOptions";
+import { Plane, Bug, Dog } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface InfectionsSectionProps {
   formData: AnamneseFormData;
@@ -30,11 +37,17 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
     });
   };
 
+  // Get birth year for year validation
+  const birthYear = formData.geburtsdatum 
+    ? new Date(formData.geburtsdatum).getFullYear() 
+    : undefined;
+
   return (
     <div className="space-y-8">
       {/* Reisen & Tropenkrankheiten */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Plane className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Tropenreisen & Infektionen" : "Tropical Travel & Infections"}
         </h3>
 
@@ -50,17 +63,30 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
             </Label>
           </div>
           {formData.infektionen?.tropenReise?.ja && (
-            <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr" : "Year"}
-                value={formData.infektionen?.tropenReise?.jahr || ""}
-                onChange={(e) => updateNestedField("tropenReise", "jahr", e.target.value)}
-              />
-              <Input
-                placeholder={language === "de" ? "Welche Länder?" : "Which countries?"}
-                value={formData.infektionen?.tropenReise?.laender || ""}
-                onChange={(e) => updateNestedField("tropenReise", "laender", e.target.value)}
-              />
+            <div className="space-y-4 pl-6">
+              <div className="space-y-2">
+                <Label>{language === "de" ? "Jahr" : "Year"}</Label>
+                <YearMonthSelect
+                  yearValue={formData.infektionen?.tropenReise?.jahr || ""}
+                  onYearChange={(value) => updateNestedField("tropenReise", "jahr", value)}
+                  showMonth={false}
+                  birthYear={birthYear}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "de" ? "Welche Länder?" : "Which countries?"}</Label>
+                <MultiSelectCheckbox
+                  options={tropicalCountries}
+                  selectedValues={formData.infektionen?.tropenReise?.laenderList || []}
+                  onChange={(values) => updateNestedField("tropenReise", "laenderList", values)}
+                  allowOther={true}
+                  otherValue={formData.infektionen?.tropenReise?.laender || ""}
+                  onOtherChange={(value) => updateNestedField("tropenReise", "laender", value)}
+                  otherPlaceholderDe="Andere Länder..."
+                  otherPlaceholderEn="Other countries..."
+                  columns={4}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -70,7 +96,8 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
 
       {/* Zecken & Borreliose */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Bug className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Zecken & Borreliose" : "Ticks & Lyme Disease"}
         </h3>
 
@@ -87,12 +114,15 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
           </div>
           {formData.infektionen?.zeckenbiss?.ja && (
             <div className="space-y-4 pl-6">
-              <Input
-                placeholder={language === "de" ? "Seit wann / Wann?" : "Since when / When?"}
-                value={formData.infektionen?.zeckenbiss?.seit || ""}
-                onChange={(e) => updateNestedField("zeckenbiss", "seit", e.target.value)}
-                className="max-w-xs"
-              />
+              <div className="space-y-2">
+                <Label>{language === "de" ? "Wann?" : "When?"}</Label>
+                <YearMonthSelect
+                  yearValue={formData.infektionen?.zeckenbiss?.seit || ""}
+                  onYearChange={(value) => updateNestedField("zeckenbiss", "seit", value)}
+                  showMonth={false}
+                  birthYear={birthYear}
+                />
+              </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="roterHof"
@@ -120,16 +150,23 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
           </div>
           {formData.infektionen?.borreliose?.ja && (
             <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <Input
-                placeholder={language === "de" ? "Jahr der Diagnose" : "Year of diagnosis"}
-                value={formData.infektionen?.borreliose?.jahr || ""}
-                onChange={(e) => updateNestedField("borreliose", "jahr", e.target.value)}
-              />
-              <Input
-                placeholder={language === "de" ? "Stadium (falls bekannt)" : "Stage (if known)"}
-                value={formData.infektionen?.borreliose?.stadium || ""}
-                onChange={(e) => updateNestedField("borreliose", "stadium", e.target.value)}
-              />
+              <div className="space-y-2">
+                <Label>{language === "de" ? "Jahr der Diagnose" : "Year of diagnosis"}</Label>
+                <YearMonthSelect
+                  yearValue={formData.infektionen?.borreliose?.jahr || ""}
+                  onYearChange={(value) => updateNestedField("borreliose", "jahr", value)}
+                  showMonth={false}
+                  birthYear={birthYear}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === "de" ? "Stadium (falls bekannt)" : "Stage (if known)"}</Label>
+                <Input
+                  placeholder={language === "de" ? "z.B. Stadium 2" : "e.g. Stage 2"}
+                  value={formData.infektionen?.borreliose?.stadium || ""}
+                  onChange={(e) => updateNestedField("borreliose", "stadium", e.target.value)}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -146,12 +183,15 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
             </Label>
           </div>
           {formData.infektionen?.fsmeImpfung?.ja && (
-            <Input
-              className="max-w-xs pl-6"
-              placeholder={language === "de" ? "Jahr der letzten Impfung" : "Year of last vaccination"}
-              value={formData.infektionen?.fsmeImpfung?.jahr || ""}
-              onChange={(e) => updateNestedField("fsmeImpfung", "jahr", e.target.value)}
-            />
+            <div className="space-y-2 pl-6">
+              <Label>{language === "de" ? "Jahr der letzten Impfung" : "Year of last vaccination"}</Label>
+              <YearMonthSelect
+                yearValue={formData.infektionen?.fsmeImpfung?.jahr || ""}
+                onYearChange={(value) => updateNestedField("fsmeImpfung", "jahr", value)}
+                showMonth={false}
+                birthYear={birthYear}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -160,7 +200,8 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
 
       {/* Haustiere */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Dog className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Haustiere & Tierkontakt" : "Pets & Animal Contact"}
         </h3>
         <p className="text-sm text-muted-foreground">
@@ -178,7 +219,7 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
                 onCheckedChange={(checked) => updateNestedField("hund", "ja", checked)}
               />
               <Label htmlFor="hund">
-                {language === "de" ? "Hund" : "Dog"}
+                {language === "de" ? "Hund 🐕" : "Dog 🐕"}
               </Label>
             </div>
             {formData.infektionen?.hund?.ja && (
@@ -199,7 +240,7 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
                 onCheckedChange={(checked) => updateNestedField("katze", "ja", checked)}
               />
               <Label htmlFor="katze">
-                {language === "de" ? "Katze" : "Cat"}
+                {language === "de" ? "Katze 🐱" : "Cat 🐱"}
               </Label>
             </div>
             {formData.infektionen?.katze?.ja && (
@@ -220,7 +261,7 @@ const InfectionsSection = ({ formData, updateFormData }: InfectionsSectionProps)
                 onCheckedChange={(checked) => updateNestedField("pferd", "ja", checked)}
               />
               <Label htmlFor="pferd">
-                {language === "de" ? "Pferd / Pferdekontakt" : "Horse / Horse contact"}
+                {language === "de" ? "Pferd / Pferdekontakt 🐴" : "Horse / Horse contact 🐴"}
               </Label>
             </div>
             {formData.infektionen?.pferd?.ja && (

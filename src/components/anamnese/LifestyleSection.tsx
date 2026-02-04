@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -7,6 +6,25 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import MultiSelectCheckbox from "./shared/MultiSelectCheckbox";
+import YearMonthSelect from "./shared/YearMonthSelect";
+import {
+  passiveSmokingOptions,
+  alcoholTypes,
+  sportsTypes,
+  walkingDistanceOptions,
+  sleepDurationOptions,
+  eatingHabitsOptions,
+} from "@/lib/medicalOptions";
+import { Cigarette, Wine, Dumbbell, Moon, Activity, Utensils } from "lucide-react";
+import NumericInput from "./shared/NumericInput";
 
 interface LifestyleSectionProps {
   formData: AnamneseFormData;
@@ -33,11 +51,37 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
     });
   };
 
+  const updateAlkoholTyp = (typ: string, checked: boolean, menge: string = "") => {
+    const current = formData.lebensweise?.alkohol?.typen || [];
+    if (checked) {
+      updateNestedField("alkohol", "typen", [...current, { typ, menge }]);
+    } else {
+      updateNestedField("alkohol", "typen", current.filter((t: any) => t.typ !== typ));
+    }
+  };
+
+  const updateAlkoholMenge = (typ: string, menge: string) => {
+    const current = formData.lebensweise?.alkohol?.typen || [];
+    updateNestedField("alkohol", "typen", current.map((t: any) => 
+      t.typ === typ ? { ...t, menge } : t
+    ));
+  };
+
+  const getAlkoholMenge = (typ: string): string => {
+    const found = (formData.lebensweise?.alkohol?.typen || []).find((t: any) => t.typ === typ);
+    return found?.menge || "";
+  };
+
+  const isAlkoholTypSelected = (typ: string): boolean => {
+    return (formData.lebensweise?.alkohol?.typen || []).some((t: any) => t.typ === typ);
+  };
+
   return (
     <div className="space-y-8">
       {/* Rauchen */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Cigarette className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Rauchen" : "Smoking"}
         </h3>
 
@@ -64,17 +108,19 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
           <div className="grid gap-4 md:grid-cols-2 pl-6">
             <div className="space-y-2">
               <Label>{language === "de" ? "Rauche seit wann?" : "Smoking since when?"}</Label>
-              <Input
-                value={formData.lebensweise?.raucherSeitWann || ""}
-                onChange={(e) => updateLebensweise("raucherSeitWann", e.target.value)}
-                placeholder={language === "de" ? "z.B. seit 2010" : "e.g. since 2010"}
+              <YearMonthSelect
+                yearValue={formData.lebensweise?.raucherSeitWann || ""}
+                onYearChange={(value) => updateLebensweise("raucherSeitWann", value)}
+                showMonth={false}
               />
             </div>
             <div className="space-y-2">
               <Label>{language === "de" ? "Zigaretten pro Tag" : "Cigarettes per day"}</Label>
-              <Input
+              <NumericInput
                 value={formData.lebensweise?.zigarettenProTag || ""}
-                onChange={(e) => updateLebensweise("zigarettenProTag", e.target.value)}
+                onChange={(value) => updateLebensweise("zigarettenProTag", value)}
+                min={1}
+                max={100}
                 placeholder={language === "de" ? "z.B. 10" : "e.g. 10"}
               />
             </div>
@@ -84,21 +130,26 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
         {formData.lebensweise?.raucher === "ehemals" && (
           <div className="space-y-2 pl-6">
             <Label>{language === "de" ? "Aufgehört wann?" : "Quit when?"}</Label>
-            <Input
-              className="max-w-xs"
-              value={formData.lebensweise?.exRaucherBisWann || ""}
-              onChange={(e) => updateLebensweise("exRaucherBisWann", e.target.value)}
-              placeholder={language === "de" ? "z.B. 2020" : "e.g. 2020"}
+            <YearMonthSelect
+              yearValue={formData.lebensweise?.exRaucherBisWann || ""}
+              onYearChange={(value) => updateLebensweise("exRaucherBisWann", value)}
+              showMonth={false}
             />
           </div>
         )}
 
         <div className="space-y-2">
           <Label>{language === "de" ? "Passivrauch-Exposition" : "Passive smoke exposure"}</Label>
-          <Input
-            value={formData.lebensweise?.passivRauchen || ""}
-            onChange={(e) => updateLebensweise("passivRauchen", e.target.value)}
-            placeholder={language === "de" ? "z.B. Partner raucht, Arbeitsplatz" : "e.g. Partner smokes, workplace"}
+          <MultiSelectCheckbox
+            options={passiveSmokingOptions}
+            selectedValues={formData.lebensweise?.passivRauchenTypen || []}
+            onChange={(values) => updateLebensweise("passivRauchenTypen", values)}
+            allowOther={true}
+            otherValue={formData.lebensweise?.passivRauchenSonstiges || ""}
+            onOtherChange={(value) => updateLebensweise("passivRauchenSonstiges", value)}
+            otherPlaceholderDe="Sonstige Exposition..."
+            otherPlaceholderEn="Other exposure..."
+            columns={2}
           />
         </div>
       </div>
@@ -107,7 +158,8 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
 
       {/* Alkohol */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Wine className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Alkohol" : "Alcohol"}
         </h3>
 
@@ -123,29 +175,52 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
         </div>
 
         {formData.lebensweise?.alkohol?.ja && (
-          <div className="grid gap-4 md:grid-cols-3 pl-6">
+          <div className="space-y-4 pl-6">
             <div className="space-y-2">
               <Label>{language === "de" ? "Seit wann?" : "Since when?"}</Label>
-              <Input
-                value={formData.lebensweise?.alkohol?.seitWann || ""}
-                onChange={(e) => updateNestedField("alkohol", "seitWann", e.target.value)}
+              <YearMonthSelect
+                yearValue={formData.lebensweise?.alkohol?.seitWann || ""}
+                onYearChange={(value) => updateNestedField("alkohol", "seitWann", value)}
+                showMonth={false}
               />
             </div>
-            <div className="space-y-2">
-              <Label>{language === "de" ? "Menge pro Tag/Woche" : "Amount per day/week"}</Label>
-              <Input
-                value={formData.lebensweise?.alkohol?.mengeProTag || ""}
-                onChange={(e) => updateNestedField("alkohol", "mengeProTag", e.target.value)}
-                placeholder={language === "de" ? "z.B. 2 Gläser Wein/Woche" : "e.g. 2 glasses wine/week"}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{language === "de" ? "Art des Alkohols" : "Type of alcohol"}</Label>
-              <Input
-                value={formData.lebensweise?.alkohol?.typ || ""}
-                onChange={(e) => updateNestedField("alkohol", "typ", e.target.value)}
-                placeholder={language === "de" ? "z.B. Wein, Bier" : "e.g. Wine, Beer"}
-              />
+
+            <div className="space-y-3">
+              <Label>{language === "de" ? "Art des Alkohols & Menge pro Woche" : "Type of alcohol & amount per week"}</Label>
+              <div className="grid gap-3 md:grid-cols-2">
+                {alcoholTypes.map((alcohol) => (
+                  <div key={alcohol.value} className="flex items-start space-x-2 p-3 bg-muted/30 rounded-lg">
+                    <Checkbox
+                      id={`alkohol-${alcohol.value}`}
+                      checked={isAlkoholTypSelected(alcohol.value)}
+                      onCheckedChange={(checked) => updateAlkoholTyp(alcohol.value, !!checked)}
+                    />
+                    <div className="flex-1 space-y-2">
+                      <Label htmlFor={`alkohol-${alcohol.value}`} className="font-normal cursor-pointer">
+                        {language === "de" ? alcohol.labelDe : alcohol.labelEn}
+                        <span className="text-xs text-muted-foreground ml-1">({alcohol.glassSize}/Glas)</span>
+                      </Label>
+                      {isAlkoholTypSelected(alcohol.value) && (
+                        <Select
+                          value={getAlkoholMenge(alcohol.value)}
+                          onValueChange={(value) => updateAlkoholMenge(alcohol.value, value)}
+                        >
+                          <SelectTrigger className="w-full h-8 text-sm">
+                            <SelectValue placeholder={language === "de" ? "Gläser/Woche" : "Glasses/week"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["1-2", "3-5", "6-10", "11-20", ">20"].map((amount) => (
+                              <SelectItem key={amount} value={amount}>
+                                {amount} {language === "de" ? "Gläser/Woche" : "glasses/week"}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -155,7 +230,8 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
 
       {/* Bewegung & Sport */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Dumbbell className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Bewegung & Sport" : "Exercise & Sports"}
         </h3>
 
@@ -172,21 +248,35 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
           </div>
 
           {formData.lebensweise?.sport?.ja && (
-            <div className="grid gap-4 md:grid-cols-2 pl-6">
+            <div className="space-y-4 pl-6">
               <div className="space-y-2">
                 <Label>{language === "de" ? "Wie oft pro Woche?" : "How often per week?"}</Label>
-                <Input
+                <Select
                   value={formData.lebensweise?.sport?.proWoche || ""}
-                  onChange={(e) => updateNestedField("sport", "proWoche", e.target.value)}
-                  placeholder={language === "de" ? "z.B. 3x" : "e.g. 3x"}
-                />
+                  onValueChange={(value) => updateNestedField("sport", "proWoche", value)}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder={language === "de" ? "Auswählen" : "Select"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["1x", "2x", "3x", "4x", "5x", "6x", "7x", ">7x"].map((freq) => (
+                      <SelectItem key={freq} value={freq}>{freq}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>{language === "de" ? "Welche Sportarten?" : "Which sports?"}</Label>
-                <Input
-                  value={formData.lebensweise?.sport?.art || ""}
-                  onChange={(e) => updateNestedField("sport", "art", e.target.value)}
-                  placeholder={language === "de" ? "z.B. Joggen, Schwimmen" : "e.g. Jogging, Swimming"}
+                <MultiSelectCheckbox
+                  options={sportsTypes}
+                  selectedValues={formData.lebensweise?.sport?.arten || []}
+                  onChange={(values) => updateNestedField("sport", "arten", values)}
+                  allowOther={true}
+                  otherValue={formData.lebensweise?.sport?.sonstige || ""}
+                  onOtherChange={(value) => updateNestedField("sport", "sonstige", value)}
+                  otherPlaceholderDe="Andere Sportarten..."
+                  otherPlaceholderEn="Other sports..."
+                  columns={3}
                 />
               </div>
             </div>
@@ -209,30 +299,57 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
             <div className="grid gap-4 md:grid-cols-2 pl-6">
               <div className="space-y-2">
                 <Label>{language === "de" ? "Wie oft pro Woche?" : "How often per week?"}</Label>
-                <Input
+                <Select
                   value={formData.lebensweise?.spaziergang?.proWoche || ""}
-                  onChange={(e) => updateNestedField("spaziergang", "proWoche", e.target.value)}
-                />
+                  onValueChange={(value) => updateNestedField("spaziergang", "proWoche", value)}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder={language === "de" ? "Auswählen" : "Select"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["1x", "2x", "3x", "4x", "5x", "6x", "7x", "täglich"].map((freq) => (
+                      <SelectItem key={freq} value={freq}>{freq}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>{language === "de" ? "Dauer in Minuten" : "Duration in minutes"}</Label>
-                <Input
+                <Select
                   value={formData.lebensweise?.spaziergang?.dauerMinuten || ""}
-                  onChange={(e) => updateNestedField("spaziergang", "dauerMinuten", e.target.value)}
-                />
+                  onValueChange={(value) => updateNestedField("spaziergang", "dauerMinuten", value)}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder={language === "de" ? "Auswählen" : "Select"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["15", "30", "45", "60", "90", "120", ">120"].map((min) => (
+                      <SelectItem key={min} value={min}>{min} min</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label>{language === "de" ? "Geschätzte tägliche Gehstrecke (Meter)" : "Estimated daily walking distance (meters)"}</Label>
-          <Input
+          <Label>{language === "de" ? "Geschätzte tägliche Gehstrecke" : "Estimated daily walking distance"}</Label>
+          <Select
             value={formData.lebensweise?.meterZuFuss || ""}
-            onChange={(e) => updateLebensweise("meterZuFuss", e.target.value)}
-            placeholder={language === "de" ? "z.B. 3000" : "e.g. 3000"}
-            className="max-w-xs"
-          />
+            onValueChange={(value) => updateLebensweise("meterZuFuss", value)}
+          >
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder={language === "de" ? "Bitte auswählen" : "Please select"} />
+            </SelectTrigger>
+            <SelectContent>
+              {walkingDistanceOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {language === "de" ? option.labelDe : option.labelEn}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -240,7 +357,8 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
 
       {/* Schlaf */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Moon className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Schlaf" : "Sleep"}
         </h3>
 
@@ -268,12 +386,22 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
           </div>
 
           <div className="space-y-2">
-            <Label>{language === "de" ? "Durchschnittliche Schlafdauer (Stunden)" : "Average sleep duration (hours)"}</Label>
-            <Input
+            <Label>{language === "de" ? "Durchschnittliche Schlafdauer" : "Average sleep duration"}</Label>
+            <Select
               value={formData.lebensweise?.schlafDauer || ""}
-              onChange={(e) => updateLebensweise("schlafDauer", e.target.value)}
-              placeholder={language === "de" ? "z.B. 7" : "e.g. 7"}
-            />
+              onValueChange={(value) => updateLebensweise("schlafDauer", value)}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder={language === "de" ? "Bitte auswählen" : "Please select"} />
+              </SelectTrigger>
+              <SelectContent>
+                {sleepDurationOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {language === "de" ? option.labelDe : option.labelEn}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -282,7 +410,8 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
 
       {/* Stress */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Activity className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Stress" : "Stress"}
         </h3>
 
@@ -310,22 +439,38 @@ const LifestyleSection = ({ formData, updateFormData }: LifestyleSectionProps) =
 
       {/* Ernährung */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Utensils className="w-5 h-5 text-muted-foreground" />
           {language === "de" ? "Ernährung" : "Nutrition"}
         </h3>
 
         <div className="space-y-2">
-          <Label htmlFor="ernaehrungsgewohnheiten">
-            {language === "de" ? "Ernährungsgewohnheiten" : "Eating habits"}
+          <Label>{language === "de" ? "Ernährungsgewohnheiten" : "Eating habits"}</Label>
+          <MultiSelectCheckbox
+            options={eatingHabitsOptions}
+            selectedValues={formData.lebensweise?.ernaehrungsTypen || []}
+            onChange={(values) => updateLebensweise("ernaehrungsTypen", values)}
+            allowOther={true}
+            otherValue={formData.lebensweise?.ernaehrungSonstiges || ""}
+            onOtherChange={(value) => updateLebensweise("ernaehrungSonstiges", value)}
+            otherPlaceholderDe="Weitere Ernährungsgewohnheiten..."
+            otherPlaceholderEn="Other eating habits..."
+            columns={3}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="ernaehrungsDetails">
+            {language === "de" ? "Zusätzliche Anmerkungen zur Ernährung" : "Additional nutrition notes"}
           </Label>
           <Textarea
-            id="ernaehrungsgewohnheiten"
+            id="ernaehrungsDetails"
             value={formData.lebensweise?.ernaehrungsgewohnheiten || ""}
             onChange={(e) => updateLebensweise("ernaehrungsgewohnheiten", e.target.value)}
             placeholder={language === "de" 
-              ? "z.B. vegetarisch, vegan, mediterran, Low-Carb, regelmäßige Mahlzeiten..."
-              : "e.g. vegetarian, vegan, Mediterranean, low-carb, regular meals..."}
-            rows={3}
+              ? "z.B. bestimmte Essenszeiten, Mahlzeitenanzahl, Besonderheiten..."
+              : "e.g. specific meal times, number of meals, special considerations..."}
+            rows={2}
           />
         </div>
       </div>

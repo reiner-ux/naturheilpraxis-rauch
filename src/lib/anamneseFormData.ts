@@ -368,14 +368,17 @@ export const initialFormData = {
   krebserkrankung: {
     hatKrebs: false,
     welche: "",
+    welcheTyp: "",
     diagnoseJahr: "",
     betroffeneOrgane: "",
+    betroffeneOrganeList: [] as string[],
     tnmStadium: { t: "", n: "", m: "" },
     operationDurchgefuehrt: { ja: false, welche: "" },
-    chemotherapieErhalten: { ja: false, von: "", bis: "", welche: "" },
-    strahlentherapieErhalten: { ja: false, bereich: "", dauerWochen: "" },
-    metastasen: { ja: false, organe: "" },
-    aktuelleTumortherapie: { ja: false, welche: "" },
+    operationenList: [] as { jahr: string; art: string }[],
+    chemotherapieErhalten: { ja: false, von: "", bis: "", welche: "", typen: [] as string[] },
+    strahlentherapieErhalten: { ja: false, bereich: "", dauerWochen: "", typen: [] as string[] },
+    metastasen: { ja: false, organe: "", organeList: [] as string[] },
+    aktuelleTumortherapie: { ja: false, welche: "", typen: [] as string[] },
     krebsBestaetigung: false,
   },
   
@@ -383,9 +386,9 @@ export const initialFormData = {
   allergien: {
     inhalation: { ja: false, pollen: false, staub: false, tierhaare: false, schimmel: false },
     tierepithelien: { ja: false, hund: false, katze: false, pferd: false, sonstige: "" },
-    nahrungsmittel: { ja: false, details: "" },
-    medikamente: { ja: false, details: "" },
-    kontakt: { ja: false, nickel: false, latex: false, sonstige: "" },
+    nahrungsmittel: { ja: false, details: "", allergene: [] as string[] },
+    medikamente: { ja: false, details: "", allergene: [] as string[] },
+    kontakt: { ja: false, nickel: false, latex: false, sonstige: "", allergene: [] as string[] },
     laktose: { ja: false, mild: false, moderat: false, schwer: false },
     gluten: { ja: false, diagnostiziert: false },
     fruktose: { ja: false, details: "" },
@@ -408,8 +411,22 @@ export const initialFormData = {
     zigarettenProTag: "",
     exRaucherBisWann: "",
     passivRauchen: "",
-    alkohol: { ja: false, seitWann: "", mengeProTag: "", typ: "" },
-    sport: { ja: false, proWoche: "", art: "" },
+    passivRauchenTypen: [] as string[],
+    passivRauchenSonstiges: "",
+    alkohol: { 
+      ja: false, 
+      seitWann: "", 
+      mengeProTag: "", 
+      typ: "",
+      typen: [] as { typ: string; menge: string }[]
+    },
+    sport: { 
+      ja: false, 
+      proWoche: "", 
+      art: "",
+      arten: [] as string[],
+      sonstige: ""
+    },
     taeglicheBewegung: { ja: false, details: "" },
     spaziergang: { ja: false, proWoche: "", dauerMinuten: "" },
     meterZuFuss: "",
@@ -417,6 +434,8 @@ export const initialFormData = {
     schlafDauer: "",
     stressLevel: "",
     ernaehrungsgewohnheiten: "",
+    ernaehrungsTypen: [] as string[],
+    ernaehrungSonstiges: "",
   },
   
   // X. Umweltbelastungen & Sensitivitäten
@@ -455,7 +474,7 @@ export const initialFormData = {
   
   // XI. Infektionskrankheiten & Zoonosen
   infektionen: {
-    tropenReise: { ja: false, jahr: "", laender: "" },
+    tropenReise: { ja: false, jahr: "", laender: "", laenderList: [] as string[] },
     zeckenbiss: { ja: false, seit: "", roterHof: false },
     borreliose: { ja: false, jahr: "", stadium: "" },
     fsmeImpfung: { ja: false, jahr: "" },
