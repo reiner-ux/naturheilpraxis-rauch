@@ -361,7 +361,9 @@ export default function AnamneseDemo() {
   const [showVerification, setShowVerification] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
-  const [tempUserId, setTempUserId] = useState<string | null>(null);
+  const [tempUserId, setTempUserId] = useState<string | null>(() => {
+    try { return sessionStorage.getItem('anamnese_tempUserId'); } catch { return null; }
+  });
   const printRef = useRef<HTMLDivElement>(null);
 
   const updateFormData = (field: string, value: any) => {
@@ -400,7 +402,10 @@ export default function AnamneseDemo() {
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Submission failed");
       setSubmissionId(data.submissionId || null);
-      if (data.tempUserId) setTempUserId(data.tempUserId);
+      if (data.tempUserId) {
+        setTempUserId(data.tempUserId);
+        try { sessionStorage.setItem('anamnese_tempUserId', data.tempUserId); } catch {}
+      }
       setShowVerification(true);
       toast.success(language === "de" ? "Bestätigungscode gesendet!" : "Verification code sent!", {
         description: `Code an ${formData.email} gesendet.`,
