@@ -1,3 +1,4 @@
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +15,17 @@ interface SignatureSectionProps {
 
 const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) => {
   const { language } = useLanguage();
+
+  // Auto-set today's date if not already set
+  React.useEffect(() => {
+    if (!formData.unterschrift?.datum) {
+      const today = new Date().toISOString().split('T')[0];
+      updateFormData("unterschrift", {
+        ...formData.unterschrift,
+        datum: today
+      });
+    }
+  }, []);
 
   const updateUnterschrift = (field: string, value: any) => {
     updateFormData("unterschrift", {
