@@ -1,9 +1,12 @@
-import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
-import YearMonthSelect from "./shared/YearMonthSelect";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
+import SubConditionList from "./shared/SubConditionList";
 
 interface MusculoskeletalSectionProps {
   formData: AnamneseFormData;
@@ -12,123 +15,51 @@ interface MusculoskeletalSectionProps {
 
 const MusculoskeletalSection = ({ formData, updateFormData }: MusculoskeletalSectionProps) => {
   const { language } = useLanguage();
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   const birthYear = formData.geburtsdatum ? new Date(formData.geburtsdatum).getFullYear() : undefined;
+  const wgData = (formData.wirbelsaeuleGelenke || {}) as any;
 
-  const parseYearMonth = (raw: string): { year: string; month: string } => {
-    if (!raw) return { year: "", month: "" };
-    const m = raw.match(/^(\d{4})(?:-(\d{2}))?$/);
-    if (!m) return { year: "", month: "" };
-    return { year: m[1] ?? "", month: m[2] ?? "" };
+  const setSectionOpen = (section: string, open: boolean) => {
+    setExpandedSections(prev => ({ ...prev, [section]: open }));
   };
 
-  const updateNestedField = (section: string, field: string, subfield: string, value: any) => {
-    const current = formData[section as keyof AnamneseFormData] as any;
-    const currentField = current?.[field] || {};
-    updateFormData(section, {
-      ...current,
-      [field]: { ...currentField, [subfield]: value }
+  const handleSubItemChange = (parentKey: string, subKey: string, subField: string, value: any) => {
+    const parent = wgData[parentKey] || {};
+    const subItem = parent[subKey];
+    const currentSub = (typeof subItem === 'boolean')
+      ? { ja: subItem, seit: "", status: "", bisJahr: "" }
+      : { seit: "", status: "", bisJahr: "", ...(subItem || {}) };
+    updateFormData("wirbelsaeuleGelenke", {
+      ...wgData,
+      [parentKey]: { ...parent, [subKey]: { ...currentSub, [subField]: value } }
     });
   };
 
-  const updateSectionField = (section: string, field: string, value: any) => {
-    const current = formData[section as keyof AnamneseFormData] as any;
-    updateFormData(section, {
-      ...current,
-      [field]: value
-    });
-  };
-
-  const setYearMonthCombined = (section: string, field: string, timeKey: string, next: { year?: string; month?: string }) => {
-    const sectionData = (formData as any)?.[section] || {};
-    const fieldData = sectionData?.[field] || {};
-    const current = parseYearMonth(String(fieldData?.[timeKey] ?? ""));
-    const year = (next.year ?? current.year).slice(0, 4);
-    const month = (next.month ?? current.month).slice(0, 2);
-    const combined = month ? `${year}-${month}` : year;
-    updateNestedField(section, field, timeKey, combined);
-  };
-
-  const spineConditions = [
-    { key: "hws", labelDe: "HWS (Halswirbelsäule)", labelEn: "Cervical Spine" },
-    { key: "bws", labelDe: "BWS (Brustwirbelsäule)", labelEn: "Thoracic Spine" },
-    { key: "lws", labelDe: "LWS (Lendenwirbelsäule)", labelEn: "Lumbar Spine" },
-    { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc" },
-    { key: "spinalkanalstenose", labelDe: "Spinalkanalstenose", labelEn: "Spinal Stenosis" },
-    { key: "skoliose", labelDe: "Skoliose", labelEn: "Scoliosis" },
-    { key: "morbusBechterew", labelDe: "Morbus Bechterew", labelEn: "Ankylosing Spondylitis" },
-  ];
-
-  const jointConditions = [
-    { key: "schulter", labelDe: "Schultergelenke", labelEn: "Shoulder Joints", hasSymmetry: true },
-    { key: "ellbogen", labelDe: "Ellbogengelenke", labelEn: "Elbow Joints", hasSymmetry: true },
-    { key: "handgelenk", labelDe: "Handgelenke", labelEn: "Wrist Joints", hasSymmetry: true },
-    { key: "finger", labelDe: "Fingergelenke", labelEn: "Finger Joints", hasSymmetry: true },
-    { key: "huefte", labelDe: "Hüftgelenke", labelEn: "Hip Joints", hasSymmetry: true },
-    { key: "knie", labelDe: "Kniegelenke", labelEn: "Knee Joints", hasSymmetry: true },
-    { key: "fuss", labelDe: "Fußgelenke/Sprunggelenk", labelEn: "Ankle Joints", hasSymmetry: true },
-  ];
-
-  const rheumaConditions = [
-    { key: "rheuma", labelDe: "Rheumatoide Arthritis", labelEn: "Rheumatoid Arthritis" },
-    { key: "arthrose", labelDe: "Arthrose (Gelenkverschleiß)", labelEn: "Osteoarthritis" },
-    { key: "gicht", labelDe: "Gicht", labelEn: "Gout" },
-    { key: "fibromyalgie", labelDe: "Fibromyalgie", labelEn: "Fibromyalgia" },
-    { key: "osteoporose", labelDe: "Osteoporose", labelEn: "Osteoporosis" },
-    { key: "lupus", labelDe: "Lupus erythematodes", labelEn: "Lupus" },
-  ];
-
-  const renderCondition = (item: { key: string; labelDe: string; labelEn: string; hasSymmetry?: boolean }) => {
-    const fieldData = (formData.wirbelsaeuleGelenke as any)?.[item.key];
-    const isChecked = fieldData && typeof fieldData === 'object' && 'ja' in fieldData ? Boolean(fieldData.ja) : false;
-    const timeValue = String(fieldData?.seit || fieldData?.jahr || "");
-    const parsed = parseYearMonth(timeValue);
-
-    return (
-      <div key={item.key} className="border rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <Checkbox
-            checked={isChecked}
-            onCheckedChange={(checked) => updateNestedField("wirbelsaeuleGelenke", item.key, "ja", !!checked)}
-          />
-          <div className="space-y-2 flex-1">
-            <Label>{language === "de" ? item.labelDe : item.labelEn}</Label>
-            {isChecked && (
-              <div className="space-y-3 mt-2">
-                <div className="max-w-xs">
-                  <YearMonthSelect
-                    yearValue={parsed.year}
-                    monthValue={parsed.month}
-                    onYearChange={(value) => setYearMonthCombined("wirbelsaeuleGelenke", item.key, "seit", { year: value })}
-                    onMonthChange={(value) => setYearMonthCombined("wirbelsaeuleGelenke", item.key, "seit", { month: value })}
-                    showMonth={true}
-                    birthYear={birthYear}
-                  />
-                </div>
-                {item.hasSymmetry && (
-                  <div className="flex flex-wrap gap-4">
-                    {[
-                      { key: "rechts", labelDe: "rechts", labelEn: "right" },
-                      { key: "links", labelDe: "links", labelEn: "left" },
-                      { key: "beidseitig", labelDe: "beidseitig", labelEn: "both sides" },
-                    ].map((side) => (
-                      <div key={side.key} className="flex items-center gap-2">
-                        <Checkbox
-                          checked={fieldData?.[side.key] || false}
-                          onCheckedChange={(checked) => updateNestedField("wirbelsaeuleGelenke", item.key, side.key, !!checked)}
-                        />
-                        <Label className="font-normal text-sm">{language === "de" ? side.labelDe : side.labelEn}</Label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const renderCollapsibleSection = (
+    sectionKey: string,
+    emoji: string,
+    labelDe: string,
+    labelEn: string,
+    items: { key: string; labelDe: string; labelEn: string }[]
+  ) => (
+    <Collapsible key={sectionKey} open={!!expandedSections[sectionKey]} onOpenChange={(open) => setSectionOpen(sectionKey, open)}>
+      <CollapsibleTrigger asChild>
+        <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
+          <span className="font-medium">{language === "de" ? `${emoji} ${labelDe}` : `${emoji} ${labelEn}`}</span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections[sectionKey] ? 'rotate-180' : ''}`} />
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-4">
+        <SubConditionList
+          items={items}
+          parentData={wgData[sectionKey] || {}}
+          onSubItemChange={(subKey, subField, value) => handleSubItemChange(sectionKey, subKey, subField, value)}
+          birthYear={birthYear}
+        />
+      </CollapsibleContent>
+    </Collapsible>
+  );
 
   return (
     <div className="space-y-6">
@@ -139,19 +70,125 @@ const MusculoskeletalSection = ({ formData, updateFormData }: MusculoskeletalSec
       </p>
 
       <h4 className="font-semibold">{language === "de" ? "Wirbelsäule" : "Spine"}</h4>
-      <div className="grid gap-4">
-        {spineConditions.map(renderCondition)}
-      </div>
+
+      {renderCollapsibleSection("hws", "🦴", "HWS (Halswirbelsäule)", "Cervical Spine", [
+        { key: "hwsSyndrom", labelDe: "HWS-Syndrom / Zervikalsyndrom", labelEn: "Cervical Syndrome" },
+        { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc" },
+        { key: "spinalkanalstenose", labelDe: "Spinalkanalstenose", labelEn: "Spinal Stenosis" },
+        { key: "verspannung", labelDe: "Muskelverspannung", labelEn: "Muscle Tension" },
+        { key: "arthrose", labelDe: "Spondylarthrose", labelEn: "Spondylarthrosis" },
+        { key: "myelopathie", labelDe: "Zervikale Myelopathie", labelEn: "Cervical Myelopathy" },
+        { key: "facettensyndrom", labelDe: "Facettensyndrom", labelEn: "Facet Joint Syndrome" },
+        { key: "schleudertrauma", labelDe: "Schleudertrauma", labelEn: "Whiplash" },
+      ])}
+
+      {renderCollapsibleSection("bws", "🦴", "BWS (Brustwirbelsäule)", "Thoracic Spine", [
+        { key: "bwsSyndrom", labelDe: "BWS-Syndrom", labelEn: "Thoracic Spine Syndrome" },
+        { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc" },
+        { key: "morbus Scheuermann", labelDe: "Morbus Scheuermann", labelEn: "Scheuermann's Disease" },
+        { key: "verspannung", labelDe: "Muskelverspannung", labelEn: "Muscle Tension" },
+        { key: "interkostalneuralgie", labelDe: "Interkostalneuralgie", labelEn: "Intercostal Neuralgia" },
+        { key: "arthrose", labelDe: "Spondylarthrose", labelEn: "Spondylarthrosis" },
+      ])}
+
+      {renderCollapsibleSection("lws", "🦴", "LWS (Lendenwirbelsäule)", "Lumbar Spine", [
+        { key: "lwsSyndrom", labelDe: "LWS-Syndrom / Lumbalsyndrom", labelEn: "Lumbar Syndrome" },
+        { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc" },
+        { key: "spinalkanalstenose", labelDe: "Spinalkanalstenose", labelEn: "Spinal Stenosis" },
+        { key: "ischialgie", labelDe: "Ischialgie / Ischiasschmerz", labelEn: "Sciatica" },
+        { key: "lumbago", labelDe: "Lumbago (Hexenschuss)", labelEn: "Lumbago" },
+        { key: "spondylolisthesis", labelDe: "Spondylolisthesis (Wirbelgleiten)", labelEn: "Spondylolisthesis" },
+        { key: "facettensyndrom", labelDe: "Facettensyndrom", labelEn: "Facet Joint Syndrome" },
+        { key: "arthrose", labelDe: "Spondylarthrose", labelEn: "Spondylarthrosis" },
+      ])}
+
+      {renderCollapsibleSection("allgemeineWS", "🦴", "Allgemeine Wirbelsäulenerkrankungen", "General Spine Conditions", [
+        { key: "skoliose", labelDe: "Skoliose", labelEn: "Scoliosis" },
+        { key: "morbusBechterew", labelDe: "Morbus Bechterew", labelEn: "Ankylosing Spondylitis" },
+        { key: "osteoporose", labelDe: "Osteoporose", labelEn: "Osteoporosis" },
+        { key: "iliosakral", labelDe: "ISG-Syndrom (Iliosakralgelenk)", labelEn: "SI Joint Syndrome" },
+      ])}
 
       <h4 className="font-semibold mt-6">{language === "de" ? "Gelenke" : "Joints"}</h4>
-      <div className="grid gap-4">
-        {jointConditions.map(renderCondition)}
-      </div>
+
+      {renderCollapsibleSection("schulter", "💪", "Schultergelenke", "Shoulder Joints", [
+        { key: "impingement", labelDe: "Impingement-Syndrom", labelEn: "Impingement Syndrome" },
+        { key: "rotatorenmanschette", labelDe: "Rotatorenmanschettenruptur", labelEn: "Rotator Cuff Tear" },
+        { key: "frozenShoulder", labelDe: "Frozen Shoulder (Schultersteife)", labelEn: "Frozen Shoulder" },
+        { key: "acGelenk", labelDe: "AC-Gelenk-Arthrose", labelEn: "AC Joint Arthrosis" },
+        { key: "luxation", labelDe: "Schulterluxation", labelEn: "Shoulder Dislocation" },
+        { key: "kalkschulter", labelDe: "Kalkschulter (Tendinosis calcarea)", labelEn: "Calcific Tendinitis" },
+        { key: "bizepssehne", labelDe: "Bizepssehnenruptur", labelEn: "Biceps Tendon Rupture" },
+        { key: "arthrose", labelDe: "Schulterarthrose (Omarthrose)", labelEn: "Shoulder Osteoarthritis" },
+      ])}
+
+      {renderCollapsibleSection("ellbogen", "💪", "Ellbogengelenke", "Elbow Joints", [
+        { key: "tennisellbogen", labelDe: "Tennisellbogen (Epicondylitis lateralis)", labelEn: "Tennis Elbow" },
+        { key: "golferellbogen", labelDe: "Golferellbogen (Epicondylitis medialis)", labelEn: "Golfer's Elbow" },
+        { key: "bursitis", labelDe: "Bursitis olecrani (Schleimbeutelentzündung)", labelEn: "Olecranon Bursitis" },
+        { key: "arthrose", labelDe: "Ellbogenarthrose (Cubitalarthrose)", labelEn: "Elbow Osteoarthritis" },
+        { key: "sulcusUlnaris", labelDe: "Sulcus-ulnaris-Syndrom", labelEn: "Cubital Tunnel Syndrome" },
+      ])}
+
+      {renderCollapsibleSection("handgelenk", "🤚", "Handgelenke", "Wrist Joints", [
+        { key: "karpaltunnel", labelDe: "Karpaltunnelsyndrom", labelEn: "Carpal Tunnel Syndrome" },
+        { key: "sehnenscheidenentzuendung", labelDe: "Sehnenscheidenentzündung", labelEn: "Tendinitis" },
+        { key: "ganglion", labelDe: "Ganglion (Überbein)", labelEn: "Ganglion Cyst" },
+        { key: "arthrose", labelDe: "Handgelenksarthrose", labelEn: "Wrist Osteoarthritis" },
+        { key: "deQuervain", labelDe: "De-Quervain-Syndrom", labelEn: "De Quervain's Tenosynovitis" },
+        { key: "skaphoidfraktur", labelDe: "Kahnbeinbruch / Pseudarthrose", labelEn: "Scaphoid Fracture" },
+      ])}
+
+      {renderCollapsibleSection("finger", "🖐️", "Fingergelenke", "Finger Joints", [
+        { key: "heberden", labelDe: "Heberden-Arthrose (Endgelenke)", labelEn: "Heberden's Nodes" },
+        { key: "bouchard", labelDe: "Bouchard-Arthrose (Mittelgelenke)", labelEn: "Bouchard's Nodes" },
+        { key: "rhizarthrose", labelDe: "Rhizarthrose (Daumensattelgelenk)", labelEn: "Thumb Basal Joint Arthritis" },
+        { key: "dupuytren", labelDe: "Dupuytren-Kontraktur", labelEn: "Dupuytren's Contracture" },
+        { key: "schnellenderFinger", labelDe: "Schnellender Finger (Trigger Finger)", labelEn: "Trigger Finger" },
+      ])}
+
+      {renderCollapsibleSection("huefte", "🦵", "Hüftgelenke", "Hip Joints", [
+        { key: "coxarthrose", labelDe: "Coxarthrose (Hüftarthrose)", labelEn: "Hip Osteoarthritis" },
+        { key: "dysplasie", labelDe: "Hüftdysplasie", labelEn: "Hip Dysplasia" },
+        { key: "schenkelhalsbruch", labelDe: "Schenkelhalsbruch", labelEn: "Femoral Neck Fracture" },
+        { key: "bursitis", labelDe: "Bursitis trochanterica", labelEn: "Trochanteric Bursitis" },
+        { key: "labrumlaesion", labelDe: "Labrumläsion", labelEn: "Labral Tear" },
+        { key: "huetkopfnekrose", labelDe: "Hüftkopfnekrose", labelEn: "Avascular Necrosis" },
+        { key: "hueftTep", labelDe: "Hüft-TEP (Totalendoprothese)", labelEn: "Hip Replacement" },
+      ])}
+
+      {renderCollapsibleSection("knie", "🦵", "Kniegelenke", "Knee Joints", [
+        { key: "gonarthrose", labelDe: "Gonarthrose (Kniearthrose)", labelEn: "Knee Osteoarthritis" },
+        { key: "meniskus", labelDe: "Meniskusschaden", labelEn: "Meniscus Tear" },
+        { key: "kreuzbandriss", labelDe: "Kreuzbandriss (vorderes/hinteres)", labelEn: "Cruciate Ligament Tear" },
+        { key: "patellaluxation", labelDe: "Patellaluxation", labelEn: "Patellar Dislocation" },
+        { key: "bakerZyste", labelDe: "Baker-Zyste", labelEn: "Baker's Cyst" },
+        { key: "chondropathie", labelDe: "Chondropathie / Knorpelschaden", labelEn: "Chondropathy" },
+        { key: "knieTep", labelDe: "Knie-TEP (Totalendoprothese)", labelEn: "Knee Replacement" },
+      ])}
+
+      {renderCollapsibleSection("fuss", "🦶", "Fuß & Sprunggelenk", "Foot & Ankle", [
+        { key: "sprunggelenkarthrose", labelDe: "Sprunggelenksarthrose", labelEn: "Ankle Osteoarthritis" },
+        { key: "achillessehne", labelDe: "Achillessehnenentzündung", labelEn: "Achilles Tendinitis" },
+        { key: "plantarfasziitis", labelDe: "Plantarfasziitis", labelEn: "Plantar Fasciitis" },
+        { key: "halluxValgus", labelDe: "Hallux valgus", labelEn: "Hallux Valgus" },
+        { key: "fersensporn", labelDe: "Fersensporn", labelEn: "Heel Spur" },
+        { key: "baenderriss", labelDe: "Bänderriss / Bandinstabilität", labelEn: "Ligament Tear" },
+        { key: "mortonNeurom", labelDe: "Morton-Neurom", labelEn: "Morton's Neuroma" },
+      ])}
 
       <h4 className="font-semibold mt-6">{language === "de" ? "Rheumatische Erkrankungen" : "Rheumatic Diseases"}</h4>
-      <div className="grid gap-4">
-        {rheumaConditions.map(renderCondition)}
-      </div>
+
+      {renderCollapsibleSection("rheuma", "🔥", "Rheumatische Erkrankungen", "Rheumatic Diseases", [
+        { key: "rheumatoideArthritis", labelDe: "Rheumatoide Arthritis", labelEn: "Rheumatoid Arthritis" },
+        { key: "arthrose", labelDe: "Arthrose (Gelenkverschleiß)", labelEn: "Osteoarthritis" },
+        { key: "gicht", labelDe: "Gicht", labelEn: "Gout" },
+        { key: "fibromyalgie", labelDe: "Fibromyalgie", labelEn: "Fibromyalgia" },
+        { key: "osteoporoseRheuma", labelDe: "Osteoporose", labelEn: "Osteoporosis" },
+        { key: "lupus", labelDe: "Lupus erythematodes", labelEn: "Lupus" },
+        { key: "psoriasisArthritis", labelDe: "Psoriasis-Arthritis", labelEn: "Psoriatic Arthritis" },
+        { key: "polymyalgia", labelDe: "Polymyalgia rheumatica", labelEn: "Polymyalgia Rheumatica" },
+      ])}
 
       <div className="border rounded-lg p-4 bg-muted/30">
         <Label className="text-base font-medium">
@@ -159,8 +196,8 @@ const MusculoskeletalSection = ({ formData, updateFormData }: MusculoskeletalSec
         </Label>
         <Textarea
           placeholder={language === "de" ? "Bitte beschreiben Sie weitere Erkrankungen..." : "Please describe other conditions..."}
-          value={(formData.wirbelsaeuleGelenke as any)?.sonstige || ""}
-          onChange={(e) => updateSectionField("wirbelsaeuleGelenke", "sonstige", e.target.value)}
+          value={wgData?.sonstige || ""}
+          onChange={(e) => updateFormData("wirbelsaeuleGelenke", { ...wgData, sonstige: e.target.value })}
           className="mt-2"
           rows={2}
         />
