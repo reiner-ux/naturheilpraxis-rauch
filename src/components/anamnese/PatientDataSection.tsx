@@ -5,6 +5,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Plus, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PatientDataSectionProps {
   formData: AnamneseFormData;
@@ -443,14 +446,6 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="fachaerzte">{language === "de" ? "Fachärzte" : "Specialists"}</Label>
-            <Input 
-              id="fachaerzte" 
-              value={formData.fachaerzte} 
-              onChange={(e) => updateFormData("fachaerzte", e.target.value)} 
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="heilpraktiker">{language === "de" ? "Naturheilkundler/Heilpraktiker" : "Naturopath"}</Label>
             <Input 
               id="heilpraktiker" 
@@ -482,6 +477,103 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
               onChange={(e) => updateFormData("sonstigeTherapeutenn", e.target.value)} 
             />
           </div>
+        </div>
+
+        {/* Multi-Entry Fachärzte */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-base font-medium">
+              {language === "de" ? "Fachärzte" : "Specialists"}
+            </Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const current = Array.isArray((formData as any).facharztListe) ? (formData as any).facharztListe : [];
+                updateFormData("facharztListe", [...current, { fachrichtung: "", name: "" }]);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              {language === "de" ? "Facharzt hinzufügen" : "Add Specialist"}
+            </Button>
+          </div>
+          {(Array.isArray((formData as any).facharztListe) ? (formData as any).facharztListe : []).map((entry: any, index: number) => (
+            <div key={index} className="flex gap-3 items-start mb-3 p-3 border rounded-lg">
+              <div className="flex-1 grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">{language === "de" ? "Fachrichtung" : "Specialty"}</Label>
+                  <Select
+                    value={entry.fachrichtung || ""}
+                    onValueChange={(v) => {
+                      const list = [...(formData as any).facharztListe];
+                      list[index] = { ...list[index], fachrichtung: v };
+                      updateFormData("facharztListe", list);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={language === "de" ? "Fachrichtung wählen" : "Select specialty"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[
+                        { value: "orthopaedie", de: "Orthopädie", en: "Orthopedics" },
+                        { value: "kardiologie", de: "Kardiologie", en: "Cardiology" },
+                        { value: "neurologie", de: "Neurologie", en: "Neurology" },
+                        { value: "dermatologie", de: "Dermatologie", en: "Dermatology" },
+                        { value: "hno", de: "HNO", en: "ENT" },
+                        { value: "augenheilkunde", de: "Augenheilkunde", en: "Ophthalmology" },
+                        { value: "urologie", de: "Urologie", en: "Urology" },
+                        { value: "gynaekologie", de: "Gynäkologie", en: "Gynecology" },
+                        { value: "gastroenterologie", de: "Gastroenterologie", en: "Gastroenterology" },
+                        { value: "endokrinologie", de: "Endokrinologie", en: "Endocrinology" },
+                        { value: "pneumologie", de: "Pneumologie", en: "Pulmonology" },
+                        { value: "onkologie", de: "Onkologie", en: "Oncology" },
+                        { value: "psychiatrie", de: "Psychiatrie", en: "Psychiatry" },
+                        { value: "rheumatologie", de: "Rheumatologie", en: "Rheumatology" },
+                        { value: "chirurgie", de: "Chirurgie", en: "Surgery" },
+                        { value: "radiologie", de: "Radiologie", en: "Radiology" },
+                        { value: "sonstige", de: "Sonstige", en: "Other" },
+                      ].map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {language === "de" ? opt.de : opt.en}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">{language === "de" ? "Name" : "Name"}</Label>
+                  <Input
+                    value={entry.name || ""}
+                    onChange={(e) => {
+                      const list = [...(formData as any).facharztListe];
+                      list[index] = { ...list[index], name: sanitizeName(e.target.value) };
+                      updateFormData("facharztListe", list);
+                    }}
+                    placeholder={language === "de" ? "Name des Facharztes" : "Specialist name"}
+                  />
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-destructive mt-5"
+                onClick={() => {
+                  const list = [...(formData as any).facharztListe];
+                  list.splice(index, 1);
+                  updateFormData("facharztListe", list);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          {(!Array.isArray((formData as any).facharztListe) || (formData as any).facharztListe.length === 0) && (
+            <p className="text-sm text-muted-foreground italic">
+              {language === "de" ? "Noch keine Fachärzte hinzugefügt. Klicken Sie auf 'Facharzt hinzufügen'." : "No specialists added yet. Click 'Add Specialist'."}
+            </p>
+          )}
         </div>
       </div>
     </div>
