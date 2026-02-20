@@ -69,7 +69,7 @@ async function sendViaRelay(
       to,
       subject,
       html,
-      from: "info@rauch-heilpraktiker.de",
+      from: "noreply@rauch-heilpraktiker.de",
     }),
   });
 
