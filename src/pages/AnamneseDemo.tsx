@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { Layout } from "@/components/layout/Layout";
+import { supabase } from "@/integrations/supabase/client";
+import VerificationDialog from "@/components/anamnese/VerificationDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -356,6 +358,10 @@ export default function AnamneseDemo() {
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>(["patientData"]);
   const [showPrintView, setShowPrintView] = useState(false);
   const [showFilteredSummary, setShowFilteredSummary] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const [tempUserId, setTempUserId] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   const updateFormData = (field: string, value: any) => {
@@ -378,6 +384,53 @@ export default function AnamneseDemo() {
       window.print();
       setTimeout(() => setShowPrintView(false), 500);
     }, 100);
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('submit-anamnesis', {
+        body: {
+          action: "submit",
+          email: formData.email,
+          formData,
+          tempUserId: tempUserId || undefined,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Submission failed");
+      setSubmissionId(data.submissionId || null);
+      if (data.tempUserId) setTempUserId(data.tempUserId);
+      setShowVerification(true);
+      toast.success(language === "de" ? "Bestätigungscode gesendet!" : "Verification code sent!", {
+        description: `Code an ${formData.email} gesendet.`,
+      });
+    } catch (error: any) {
+      toast.error("Fehler beim Absenden", { description: error?.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyCode = async (code: string) => {
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('submit-anamnesis', {
+        body: { action: "confirm", email: formData.email, code, submissionId, tempUserId, formData },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Verification failed");
+      setShowVerification(false);
+      toast.success("Anamnesebogen erfolgreich übermittelt!", { duration: 10000 });
+    } catch (error: any) {
+      toast.error("Verifizierung fehlgeschlagen", { description: error?.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    await handleSubmit();
   };
 
   const renderSectionContent = (sectionId: string) => {
@@ -448,6 +501,10 @@ export default function AnamneseDemo() {
               <FileDown className="w-4 h-4" />
               PDF Export
             </Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2">
+              <Send className="w-4 h-4" />
+              {isSubmitting ? "Wird gesendet..." : "Absenden & Verifizieren"}
+            </Button>
           </div>
         </div>
 
@@ -514,6 +571,16 @@ export default function AnamneseDemo() {
             </div>
           </div>
         )}
+
+        {/* Verification Dialog */}
+        <VerificationDialog
+          open={showVerification}
+          onOpenChange={setShowVerification}
+          email={formData.email}
+          onVerify={handleVerifyCode}
+          onResend={handleResendCode}
+          isVerifying={isSubmitting}
+        />
       </div>
     </Layout>
   );
