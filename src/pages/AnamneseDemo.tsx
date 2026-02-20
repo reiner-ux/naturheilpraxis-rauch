@@ -69,6 +69,7 @@ import CancerSection from "@/components/anamnese/CancerSection";
 import AllergiesSection from "@/components/anamnese/AllergiesSection";
 import MedicationsSection from "@/components/anamnese/MedicationsSection";
 import LifestyleSection from "@/components/anamnese/LifestyleSection";
+import DentalSection from "@/components/anamnese/DentalSection";
 import EnvironmentSection from "@/components/anamnese/EnvironmentSection";
 import InfectionsSection from "@/components/anamnese/InfectionsSection";
 import VaccinationsSection from "@/components/anamnese/VaccinationsSection";
@@ -229,6 +230,27 @@ const xaverDemoData: AnamneseFormData = {
     ernaehrungsTypen: ["Mischkost"],
   },
 
+  // Zahngesundheit
+  zahngesundheit: {
+    ...initialFormData.zahngesundheit,
+    gebissTyp: "vollstaendig",
+    zahnbefunde: {
+      "16": { diagnoses: ["wurzelbehandelt", "krone"], seit: "2018" },
+      "26": { diagnoses: ["wurzelbehandelt"], seit: "2020" },
+      "36": { diagnoses: ["amalgam"], bemerkung: "Amalgam 2019 entfernt, jetzt Kunststoff" },
+      "46": { diagnoses: ["amalgam"], bemerkung: "Amalgam 2019 entfernt, jetzt Kunststoff" },
+      "37": { diagnoses: ["karies"], seit: "2025" },
+      "45": { diagnoses: ["bruecke"], seit: "2017" },
+    },
+    parodontitis: { ja: false, seitYear: "", seitMonth: "", status: "", bisYear: "", bisMonth: "", leicht: false, mittel: false, schwer: false },
+    zahnfleischbluten: { ja: true, seitYear: "2023", seitMonth: "06", status: "nochVorhanden", bisYear: "", bisMonth: "" },
+    kiefergelenk: { ja: true, knacken: true, schmerzen: false, eingeschraenkt: false },
+    bruxismus: { ja: true, nachts: true, tagsueber: false, schiene: true },
+    letzterZahnarztbesuch: "November 2025",
+    zahnarztName: "Dr. Zahn, Augsburg",
+    bemerkungen: "Amalgamsanierung 2019 durchgeführt. Gelegentlich empfindliche Zahnhälse bei kalten Getränken.",
+  },
+
   // X. Umwelt
   umweltbelastungen: {
     ...initialFormData.umweltbelastungen,
@@ -378,6 +400,7 @@ export default function AnamneseDemo() {
       case "allergies": return <AllergiesSection formData={formData} updateFormData={updateFormData} />;
       case "medications": return <MedicationsSection formData={formData} updateFormData={updateFormData} />;
       case "lifestyle": return <LifestyleSection formData={formData} updateFormData={updateFormData} />;
+      case "dental": return <DentalSection formData={formData} updateFormData={updateFormData} />;
       case "environment": return <EnvironmentSection formData={formData} updateFormData={updateFormData} />;
       case "infections": return <InfectionsSection formData={formData} updateFormData={updateFormData} />;
       case "vaccinations": return <VaccinationsSection formData={formData} updateFormData={updateFormData} />;

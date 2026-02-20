@@ -72,6 +72,7 @@ import CancerSection from "@/components/anamnese/CancerSection";
 import AllergiesSection from "@/components/anamnese/AllergiesSection";
 import MedicationsSection from "@/components/anamnese/MedicationsSection";
 import LifestyleSection from "@/components/anamnese/LifestyleSection";
+import DentalSection from "@/components/anamnese/DentalSection";
 import EnvironmentSection from "@/components/anamnese/EnvironmentSection";
 import InfectionsSection from "@/components/anamnese/InfectionsSection";
 import VaccinationsSection from "@/components/anamnese/VaccinationsSection";
@@ -746,6 +747,8 @@ const Anamnesebogen = () => {
         return <MedicationsSection formData={formData} updateFormData={updateFormData} />;
       case "lifestyle":
         return <LifestyleSection formData={formData} updateFormData={updateFormData} />;
+      case "dental":
+        return <DentalSection formData={formData} updateFormData={updateFormData} />;
       case "environment":
         return <EnvironmentSection formData={formData} updateFormData={updateFormData} />;
       case "infections":

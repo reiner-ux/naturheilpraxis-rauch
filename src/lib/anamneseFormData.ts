@@ -28,13 +28,14 @@ export const formSections: FormSection[] = [
   { id: "allergies", titleDe: "XIV. Allergien", titleEn: "XIV. Allergies", emoji: "🤧", icon: "ShieldAlert", color: "bg-yellow-100 dark:bg-yellow-950/30", iconColor: "text-yellow-600" },
   { id: "medications", titleDe: "XV. Medikamente", titleEn: "XV. Medications", emoji: "💊", icon: "Pill", color: "bg-purple-100 dark:bg-purple-950/30", iconColor: "text-purple-500" },
   { id: "lifestyle", titleDe: "XVI. Lebensweise", titleEn: "XVI. Lifestyle", emoji: "🌿", icon: "Leaf", color: "bg-green-100 dark:bg-green-950/30", iconColor: "text-green-500" },
-  { id: "environment", titleDe: "XVII. Umwelt", titleEn: "XVII. Environment", emoji: "🌍", icon: "Globe", color: "bg-teal-100 dark:bg-teal-950/30", iconColor: "text-teal-500" },
-  { id: "infections", titleDe: "XVIII. Infektionen", titleEn: "XVIII. Infections", emoji: "🦠", icon: "Bug", color: "bg-rose-100 dark:bg-rose-950/30", iconColor: "text-rose-500" },
-  { id: "vaccinations", titleDe: "XIX. Impfstatus", titleEn: "XIX. Vaccinations", emoji: "💉", icon: "Syringe", color: "bg-indigo-100 dark:bg-indigo-950/30", iconColor: "text-indigo-500" },
-  { id: "complaints", titleDe: "XX. Beschwerden", titleEn: "XX. Complaints", emoji: "📋", icon: "ClipboardList", color: "bg-slate-100 dark:bg-slate-950/30", iconColor: "text-slate-500" },
-  { id: "preferences", titleDe: "XXI. Präferenzen", titleEn: "XXI. Preferences", emoji: "✨", icon: "Wand2", color: "bg-violet-100 dark:bg-violet-950/30", iconColor: "text-violet-500" },
-  { id: "social", titleDe: "XXII. Persönliches", titleEn: "XXII. Personal", emoji: "🏠", icon: "Home", color: "bg-sky-100 dark:bg-sky-950/30", iconColor: "text-sky-500" },
-  { id: "signature", titleDe: "XXIII. Unterschrift", titleEn: "XXIII. Signature", emoji: "✍️", icon: "PenTool", color: "bg-stone-100 dark:bg-stone-950/30", iconColor: "text-stone-500" },
+  { id: "dental", titleDe: "XVII. Zahngesundheit", titleEn: "XVII. Dental Health", emoji: "🦷", icon: "Stethoscope", color: "bg-cyan-100 dark:bg-cyan-950/30", iconColor: "text-cyan-600" },
+  { id: "environment", titleDe: "XVIII. Umwelt", titleEn: "XVIII. Environment", emoji: "🌍", icon: "Globe", color: "bg-teal-100 dark:bg-teal-950/30", iconColor: "text-teal-500" },
+  { id: "infections", titleDe: "XIX. Infektionen", titleEn: "XIX. Infections", emoji: "🦠", icon: "Bug", color: "bg-rose-100 dark:bg-rose-950/30", iconColor: "text-rose-500" },
+  { id: "vaccinations", titleDe: "XX. Impfstatus", titleEn: "XX. Vaccinations", emoji: "💉", icon: "Syringe", color: "bg-indigo-100 dark:bg-indigo-950/30", iconColor: "text-indigo-500" },
+  { id: "complaints", titleDe: "XXI. Beschwerden", titleEn: "XXI. Complaints", emoji: "📋", icon: "ClipboardList", color: "bg-slate-100 dark:bg-slate-950/30", iconColor: "text-slate-500" },
+  { id: "preferences", titleDe: "XXII. Präferenzen", titleEn: "XXII. Preferences", emoji: "✨", icon: "Wand2", color: "bg-violet-100 dark:bg-violet-950/30", iconColor: "text-violet-500" },
+  { id: "social", titleDe: "XXIII. Persönliches", titleEn: "XXIII. Personal", emoji: "🏠", icon: "Home", color: "bg-sky-100 dark:bg-sky-950/30", iconColor: "text-sky-500" },
+  { id: "signature", titleDe: "XXIV. Unterschrift", titleEn: "XXIV. Signature", emoji: "✍️", icon: "PenTool", color: "bg-stone-100 dark:bg-stone-950/30", iconColor: "text-stone-500" },
 ];
 
 // Initial form state with all fields
@@ -554,6 +555,21 @@ export const initialFormData = {
   therapieerwartungen: "",
   gesundheitsziele: "",
   
+  // Zahngesundheit
+  zahngesundheit: {
+    gebissTyp: "", // vollstaendig | teilprothese | vollprothese
+    protheseKiefer: { oberkiefer: false, unterkiefer: false, beideKiefer: false },
+    protheseSeit: "",
+    zahnbefunde: {} as Record<string, { diagnoses: string[]; seit?: string; bemerkung?: string }>,
+    parodontitis: { ja: false, seitYear: "", seitMonth: "", status: "", bisYear: "", bisMonth: "", leicht: false, mittel: false, schwer: false },
+    zahnfleischbluten: { ja: false, seitYear: "", seitMonth: "", status: "", bisYear: "", bisMonth: "" },
+    kiefergelenk: { ja: false, knacken: false, schmerzen: false, eingeschraenkt: false },
+    bruxismus: { ja: false, nachts: false, tagsueber: false, schiene: false },
+    letzterZahnarztbesuch: "",
+    zahnarztName: "",
+    bemerkungen: "",
+  },
+
   // XV. Weitere Erkrankungen/Symptome
   weitereErkrankungen: "",
   
