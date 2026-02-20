@@ -21,8 +21,8 @@ const requestSchema = z.object({
     .length(6)
     .regex(/^\d{6}$/)
     .optional(),
-  submissionId: z.string().uuid().optional(),
-  tempUserId: z.string().uuid().optional(),
+  submissionId: z.string().uuid().optional().nullable(),
+  tempUserId: z.string().uuid().optional().nullable(),
 });
 
 // In-memory rate limiting
