@@ -7,6 +7,7 @@ interface SubCondition {
   key: string;
   labelDe: string;
   labelEn: string;
+  subOptions?: { key: string; labelDe: string; labelEn: string }[];
 }
 
 interface SubConditionListProps {
@@ -48,6 +49,12 @@ const SubConditionList = ({ items, parentData, onSubItemChange, birthYear }: Sub
     onSubItemChange(key, timeKey, combined);
   };
 
+  const getSubOptionChecked = (key: string, optionKey: string): boolean => {
+    const val = parentData?.[key];
+    if (val && typeof val === 'object') return Boolean(val[optionKey]);
+    return false;
+  };
+
   return (
     <div className="space-y-3">
       {items.map(item => {
@@ -67,7 +74,28 @@ const SubConditionList = ({ items, parentData, onSubItemChange, birthYear }: Sub
               </Label>
             </div>
             {data.ja && (
-              <div className="ml-6 mt-3 p-3 bg-muted/30 rounded-md">
+              <div className="ml-6 mt-3 p-3 bg-muted/30 rounded-md space-y-3">
+                {/* Sub-options (e.g. spinal segments) */}
+                {item.subOptions && item.subOptions.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1 block">
+                      {language === "de" ? "Genauere Angabe:" : "Specify:"}
+                    </Label>
+                    <div className="flex flex-wrap gap-2">
+                      {item.subOptions.map(opt => (
+                        <div key={opt.key} className="flex items-center gap-1.5">
+                          <Checkbox
+                            checked={getSubOptionChecked(item.key, opt.key)}
+                            onCheckedChange={(checked) => onSubItemChange(item.key, opt.key, !!checked)}
+                          />
+                          <Label className="font-normal text-xs cursor-pointer">
+                            {language === "de" ? opt.labelDe : opt.labelEn}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <TemporalStatusSelect
                   prefix={item.key}
                   seitYear={seitParsed.year}

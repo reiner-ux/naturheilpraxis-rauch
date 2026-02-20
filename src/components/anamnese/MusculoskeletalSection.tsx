@@ -41,7 +41,7 @@ const MusculoskeletalSection = ({ formData, updateFormData }: MusculoskeletalSec
     emoji: string,
     labelDe: string,
     labelEn: string,
-    items: { key: string; labelDe: string; labelEn: string }[]
+    items: { key: string; labelDe: string; labelEn: string; subOptions?: { key: string; labelDe: string; labelEn: string }[] }[]
   ) => (
     <Collapsible key={sectionKey} open={!!expandedSections[sectionKey]} onOpenChange={(open) => setSectionOpen(sectionKey, open)}>
       <CollapsibleTrigger asChild>
@@ -61,6 +61,30 @@ const MusculoskeletalSection = ({ formData, updateFormData }: MusculoskeletalSec
     </Collapsible>
   );
 
+  // Spinal segment options
+  const hwsSegments = [
+    { key: "C2C3", labelDe: "C2/C3", labelEn: "C2/C3" },
+    { key: "C3C4", labelDe: "C3/C4", labelEn: "C3/C4" },
+    { key: "C4C5", labelDe: "C4/C5", labelEn: "C4/C5" },
+    { key: "C5C6", labelDe: "C5/C6", labelEn: "C5/C6" },
+    { key: "C6C7", labelDe: "C6/C7", labelEn: "C6/C7" },
+    { key: "C7T1", labelDe: "C7/Th1", labelEn: "C7/T1" },
+  ];
+
+  const bwsSegments = Array.from({ length: 12 }, (_, i) => ({
+    key: `T${i + 1}T${i + 2}`,
+    labelDe: `Th${i + 1}/Th${i + 2}`,
+    labelEn: `T${i + 1}/T${i + 2}`,
+  }));
+
+  const lwsSegments = [
+    { key: "L1L2", labelDe: "L1/L2", labelEn: "L1/L2" },
+    { key: "L2L3", labelDe: "L2/L3", labelEn: "L2/L3" },
+    { key: "L3L4", labelDe: "L3/L4", labelEn: "L3/L4" },
+    { key: "L4L5", labelDe: "L4/L5", labelEn: "L4/L5" },
+    { key: "L5S1", labelDe: "L5/S1", labelEn: "L5/S1" },
+  ];
+
   return (
     <div className="space-y-6">
       <p className="text-muted-foreground">
@@ -73,7 +97,8 @@ const MusculoskeletalSection = ({ formData, updateFormData }: MusculoskeletalSec
 
       {renderCollapsibleSection("hws", "🦴", "HWS (Halswirbelsäule)", "Cervical Spine", [
         { key: "hwsSyndrom", labelDe: "HWS-Syndrom / Zervikalsyndrom", labelEn: "Cervical Syndrome" },
-        { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc" },
+        { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc", subOptions: hwsSegments },
+        { key: "bandscheibenprotrusion", labelDe: "Bandscheibenprotrusion (Vorwölbung)", labelEn: "Disc Protrusion", subOptions: hwsSegments },
         { key: "spinalkanalstenose", labelDe: "Spinalkanalstenose", labelEn: "Spinal Stenosis" },
         { key: "verspannung", labelDe: "Muskelverspannung", labelEn: "Muscle Tension" },
         { key: "arthrose", labelDe: "Spondylarthrose", labelEn: "Spondylarthrosis" },
@@ -84,8 +109,9 @@ const MusculoskeletalSection = ({ formData, updateFormData }: MusculoskeletalSec
 
       {renderCollapsibleSection("bws", "🦴", "BWS (Brustwirbelsäule)", "Thoracic Spine", [
         { key: "bwsSyndrom", labelDe: "BWS-Syndrom", labelEn: "Thoracic Spine Syndrome" },
-        { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc" },
-        { key: "morbus Scheuermann", labelDe: "Morbus Scheuermann", labelEn: "Scheuermann's Disease" },
+        { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc", subOptions: bwsSegments },
+        { key: "bandscheibenprotrusion", labelDe: "Bandscheibenprotrusion (Vorwölbung)", labelEn: "Disc Protrusion", subOptions: bwsSegments },
+        { key: "morbusScheuermann", labelDe: "Morbus Scheuermann", labelEn: "Scheuermann's Disease" },
         { key: "verspannung", labelDe: "Muskelverspannung", labelEn: "Muscle Tension" },
         { key: "interkostalneuralgie", labelDe: "Interkostalneuralgie", labelEn: "Intercostal Neuralgia" },
         { key: "arthrose", labelDe: "Spondylarthrose", labelEn: "Spondylarthrosis" },
@@ -93,7 +119,8 @@ const MusculoskeletalSection = ({ formData, updateFormData }: MusculoskeletalSec
 
       {renderCollapsibleSection("lws", "🦴", "LWS (Lendenwirbelsäule)", "Lumbar Spine", [
         { key: "lwsSyndrom", labelDe: "LWS-Syndrom / Lumbalsyndrom", labelEn: "Lumbar Syndrome" },
-        { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc" },
+        { key: "bandscheibenvorfall", labelDe: "Bandscheibenvorfall", labelEn: "Herniated Disc", subOptions: lwsSegments },
+        { key: "bandscheibenprotrusion", labelDe: "Bandscheibenprotrusion (Vorwölbung)", labelEn: "Disc Protrusion", subOptions: lwsSegments },
         { key: "spinalkanalstenose", labelDe: "Spinalkanalstenose", labelEn: "Spinal Stenosis" },
         { key: "ischialgie", labelDe: "Ischialgie / Ischiasschmerz", labelEn: "Sciatica" },
         { key: "lumbago", labelDe: "Lumbago (Hexenschuss)", labelEn: "Lumbago" },
