@@ -23,6 +23,7 @@ const requestSchema = z.object({
     .optional(),
   submissionId: z.string().uuid().optional().nullable(),
   tempUserId: z.string().uuid().optional().nullable(),
+  pdfBase64: z.string().optional(),
 });
 
 // In-memory rate limiting
@@ -65,10 +66,22 @@ function encodeSubjectRfc2047(subject: string): string {
 async function sendViaRelay(
   to: string,
   subject: string,
-  html: string
+  html: string,
+  attachment?: { filename: string; base64: string; contentType: string }
 ): Promise<void> {
   const relaySecret = Deno.env.get("RELAY_SECRET");
   if (!relaySecret) throw new Error("Email service not configured");
+
+  const payload: Record<string, unknown> = {
+    to,
+    subject: encodeSubjectRfc2047(subject),
+    html,
+    from: "noreply@rauch-heilpraktiker.de",
+  };
+
+  if (attachment) {
+    payload.attachment = attachment;
+  }
 
   const resp = await fetch("https://rauch-heilpraktiker.de/mail-relay.php", {
     method: "POST",
@@ -76,12 +89,7 @@ async function sendViaRelay(
       "Content-Type": "application/json",
       "X-Relay-Token": relaySecret,
     },
-    body: JSON.stringify({
-      to,
-      subject: encodeSubjectRfc2047(subject),
-      html,
-      from: "noreply@rauch-heilpraktiker.de",
-    }),
+    body: JSON.stringify(payload),
   });
 
   const text = await resp.text();
@@ -140,7 +148,7 @@ serve(async (req) => {
       });
     }
 
-    const { action, email, formData, code, submissionId, tempUserId } =
+    const { action, email, formData, code, submissionId, tempUserId, pdfBase64 } =
       parseResult.data;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -401,39 +409,13 @@ serve(async (req) => {
         timeZone: "Europe/Berlin",
       });
 
-      // Build HTML summary of all form fields
-      function renderValue(val: unknown, depth = 0): string {
-        if (val === null || val === undefined || val === "") return "-";
-        if (typeof val === "boolean") return val ? "Ja" : "Nein";
-        if (Array.isArray(val)) {
-          const filtered = val.filter((v) => v !== null && v !== undefined && v !== "");
-          if (filtered.length === 0) return "-";
-          if (typeof filtered[0] === "object") {
-            return filtered.map((item, i) => `<div style="margin-left:${depth*12}px;margin-bottom:4px;"><strong>#${i+1}</strong><br/>${renderValue(item, depth+1)}</div>`).join("");
-          }
-          return filtered.map((v) => escapeHtml(String(v))).join(", ");
-        }
-        if (typeof val === "object") {
-          const entries = Object.entries(val as Record<string, unknown>).filter(([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0));
-          if (entries.length === 0) return "-";
-          return entries.map(([k, v]) => `<tr><td style="padding:4px 8px;vertical-align:top;font-weight:bold;white-space:nowrap;border-bottom:1px solid #eee;">${escapeHtml(k)}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;">${renderValue(v, depth+1)}</td></tr>`).join("");
-        }
-        return escapeHtml(String(val));
-      }
-
-      // Build the summary table
-      const formEntries = Object.entries(fd).filter(([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0));
-      let summaryHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
-      for (const [key, value] of formEntries) {
-        if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-          // Nested object: render sub-table
-          const subRows = renderValue(value, 1);
-          summaryHtml += `<tr><td colspan="2" style="padding:10px 8px 4px;font-weight:bold;color:#4a7c59;font-size:14px;border-bottom:2px solid #4a7c59;">${escapeHtml(key)}</td></tr>${subRows}`;
-        } else {
-          summaryHtml += `<tr><td style="padding:4px 8px;vertical-align:top;font-weight:bold;white-space:nowrap;border-bottom:1px solid #eee;">${escapeHtml(key)}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;">${renderValue(value)}</td></tr>`;
-        }
-      }
-      summaryHtml += '</table>';
+      // Build PDF attachment info
+      const pdfFilename = `Anamnesebogen_${escapeHtml(patientName).replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const pdfAttachment = pdfBase64 ? {
+        filename: pdfFilename,
+        base64: pdfBase64,
+        contentType: "application/pdf",
+      } : undefined;
 
       // ── Send notification to practice ──
       await sendViaRelay(
@@ -443,11 +425,10 @@ serve(async (req) => {
 <html><head><meta charset="utf-8">
 <style>
   body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-  .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
   .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a7c59; }
   .info-box { background: #f0f7f0; border: 1px solid #4a7c59; border-radius: 8px; padding: 15px; margin: 20px 0; }
   .label { font-weight: bold; color: #4a7c59; }
-  .summary { margin-top: 30px; }
   .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
 </style>
 </head><body>
@@ -462,12 +443,10 @@ serve(async (req) => {
     <p><span class="label">Eingereicht am:</span> ${escapeHtml(submittedAt)}</p>
     <p><span class="label">Status:</span> ✅ Digital verifiziert (§&nbsp;126a BGB)</p>
   </div>
-  <div class="summary">
-    <h2 style="color: #4a7c59; border-bottom: 2px solid #4a7c59; padding-bottom: 8px;">Vollständige Angaben</h2>
-    ${summaryHtml}
-  </div>
+  <p>📎 Der vollständige Anamnesebogen ist als <strong>PDF im Anhang</strong> beigefügt.</p>
   <div class="footer"><p>Automatische Benachrichtigung – Naturheilpraxis Rauch</p></div>
-</div></body></html>`
+</div></body></html>`,
+        pdfAttachment
       );
 
       // ── Send confirmation to patient ──

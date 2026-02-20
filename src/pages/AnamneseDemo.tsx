@@ -49,6 +49,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formSections as formSectionsData, initialFormData, AnamneseFormData } from "@/lib/anamneseFormData";
 import { generateEnhancedAnamnesePdf } from "@/lib/pdfExportEnhanced";
+import { generateAnamnesePdfBase64 } from "@/lib/pdfExportEnhanced";
 import PrintView from "@/components/anamnese/PrintView";
 import FilteredSummaryView from "@/components/anamnese/FilteredSummaryView";
 
@@ -420,12 +421,21 @@ export default function AnamneseDemo() {
   const handleVerifyCode = async (code: string) => {
     setIsSubmitting(true);
     try {
+      // Generate PDF as Base64 for email attachment
+      let pdfBase64: string | undefined;
+      try {
+        pdfBase64 = await generateAnamnesePdfBase64({ formData, language });
+      } catch (e) {
+        console.warn("PDF generation failed, sending without attachment:", e);
+      }
+
       const { data, error } = await supabase.functions.invoke('submit-anamnesis', {
-        body: { action: "confirm", email: formData.email, code, submissionId, tempUserId, formData },
+        body: { action: "confirm", email: formData.email, code, submissionId, tempUserId, formData, pdfBase64 },
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Verification failed");
       setShowVerification(false);
+      try { sessionStorage.removeItem('anamnese_tempUserId'); } catch {}
       toast.success("Anamnesebogen erfolgreich übermittelt!", { duration: 10000 });
     } catch (error: any) {
       toast.error("Verifizierung fehlgeschlagen", { description: error?.message });

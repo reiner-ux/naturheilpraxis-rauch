@@ -76,43 +76,72 @@ if (!$to || !$subject || !$html) {
     exit;
 }
 
-relay_log('Accepted: to=' . $to . ' from=' . ($from ?: '-') . ' subject=' . $subject);
+relay_log('Accepted: to=' . $to . ' from=' . ($from ?: '-') . ' subject=' . $subject . ' has_attachment=' . (isset($data['attachment']) ? 'yes' : 'no'));
 
-// E-Mail Header
-$headers = [
-    'MIME-Version: 1.0',
-    'Content-type: text/html; charset=UTF-8',
-    'From: Naturheilpraxis Rauch <' . $from . '>',
-    'Reply-To: ' . $from,
-    'X-Mailer: PHP/' . phpversion()
-];
-
-// E-Mail senden
-// Subject wird bereits RFC 2047 kodiert vom Sender geliefert - direkt durchreichen
-// Falls nicht kodiert (Legacy), UTF-8 Base64 kodieren
+// Subject encoding
 if (strpos($subject, '=?UTF-8?') === 0) {
-    $encodedSubject = $subject; // already encoded
+    $encodedSubject = $subject;
 } else {
     $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
 }
 
-// Envelope-From explizit setzen
 $envelopeFrom = $from ?: 'info@rauch-heilpraktiker.de';
 $additionalParams = '-f ' . $envelopeFrom;
-$success = mail($to, $encodedSubject, $html, implode("\r\n", $headers), $additionalParams);
+
+// Check if attachment is present
+$attachment = $data['attachment'] ?? null;
+
+if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename'])) {
+    // Multipart MIME email with attachment
+    $boundary = '----=_Part_' . md5(uniqid(microtime(true)));
+    
+    $headers = [
+        'MIME-Version: 1.0',
+        'Content-Type: multipart/mixed; boundary="' . $boundary . '"',
+        'From: Naturheilpraxis Rauch <' . $from . '>',
+        'Reply-To: ' . $from,
+        'X-Mailer: PHP/' . phpversion()
+    ];
+    
+    $body = '--' . $boundary . "\r\n";
+    $body .= 'Content-Type: text/html; charset=UTF-8' . "\r\n";
+    $body .= 'Content-Transfer-Encoding: 8bit' . "\r\n\r\n";
+    $body .= $html . "\r\n\r\n";
+    
+    $body .= '--' . $boundary . "\r\n";
+    $contentType = $attachment['contentType'] ?? 'application/octet-stream';
+    $filename = $attachment['filename'];
+    $body .= 'Content-Type: ' . $contentType . '; name="' . $filename . '"' . "\r\n";
+    $body .= 'Content-Disposition: attachment; filename="' . $filename . '"' . "\r\n";
+    $body .= 'Content-Transfer-Encoding: base64' . "\r\n\r\n";
+    $body .= chunk_split($attachment['base64']) . "\r\n";
+    
+    $body .= '--' . $boundary . '--';
+    
+    $success = mail($to, $encodedSubject, $body, implode("\r\n", $headers), $additionalParams);
+    relay_log('Multipart mail ' . ($success ? 'OK' : 'FAIL') . ': to=' . $to . ' attachment=' . $filename);
+} else {
+    // Simple HTML email (no attachment)
+    $headers = [
+        'MIME-Version: 1.0',
+        'Content-type: text/html; charset=UTF-8',
+        'From: Naturheilpraxis Rauch <' . $from . '>',
+        'Reply-To: ' . $from,
+        'X-Mailer: PHP/' . phpversion()
+    ];
+    
+    $success = mail($to, $encodedSubject, $html, implode("\r\n", $headers), $additionalParams);
+    relay_log('Simple mail ' . ($success ? 'OK' : 'FAIL') . ': to=' . $to);
+}
 
 if ($success) {
-    relay_log('Mail OK: to=' . $to . ' envelopeFrom=' . $envelopeFrom);
     echo json_encode([
         'success' => true,
         'message' => 'Email sent',
         'version' => $RELAY_VERSION,
-        'received_to' => $to,
-        'received_from' => $from,
-        'envelope_from' => $envelopeFrom,
+        'has_attachment' => !empty($attachment),
     ]);
 } else {
     http_response_code(500);
-    relay_log('Mail FAIL: to=' . $to . ' envelopeFrom=' . $envelopeFrom);
     echo json_encode(['success' => false, 'error' => 'Failed to send email', 'version' => $RELAY_VERSION]);
 }
