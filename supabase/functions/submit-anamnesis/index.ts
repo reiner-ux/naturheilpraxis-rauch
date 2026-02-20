@@ -378,7 +378,7 @@ serve(async (req) => {
           .eq("id", submissionId);
       }
 
-      // Extract patient info (DSGVO: only basic info in emails)
+      // Extract patient info
       const fd = formData || {};
       const patientName =
         `${fd.vorname || ""} ${fd.nachname || ""}`.trim() || "Unbekannt";
@@ -390,6 +390,40 @@ serve(async (req) => {
         timeZone: "Europe/Berlin",
       });
 
+      // Build HTML summary of all form fields
+      function renderValue(val: unknown, depth = 0): string {
+        if (val === null || val === undefined || val === "") return "-";
+        if (typeof val === "boolean") return val ? "Ja" : "Nein";
+        if (Array.isArray(val)) {
+          const filtered = val.filter((v) => v !== null && v !== undefined && v !== "");
+          if (filtered.length === 0) return "-";
+          if (typeof filtered[0] === "object") {
+            return filtered.map((item, i) => `<div style="margin-left:${depth*12}px;margin-bottom:4px;"><strong>#${i+1}</strong><br/>${renderValue(item, depth+1)}</div>`).join("");
+          }
+          return filtered.map((v) => escapeHtml(String(v))).join(", ");
+        }
+        if (typeof val === "object") {
+          const entries = Object.entries(val as Record<string, unknown>).filter(([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0));
+          if (entries.length === 0) return "-";
+          return entries.map(([k, v]) => `<tr><td style="padding:4px 8px;vertical-align:top;font-weight:bold;white-space:nowrap;border-bottom:1px solid #eee;">${escapeHtml(k)}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;">${renderValue(v, depth+1)}</td></tr>`).join("");
+        }
+        return escapeHtml(String(val));
+      }
+
+      // Build the summary table
+      const formEntries = Object.entries(fd).filter(([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0));
+      let summaryHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+      for (const [key, value] of formEntries) {
+        if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+          // Nested object: render sub-table
+          const subRows = renderValue(value, 1);
+          summaryHtml += `<tr><td colspan="2" style="padding:10px 8px 4px;font-weight:bold;color:#4a7c59;font-size:14px;border-bottom:2px solid #4a7c59;">${escapeHtml(key)}</td></tr>${subRows}`;
+        } else {
+          summaryHtml += `<tr><td style="padding:4px 8px;vertical-align:top;font-weight:bold;white-space:nowrap;border-bottom:1px solid #eee;">${escapeHtml(key)}</td><td style="padding:4px 8px;border-bottom:1px solid #eee;">${renderValue(value)}</td></tr>`;
+        }
+      }
+      summaryHtml += '</table>';
+
       // ── Send notification to practice ──
       await sendViaRelay(
         "info@rauch-heilpraktiker.de",
@@ -398,10 +432,11 @@ serve(async (req) => {
 <html><head><meta charset="utf-8">
 <style>
   body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+  .container { max-width: 800px; margin: 0 auto; padding: 20px; }
   .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a7c59; }
   .info-box { background: #f0f7f0; border: 1px solid #4a7c59; border-radius: 8px; padding: 15px; margin: 20px 0; }
   .label { font-weight: bold; color: #4a7c59; }
+  .summary { margin-top: 30px; }
   .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
 </style>
 </head><body>
@@ -416,7 +451,10 @@ serve(async (req) => {
     <p><span class="label">Eingereicht am:</span> ${escapeHtml(submittedAt)}</p>
     <p><span class="label">Status:</span> ✅ Digital verifiziert (§&nbsp;126a BGB)</p>
   </div>
-  <p>Die vollständigen Formulardaten sind im System gespeichert und können über das Admin-Dashboard eingesehen werden.</p>
+  <div class="summary">
+    <h2 style="color: #4a7c59; border-bottom: 2px solid #4a7c59; padding-bottom: 8px;">Vollständige Angaben</h2>
+    ${summaryHtml}
+  </div>
   <div class="footer"><p>Automatische Benachrichtigung – Naturheilpraxis Rauch</p></div>
 </div></body></html>`
       );
