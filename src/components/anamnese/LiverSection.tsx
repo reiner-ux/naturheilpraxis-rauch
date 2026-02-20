@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
-import YearMonthSelect from "./shared/YearMonthSelect";
+import TemporalStatusSelect from "./shared/TemporalStatusSelect";
 
 interface LiverSectionProps {
   formData: AnamneseFormData;
@@ -12,41 +12,31 @@ interface LiverSectionProps {
 
 const LiverSection = ({ formData, updateFormData }: LiverSectionProps) => {
   const { language } = useLanguage();
-
   const birthYear = formData.geburtsdatum ? new Date(formData.geburtsdatum).getFullYear() : undefined;
+  const lgData = (formData.leberGalle || {}) as any;
 
-  const parseYearMonth = (raw: string): { year: string; month: string } => {
+  const parseYearMonth = (raw: string) => {
     if (!raw) return { year: "", month: "" };
     const m = raw.match(/^(\d{4})(?:-(\d{2}))?$/);
     if (!m) return { year: "", month: "" };
     return { year: m[1] ?? "", month: m[2] ?? "" };
   };
 
-  const updateNestedField = (section: string, field: string, subfield: string, value: any) => {
-    const current = formData[section as keyof AnamneseFormData] as any;
-    const currentField = current?.[field] || {};
-    updateFormData(section, {
-      ...current,
-      [field]: { ...currentField, [subfield]: value }
+  const updateField = (field: string, subfield: string, value: any) => {
+    const fieldData = lgData[field] || {};
+    updateFormData("leberGalle", {
+      ...lgData,
+      [field]: { ...fieldData, [subfield]: value }
     });
   };
 
-  const updateSectionField = (section: string, field: string, value: any) => {
-    const current = formData[section as keyof AnamneseFormData] as any;
-    updateFormData(section, {
-      ...current,
-      [field]: value
-    });
-  };
-
-  const setYearMonthCombined = (section: string, field: string, timeKey: string, next: { year?: string; month?: string }) => {
-    const sectionData = (formData as any)?.[section] || {};
-    const fieldData = sectionData?.[field] || {};
-    const current = parseYearMonth(String(fieldData?.[timeKey] ?? ""));
+  const setYearMonth = (field: string, timeKey: string, next: { year?: string; month?: string }) => {
+    const fieldData = lgData[field] || {};
+    const current = parseYearMonth(String(fieldData[timeKey] ?? ""));
     const year = (next.year ?? current.year).slice(0, 4);
     const month = (next.month ?? current.month).slice(0, 2);
     const combined = month ? `${year}-${month}` : year;
-    updateNestedField(section, field, timeKey, combined);
+    updateField(field, timeKey, combined);
   };
 
   const conditions = [
@@ -78,28 +68,35 @@ const LiverSection = ({ formData, updateFormData }: LiverSectionProps) => {
 
       <div className="grid gap-4">
         {conditions.map((item) => {
-          const fieldData = (formData.leberGalle as any)?.[item.key];
-          const isChecked = fieldData && typeof fieldData === 'object' && 'ja' in fieldData ? Boolean(fieldData.ja) : false;
-          const timeValue = String(fieldData?.jahr || fieldData?.seit || "");
-          const parsed = parseYearMonth(timeValue);
+          const fieldData = lgData?.[item.key] || {};
+          const isChecked = Boolean(fieldData?.ja);
+          const timeKey = fieldData?.seit !== undefined ? "seit" : "jahr";
+          const seitParsed = parseYearMonth(String(fieldData?.[timeKey] || ""));
+          const bisParsed = parseYearMonth(String(fieldData?.bisJahr || ""));
 
           return (
             <div key={item.key} className="border rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <Checkbox
                   checked={isChecked}
-                  onCheckedChange={(checked) => updateNestedField("leberGalle", item.key, "ja", !!checked)}
+                  onCheckedChange={(checked) => updateField(item.key, "ja", !!checked)}
                 />
                 <div className="space-y-2 flex-1">
                   <Label>{language === "de" ? item.labelDe : item.labelEn}</Label>
                   {isChecked && (
-                    <div className="mt-2 max-w-xs">
-                      <YearMonthSelect
-                        yearValue={parsed.year}
-                        monthValue={parsed.month}
-                        onYearChange={(value) => setYearMonthCombined("leberGalle", item.key, "jahr", { year: value })}
-                        onMonthChange={(value) => setYearMonthCombined("leberGalle", item.key, "jahr", { month: value })}
-                        showMonth={true}
+                    <div className="mt-2">
+                      <TemporalStatusSelect
+                        prefix={`leber-${item.key}`}
+                        seitYear={seitParsed.year}
+                        seitMonth={seitParsed.month}
+                        status={fieldData?.status || ""}
+                        bisYear={bisParsed.year}
+                        bisMonth={bisParsed.month}
+                        onSeitYearChange={(v) => setYearMonth(item.key, timeKey, { year: v })}
+                        onSeitMonthChange={(v) => setYearMonth(item.key, timeKey, { month: v })}
+                        onStatusChange={(v) => updateField(item.key, "status", v)}
+                        onBisYearChange={(v) => setYearMonth(item.key, "bisJahr", { year: v })}
+                        onBisMonthChange={(v) => setYearMonth(item.key, "bisJahr", { month: v })}
                         birthYear={birthYear}
                       />
                     </div>
@@ -117,8 +114,8 @@ const LiverSection = ({ formData, updateFormData }: LiverSectionProps) => {
         </Label>
         <Textarea
           placeholder={language === "de" ? "Bitte beschreiben Sie weitere Erkrankungen..." : "Please describe other conditions..."}
-          value={(formData.leberGalle as any)?.sonstige || ""}
-          onChange={(e) => updateSectionField("leberGalle", "sonstige", e.target.value)}
+          value={lgData?.sonstige || ""}
+          onChange={(e) => updateFormData("leberGalle", { ...lgData, sonstige: e.target.value })}
           className="mt-2"
           rows={2}
         />
