@@ -13,7 +13,7 @@ import { AnamneseFormData } from "@/lib/anamneseFormData";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Trash2, CalendarIcon, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import YearMonthSelect from "./shared/YearMonthSelect";
+import TemporalStatusSelect from "./shared/TemporalStatusSelect";
 
 interface SurgeriesSectionProps {
   formData: AnamneseFormData;
@@ -44,9 +44,88 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
     });
   };
 
+  const parseYearMonth = (raw: string) => {
+    if (!raw) return { year: "", month: "" };
+    const m = raw.match(/^(\d{4})(?:-(\d{2}))?$/);
+    if (!m) return { year: "", month: "" };
+    return { year: m[1] ?? "", month: m[2] ?? "" };
+  };
+
+  const setYearMonth = (parentField: string, timeKey: string, next: { year?: string; month?: string }) => {
+    const parent = formData.unfaelleOperationen?.[parentField as keyof typeof formData.unfaelleOperationen] as any || {};
+    const currentRaw = String(parent?.[timeKey] || parent?.jahr || "");
+    const current = parseYearMonth(currentRaw);
+    const year = (next.year ?? current.year).slice(0, 4);
+    const month = (next.month ?? current.month).slice(0, 2);
+    const combined = month ? `${year}-${month}` : year;
+    updateNestedField(parentField, timeKey, combined);
+  };
+
+  const getNestedBoolean = (parentField: string, key: string): boolean => {
+    const parent = formData.unfaelleOperationen?.[parentField as keyof typeof formData.unfaelleOperationen] as any;
+    return typeof parent?.[key] === 'boolean' ? parent[key] : false;
+  };
+
+  const renderEventWithTemporal = (
+    parentField: string,
+    labelDe: string,
+    labelEn: string,
+    subOptions?: { key: string; labelDe: string; labelEn: string }[],
+    extraContent?: React.ReactNode
+  ) => {
+    const parent = formData.unfaelleOperationen?.[parentField as keyof typeof formData.unfaelleOperationen] as any || {};
+    const seitParsed = parseYearMonth(parent?.seit || parent?.jahr || "");
+    const bisParsed = parseYearMonth(parent?.bisJahr || "");
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id={parentField}
+            checked={parent?.ja || false}
+            onCheckedChange={(checked) => updateNestedField(parentField, "ja", checked)}
+          />
+          <Label htmlFor={parentField}>{language === "de" ? labelDe : labelEn}</Label>
+        </div>
+        {parent?.ja && (
+          <div className="pl-6 space-y-4">
+            {subOptions && subOptions.length > 0 && (
+              <div className="flex flex-wrap gap-3">
+                {subOptions.map(opt => (
+                  <div key={opt.key} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={getNestedBoolean(parentField, opt.key)}
+                      onCheckedChange={(checked) => updateNestedField(parentField, opt.key, !!checked)}
+                    />
+                    <Label className="font-normal text-sm">{language === "de" ? opt.labelDe : opt.labelEn}</Label>
+                  </div>
+                ))}
+              </div>
+            )}
+            {extraContent}
+            <TemporalStatusSelect
+              prefix={parentField}
+              seitYear={seitParsed.year}
+              seitMonth={seitParsed.month}
+              status={parent?.status || ""}
+              bisYear={bisParsed.year}
+              bisMonth={bisParsed.month}
+              onSeitYearChange={(v) => setYearMonth(parentField, "seit", { year: v })}
+              onSeitMonthChange={(v) => setYearMonth(parentField, "seit", { month: v })}
+              onStatusChange={(v) => updateNestedField(parentField, "status", v)}
+              onBisYearChange={(v) => setYearMonth(parentField, "bisJahr", { year: v })}
+              onBisMonthChange={(v) => setYearMonth(parentField, "bisJahr", { month: v })}
+              birthYear={birthYear}
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const addOperation = () => {
     const currentOps = formData.unfaelleOperationen?.operationen || [];
-    updateUnfaelleOperationen("operationen", [...currentOps, { jahr: "", grund: "" }]);
+    updateUnfaelleOperationen("operationen", [...currentOps, { jahr: "", grund: "", status: "", bisJahr: "" }]);
   };
 
   const removeOperation = (index: number) => {
@@ -56,7 +135,7 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
 
   const updateOperation = (index: number, field: string, value: string) => {
     const currentOps = formData.unfaelleOperationen?.operationen || [];
-    const updated = currentOps.map((op, i) => 
+    const updated = currentOps.map((op, i) =>
       i === index ? { ...op, [field]: value } : op
     );
     updateUnfaelleOperationen("operationen", updated);
@@ -70,89 +149,36 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           {language === "de" ? "Unfälle" : "Accidents"}
         </h3>
 
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="unfall"
-              checked={formData.unfaelleOperationen?.unfall?.ja || false}
-              onCheckedChange={(checked) => updateNestedField("unfall", "ja", checked)}
-            />
-            <Label htmlFor="unfall">
-              {language === "de" ? "Hatte einen Unfall" : "Had an accident"}
-            </Label>
-          </div>
-          {formData.unfaelleOperationen?.unfall?.ja && (
-            <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <YearMonthSelect
-                yearValue={formData.unfaelleOperationen?.unfall?.jahr || ""}
-                onYearChange={(value) => updateNestedField("unfall", "jahr", value)}
-                showMonth={false}
-                birthYear={birthYear}
-              />
-              <Input
-                placeholder={language === "de" ? "Lokalisation/Art" : "Location/Type"}
-                value={formData.unfaelleOperationen?.unfall?.lokalisation || ""}
-                onChange={(e) => updateNestedField("unfall", "lokalisation", e.target.value)}
-              />
-            </div>
-          )}
-        </div>
+        {renderEventWithTemporal("unfall", "Hatte einen Unfall", "Had an accident", [
+          { key: "verkehrsunfall", labelDe: "Verkehrsunfall", labelEn: "Traffic accident" },
+          { key: "sportunfall", labelDe: "Sportunfall", labelEn: "Sports accident" },
+          { key: "arbeitsunfall", labelDe: "Arbeitsunfall", labelEn: "Work accident" },
+          { key: "haushaltsunfall", labelDe: "Haushaltsunfall", labelEn: "Household accident" },
+          { key: "sturzunfall", labelDe: "Sturzunfall", labelEn: "Fall accident" },
+          { key: "sonstigerUnfall", labelDe: "Sonstiger Unfall", labelEn: "Other accident" },
+        ], (
+          <Input
+            placeholder={language === "de" ? "Lokalisation/Beschreibung" : "Location/Description"}
+            value={(formData.unfaelleOperationen?.unfall as any)?.lokalisation || ""}
+            onChange={(e) => updateNestedField("unfall", "lokalisation", e.target.value)}
+          />
+        ))}
 
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="knochenbruch"
-              checked={formData.unfaelleOperationen?.knochenbruch?.ja || false}
-              onCheckedChange={(checked) => updateNestedField("knochenbruch", "ja", checked)}
-            />
-            <Label htmlFor="knochenbruch">
-              {language === "de" ? "Knochenbruch" : "Bone fracture"}
-            </Label>
-          </div>
-          {formData.unfaelleOperationen?.knochenbruch?.ja && (
-            <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <YearMonthSelect
-                yearValue={formData.unfaelleOperationen?.knochenbruch?.jahr || ""}
-                onYearChange={(value) => updateNestedField("knochenbruch", "jahr", value)}
-                showMonth={false}
-                birthYear={birthYear}
-              />
-              <Input
-                placeholder={language === "de" ? "Welcher Knochen?" : "Which bone?"}
-                value={formData.unfaelleOperationen?.knochenbruch?.welcher || ""}
-                onChange={(e) => updateNestedField("knochenbruch", "welcher", e.target.value)}
-              />
-            </div>
-          )}
-        </div>
+        {renderEventWithTemporal("knochenbruch", "Knochenbruch", "Bone fracture", undefined, (
+          <Input
+            placeholder={language === "de" ? "Welcher Knochen?" : "Which bone?"}
+            value={(formData.unfaelleOperationen?.knochenbruch as any)?.welcher || ""}
+            onChange={(e) => updateNestedField("knochenbruch", "welcher", e.target.value)}
+          />
+        ))}
 
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="kopfverletzung"
-              checked={formData.unfaelleOperationen?.kopfverletzung?.ja || false}
-              onCheckedChange={(checked) => updateNestedField("kopfverletzung", "ja", checked)}
-            />
-            <Label htmlFor="kopfverletzung">
-              {language === "de" ? "Kopfverletzung / Gehirnerschütterung" : "Head injury / Concussion"}
-            </Label>
-          </div>
-          {formData.unfaelleOperationen?.kopfverletzung?.ja && (
-            <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <YearMonthSelect
-                yearValue={formData.unfaelleOperationen?.kopfverletzung?.jahr || ""}
-                onYearChange={(value) => updateNestedField("kopfverletzung", "jahr", value)}
-                showMonth={false}
-                birthYear={birthYear}
-              />
-              <Input
-                placeholder={language === "de" ? "Schweregrad" : "Severity"}
-                value={formData.unfaelleOperationen?.kopfverletzung?.schweregrad || ""}
-                onChange={(e) => updateNestedField("kopfverletzung", "schweregrad", e.target.value)}
-              />
-            </div>
-          )}
-        </div>
+        {renderEventWithTemporal("kopfverletzung", "Kopfverletzung / Gehirnerschütterung", "Head injury / Concussion", undefined, (
+          <Input
+            placeholder={language === "de" ? "Schweregrad" : "Severity"}
+            value={(formData.unfaelleOperationen?.kopfverletzung as any)?.schweregrad || ""}
+            onChange={(e) => updateNestedField("kopfverletzung", "schweregrad", e.target.value)}
+          />
+        ))}
       </div>
 
       <Separator />
@@ -171,38 +197,49 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
 
         {(formData.unfaelleOperationen?.operationen || []).length === 0 && (
           <p className="text-sm text-muted-foreground">
-            {language === "de" 
+            {language === "de"
               ? "Keine Operationen eingetragen. Klicken Sie auf 'Operation hinzufügen' um eine neue einzutragen."
               : "No surgeries recorded. Click 'Add surgery' to add one."}
           </p>
         )}
 
-        {(formData.unfaelleOperationen?.operationen || []).map((op, index) => (
-          <div key={index} className="flex gap-4 items-start p-4 bg-muted/30 rounded-lg">
-            <div className="flex-1 grid gap-4 md:grid-cols-2">
-              <YearMonthSelect
-                yearValue={op.jahr}
-                onYearChange={(value) => updateOperation(index, "jahr", value)}
-                showMonth={false}
-                birthYear={birthYear}
-              />
-              <Input
-                placeholder={language === "de" ? "Grund / Art der Operation" : "Reason / Type of surgery"}
-                value={op.grund}
-                onChange={(e) => updateOperation(index, "grund", e.target.value)}
-              />
+        {(formData.unfaelleOperationen?.operationen || []).map((op, index) => {
+          const seitParsed = parseYearMonth(op.jahr || "");
+          return (
+            <div key={index} className="flex gap-4 items-start p-4 bg-muted/30 rounded-lg">
+              <div className="flex-1 space-y-3">
+                <Input
+                  placeholder={language === "de" ? "Grund / Art der Operation" : "Reason / Type of surgery"}
+                  value={op.grund}
+                  onChange={(e) => updateOperation(index, "grund", e.target.value)}
+                />
+                <TemporalStatusSelect
+                  prefix={`op-${index}`}
+                  seitYear={seitParsed.year}
+                  seitMonth={seitParsed.month}
+                  status={(op as any).status || ""}
+                  bisYear={parseYearMonth((op as any).bisJahr || "").year}
+                  bisMonth={parseYearMonth((op as any).bisJahr || "").month}
+                  onSeitYearChange={(v) => updateOperation(index, "jahr", v)}
+                  onSeitMonthChange={() => {}}
+                  onStatusChange={(v) => updateOperation(index, "status", v)}
+                  onBisYearChange={(v) => updateOperation(index, "bisJahr", v)}
+                  onBisMonthChange={() => {}}
+                  birthYear={birthYear}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeOperation(index)}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => removeOperation(index)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <Separator />
@@ -213,61 +250,21 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           {language === "de" ? "Krankenhausaufenthalte" : "Hospital Stays"}
         </h3>
 
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="krankenhausaufenthalt"
-              checked={formData.unfaelleOperationen?.krankenhausaufenthalt?.ja || false}
-              onCheckedChange={(checked) => updateNestedField("krankenhausaufenthalt", "ja", checked)}
-            />
-            <Label htmlFor="krankenhausaufenthalt">
-              {language === "de" ? "Krankenhausaufenthalt (ohne OP)" : "Hospital stay (without surgery)"}
-            </Label>
-          </div>
-          {formData.unfaelleOperationen?.krankenhausaufenthalt?.ja && (
-            <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <YearMonthSelect
-                yearValue={formData.unfaelleOperationen?.krankenhausaufenthalt?.jahr || ""}
-                onYearChange={(value) => updateNestedField("krankenhausaufenthalt", "jahr", value)}
-                showMonth={false}
-                birthYear={birthYear}
-              />
-              <Input
-                placeholder={language === "de" ? "Grund" : "Reason"}
-                value={formData.unfaelleOperationen?.krankenhausaufenthalt?.grund || ""}
-                onChange={(e) => updateNestedField("krankenhausaufenthalt", "grund", e.target.value)}
-              />
-            </div>
-          )}
-        </div>
+        {renderEventWithTemporal("krankenhausaufenthalt", "Krankenhausaufenthalt (ohne OP)", "Hospital stay (without surgery)", undefined, (
+          <Input
+            placeholder={language === "de" ? "Grund" : "Reason"}
+            value={(formData.unfaelleOperationen?.krankenhausaufenthalt as any)?.grund || ""}
+            onChange={(e) => updateNestedField("krankenhausaufenthalt", "grund", e.target.value)}
+          />
+        ))}
 
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="kuraufenthalt"
-              checked={formData.unfaelleOperationen?.kuraufenthalt?.ja || false}
-              onCheckedChange={(checked) => updateNestedField("kuraufenthalt", "ja", checked)}
-            />
-            <Label htmlFor="kuraufenthalt">
-              {language === "de" ? "Kur- / Reha-Aufenthalt" : "Rehabilitation stay"}
-            </Label>
-          </div>
-          {formData.unfaelleOperationen?.kuraufenthalt?.ja && (
-            <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <YearMonthSelect
-                yearValue={formData.unfaelleOperationen?.kuraufenthalt?.jahr || ""}
-                onYearChange={(value) => updateNestedField("kuraufenthalt", "jahr", value)}
-                showMonth={false}
-                birthYear={birthYear}
-              />
-              <Input
-                placeholder={language === "de" ? "Art der Kur" : "Type of rehabilitation"}
-                value={formData.unfaelleOperationen?.kuraufenthalt?.art || ""}
-                onChange={(e) => updateNestedField("kuraufenthalt", "art", e.target.value)}
-              />
-            </div>
-          )}
-        </div>
+        {renderEventWithTemporal("kuraufenthalt", "Kur- / Reha-Aufenthalt", "Rehabilitation stay", undefined, (
+          <Input
+            placeholder={language === "de" ? "Art der Kur" : "Type of rehabilitation"}
+            value={(formData.unfaelleOperationen?.kuraufenthalt as any)?.art || ""}
+            onChange={(e) => updateNestedField("kuraufenthalt", "art", e.target.value)}
+          />
+        ))}
       </div>
 
       <Separator />
@@ -278,84 +275,31 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
           {language === "de" ? "Spezielle Behandlungen" : "Special Treatments"}
         </h3>
 
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="bluttransfusion"
-              checked={formData.unfaelleOperationen?.bluttransfusion?.ja || false}
-              onCheckedChange={(checked) => updateNestedField("bluttransfusion", "ja", checked)}
-            />
-            <Label htmlFor="bluttransfusion">
-              {language === "de" ? "Bluttransfusion erhalten" : "Received blood transfusion"}
-            </Label>
-          </div>
-          {formData.unfaelleOperationen?.bluttransfusion?.ja && (
-            <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <YearMonthSelect
-                yearValue={formData.unfaelleOperationen?.bluttransfusion?.jahr || ""}
-                onYearChange={(value) => updateNestedField("bluttransfusion", "jahr", value)}
-                showMonth={false}
-                birthYear={birthYear}
-              />
-              <Input
-                placeholder={language === "de" ? "Grund" : "Reason"}
-                value={formData.unfaelleOperationen?.bluttransfusion?.grund || ""}
-                onChange={(e) => updateNestedField("bluttransfusion", "grund", e.target.value)}
-              />
-            </div>
-          )}
-        </div>
+        {renderEventWithTemporal("bluttransfusion", "Bluttransfusion erhalten", "Received blood transfusion", undefined, (
+          <Input
+            placeholder={language === "de" ? "Grund" : "Reason"}
+            value={(formData.unfaelleOperationen?.bluttransfusion as any)?.grund || ""}
+            onChange={(e) => updateNestedField("bluttransfusion", "grund", e.target.value)}
+          />
+        ))}
 
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="chemotherapie"
-              checked={formData.unfaelleOperationen?.chemotherapie?.ja || false}
-              onCheckedChange={(checked) => updateNestedField("chemotherapie", "ja", checked)}
-            />
-            <Label htmlFor="chemotherapie">
-              {language === "de" ? "Chemotherapie" : "Chemotherapy"}
-            </Label>
-          </div>
-          {formData.unfaelleOperationen?.chemotherapie?.ja && (
-            <div className="grid gap-4 md:grid-cols-2 pl-6">
-              <YearMonthSelect
-                yearValue={formData.unfaelleOperationen?.chemotherapie?.jahr || ""}
-                onYearChange={(value) => updateNestedField("chemotherapie", "jahr", value)}
-                showMonth={false}
-                birthYear={birthYear}
-              />
-              <Input
-                placeholder={language === "de" ? "Art der Chemotherapie" : "Type of chemotherapy"}
-                value={formData.unfaelleOperationen?.chemotherapie?.art || ""}
-                onChange={(e) => updateNestedField("chemotherapie", "art", e.target.value)}
-              />
-            </div>
-          )}
-        </div>
+        {renderEventWithTemporal("chemotherapie", "Chemotherapie", "Chemotherapy", undefined, (
+          <Input
+            placeholder={language === "de" ? "Art der Chemotherapie" : "Type of chemotherapy"}
+            value={(formData.unfaelleOperationen?.chemotherapie as any)?.art || ""}
+            onChange={(e) => updateNestedField("chemotherapie", "art", e.target.value)}
+          />
+        ))}
 
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="strahlentherapie"
-              checked={formData.unfaelleOperationen?.strahlentherapie?.ja || false}
-              onCheckedChange={(checked) => updateNestedField("strahlentherapie", "ja", checked)}
-            />
-            <Label htmlFor="strahlentherapie">
-              {language === "de" ? "Strahlentherapie" : "Radiation therapy"}
-            </Label>
-          </div>
-          {formData.unfaelleOperationen?.strahlentherapie?.ja && (
-            <Input
-              className="max-w-md pl-6"
-              placeholder={language === "de" ? "Bestrahlter Bereich" : "Irradiated area"}
-              value={formData.unfaelleOperationen?.strahlentherapie?.bereich || ""}
-              onChange={(e) => updateNestedField("strahlentherapie", "bereich", e.target.value)}
-            />
-          )}
-        </div>
+        {renderEventWithTemporal("strahlentherapie", "Strahlentherapie", "Radiation therapy", undefined, (
+          <Input
+            placeholder={language === "de" ? "Bestrahlter Bereich" : "Irradiated area"}
+            value={(formData.unfaelleOperationen?.strahlentherapie as any)?.bereich || ""}
+            onChange={(e) => updateNestedField("strahlentherapie", "bereich", e.target.value)}
+          />
+        ))}
 
-        {/* Nuklearmedizinische Untersuchungen Überschrift */}
+        {/* Nuklearmedizinische Untersuchungen */}
         <div className="mt-6 mb-4">
           <h4 className="text-base font-medium text-muted-foreground flex items-center gap-2">
             ☢️ {language === "de" ? "Nuklearmedizinische Untersuchungen" : "Nuclear Medicine Examinations"}
@@ -380,7 +324,7 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
             </Label>
           </div>
           <p className="text-sm text-muted-foreground pl-6">
-            {language === "de" 
+            {language === "de"
               ? "Nuklearmedizinische Untersuchung, häufig bei Schilddrüsendiagnostik und Tumorsuche eingesetzt."
               : "Nuclear medicine examination, commonly used for thyroid diagnostics and tumor detection."}
           </p>
@@ -413,7 +357,7 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
             </Label>
           </div>
           <p className="text-sm text-muted-foreground pl-6">
-            {language === "de" 
+            {language === "de"
               ? "Kombinierte Bildgebung zur Darstellung von Stoffwechselprozessen, häufig in der Tumordiagnostik und Verlaufskontrolle eingesetzt."
               : "Combined imaging to visualize metabolic processes, commonly used in tumor diagnostics and follow-up monitoring."}
           </p>
@@ -446,7 +390,7 @@ const SurgeriesSection = ({ formData, updateFormData }: SurgeriesSectionProps) =
             </Label>
           </div>
           <p className="text-sm text-muted-foreground pl-6">
-            {language === "de" 
+            {language === "de"
               ? "Therapie mit radioaktivem Jod, meist bei Schilddrüsenerkrankungen (Überfunktion, Krebs)."
               : "Therapy with radioactive iodine, usually for thyroid conditions (hyperthyroidism, cancer)."}
           </p>
@@ -497,14 +441,12 @@ const NuclearMedicineDetails = ({
   placeholderDe,
   placeholderEn,
   showDosis = false,
-  birthYear,
 }: NuclearMedicineDetailsProps) => {
   const data = formData.unfaelleOperationen?.[fieldName as keyof typeof formData.unfaelleOperationen] as any;
   const [calendarOpen, setCalendarOpen] = useState(false);
-  
+
   const dateLocale = language === "de" ? de : enUS;
-  
-  // Parse date and calculate weeks since
+
   const parsedDate = useMemo(() => {
     if (!data?.datum) return null;
     const parsed = parse(data.datum, "yyyy-MM-dd", new Date());
@@ -533,7 +475,7 @@ const NuclearMedicineDetails = ({
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {parsedDate 
+                {parsedDate
                   ? format(parsedDate, "PPP", { locale: dateLocale })
                   : (language === "de" ? "Datum wählen" : "Pick a date")}
               </Button>
@@ -555,7 +497,7 @@ const NuclearMedicineDetails = ({
             </PopoverContent>
           </Popover>
         </div>
-        
+
         <div className="space-y-2">
           <Label>{language === "de" ? "Grund" : "Reason"}</Label>
           <Input
@@ -578,7 +520,6 @@ const NuclearMedicineDetails = ({
         </div>
       )}
 
-      {/* Wartezeit-Status */}
       {parsedDate && (
         <div className={cn(
           "flex items-center gap-2 p-3 rounded-lg",
@@ -588,8 +529,8 @@ const NuclearMedicineDetails = ({
             <>
               <CheckCircle2 className="w-5 h-5 text-green-600" />
               <span className="text-sm text-green-800 dark:text-green-200">
-                {language === "de" 
-                  ? `Wartezeit erfüllt (${weeksSince} Wochen seit ${language === "de" ? nameDe : nameEn})`
+                {language === "de"
+                  ? `Wartezeit erfüllt (${weeksSince} Wochen seit ${nameDe})`
                   : `Waiting period complete (${weeksSince} weeks since ${nameEn})`}
               </span>
             </>
@@ -597,7 +538,7 @@ const NuclearMedicineDetails = ({
             <>
               <AlertTriangle className="w-5 h-5 text-amber-600" />
               <span className="text-sm text-amber-800 dark:text-amber-200">
-                {language === "de" 
+                {language === "de"
                   ? `Wartezeit: ${requiredWeeks - (weeksSince || 0)} Wochen verbleibend (von ${requiredWeeks} Wochen erforderlich)`
                   : `Waiting period: ${requiredWeeks - (weeksSince || 0)} weeks remaining (of ${requiredWeeks} weeks required)`}
               </span>
