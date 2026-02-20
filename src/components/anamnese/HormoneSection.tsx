@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import YearMonthSelect from "./shared/YearMonthSelect";
+import SubConditionList from "./shared/SubConditionList";
 
 interface HormoneSectionProps {
   formData: AnamneseFormData;
@@ -130,13 +131,10 @@ const HormoneSection = ({ formData, updateFormData }: HormoneSectionProps) => {
           : "Please indicate if you have or had any hormonal conditions:"}
       </p>
 
-      {/* Schilddrüse */}
+      {/* Schilddrüse - type-first pattern */}
       <Collapsible 
         open={expandedSections.schilddruese} 
-        onOpenChange={(open) => {
-          setSectionOpen('schilddruese', open);
-          if (open) updateNestedField('hormongesundheit', 'schilddruese', 'ja', true);
-        }}
+        onOpenChange={(open) => setSectionOpen('schilddruese', open)}
       >
         <CollapsibleTrigger asChild>
           <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg">
@@ -144,10 +142,9 @@ const HormoneSection = ({ formData, updateFormData }: HormoneSectionProps) => {
             <ChevronDown className={`h-4 w-4 transition-transform ${expandedSections.schilddruese ? 'rotate-180' : ''}`} />
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-4 pt-4">
-          {renderConditionItem("hormongesundheit", 
-            { key: "schilddruese", labelDe: "Schilddrüsenerkrankungen", labelEn: "Thyroid Diseases" },
-            [
+        <CollapsibleContent className="pt-4">
+          <SubConditionList
+            items={[
               { key: "unterfunktion", labelDe: "Unterfunktion (Hypothyreose)", labelEn: "Hypothyroidism" },
               { key: "ueberfunktion", labelDe: "Überfunktion (Hyperthyreose)", labelEn: "Hyperthyroidism" },
               { key: "hashimoto", labelDe: "Hashimoto-Thyreoiditis", labelEn: "Hashimoto's Thyroiditis" },
@@ -156,8 +153,22 @@ const HormoneSection = ({ formData, updateFormData }: HormoneSectionProps) => {
               { key: "schilddruesenkrebs", labelDe: "Schilddrüsenkrebs", labelEn: "Thyroid Cancer" },
               { key: "schilddruesenop", labelDe: "Schilddrüsen-OP", labelEn: "Thyroid Surgery" },
               { key: "radiojodtherapie", labelDe: "Radiojodtherapie", labelEn: "Radioiodine Therapy" },
-            ]
-          )}
+            ]}
+            parentData={(formData.hormongesundheit as any)?.schilddruese || {}}
+            onSubItemChange={(subKey, subField, value) => {
+              const current = formData.hormongesundheit as any || {};
+              const parent = current.schilddruese || {};
+              const subItem = parent[subKey];
+              const currentSub = (typeof subItem === 'boolean')
+                ? { ja: subItem, seit: "", status: "", bisJahr: "" }
+                : { seit: "", status: "", bisJahr: "", ...(subItem || {}) };
+              updateFormData("hormongesundheit", {
+                ...current,
+                schilddruese: { ...parent, [subKey]: { ...currentSub, [subField]: value } }
+              });
+            }}
+            birthYear={birthYear}
+          />
         </CollapsibleContent>
       </Collapsible>
 

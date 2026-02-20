@@ -90,6 +90,7 @@ export const initialFormData = {
   physiotherapeut: "",
   psychotherapeut: "",
   sonstigeTherapeutenn: "",
+  facharztListe: [] as { fachrichtung: string; name: string }[],
   
   // II. Familiengeschichte
   familyHistory: {
@@ -121,6 +122,7 @@ export const initialFormData = {
       ja: false, jahr: "", 
       tinnitus: false, hoersturz: false, mittelohrentzuendung: false, 
       morbusMeniere: false, otosklerose: false, gehoergangentzuendung: false,
+      trommelfell: false,
       sonstige: "" 
     },
     sinusitis: { ja: false, jahr: "", chronisch: false, akut: false, sonstige: "" },
@@ -147,11 +149,11 @@ export const initialFormData = {
   
   // Schlaf & Psychische Symptome
   schlafSymptome: {
-    schlafstörung: { ja: false, seit: "" },
+    schlafstörung: { ja: false, seit: "", status: "", bisJahr: "", einschlaf: false, durchschlaf: false, einUndDurchschlaf: false, aufwachZeit: "" },
     einschlafstörung: { ja: false, dauerMinuten: "" },
-    durchschlafstörung: { ja: false, wieOft: "" },
+    durchschlafstörung: { ja: false, wieOft: "", aufwachZeit: "" },
     fruehAufwachen: { ja: false, uhrzeit: "" },
-    konzentrationsstörung: { ja: false, seit: "", morgens: false, tagsueber: false, abends: false },
+    konzentrationsstörung: { ja: false, seit: "", status: "", bisJahr: "", morgens: false, tagsueber: false, abends: false },
     muedigkeit: { ja: false, seit: "", staendig: false, prozentVergleich: "" },
     leistungsabfall: { ja: false, seit: "", kurzfristig: false, langfristig: false },
     vergesslichkeit: { ja: false, seit: "" },
@@ -184,8 +186,9 @@ export const initialFormData = {
     herzinfarkt: { ja: false, jahr: "" },
     stent: { ja: false, jahr: "", anzahl: "" },
     herzklappenfehler: { ja: false, jahr: "", aorta: false, mitral: false, trikuspidal: false },
-    krampfadern: { ja: false, jahr: "", rechts: false, links: false, beidseitig: false },
-    thrombose: { ja: false, jahr: "", bein: false, lunge: false, arm: false },
+    herzklappenersatz: { ja: false, jahr: "", aortenklappe: false, mitralklappe: false, trikuspidalklappe: false, pulmonalklappe: false },
+    krampfadern: { ja: false, jahr: "", reUnterschenkel: false, liUnterschenkel: false, reOberschenkel: false, liOberschenkel: false },
+    thrombose: { ja: false, jahr: "", tiefeBeinvene: false, reUnterschenkel: false, liUnterschenkel: false, reOberschenkel: false, liOberschenkel: false, armvene: false, reArm: false, liArm: false, lungenembolie: false, sinusvene: false, pfortader: false, mesenterialvene: false, oberflaechlich: false },
     oedeme: { ja: false, seit: "", morgens: false, abends: false, staendig: false },
     sonstige: "",
   },
