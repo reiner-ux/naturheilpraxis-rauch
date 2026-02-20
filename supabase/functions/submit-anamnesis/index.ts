@@ -476,11 +476,13 @@ serve(async (req) => {
     <li>E-Mail: info@rauch-heilpraktiker.de</li>
     <li>Telefon: 0821-4504050</li>
   </ul>
+   <p>📎 Eine Kopie Ihres Anamnesebogens finden Sie als <strong>PDF im Anhang</strong> dieser E-Mail.</p>
   <div class="footer">
     <p>Mit freundlichen Grüßen,<br>Ihre Naturheilpraxis Rauch</p>
     <p style="font-size: 11px; color: #999;">Diese E-Mail wurde automatisch generiert. Ihre Gesundheitsdaten werden gemäß DSGVO geschützt und mit einer Aufbewahrungsfrist von 10 Jahren gespeichert.</p>
   </div>
-</div></body></html>`
+</div></body></html>`,
+        pdfAttachment
       );
 
       console.log("Anamnesis confirmed and emails sent for", email);
