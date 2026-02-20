@@ -79,6 +79,8 @@ import ComplaintsSection from "@/components/anamnese/ComplaintsSection";
 import PreferencesSection from "@/components/anamnese/PreferencesSection";
 import SocialSection from "@/components/anamnese/SocialSection";
 import SignatureSection from "@/components/anamnese/SignatureSection";
+import VerificationDialog from "@/components/anamnese/VerificationDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 type LayoutType = "wizard" | "accordion" | null;
 
@@ -470,6 +472,10 @@ const Anamnesebogen = () => {
   const [showFilteredSummary, setShowFilteredSummary] = useState(false);
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>(["intro"]);
   const printRef = useRef<HTMLDivElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
+  const [tempUserId, setTempUserId] = useState<string | null>(null);
 
   const draftStorageKey = useMemo(() => {
     if (!user?.id) return null;
@@ -532,12 +538,13 @@ const Anamnesebogen = () => {
   const isSignatureComplete = () => {
     return !!(
       formData.unterschrift?.bestaetigung &&
+      formData.unterschrift?.datenschutzEinwilligung &&
       formData.unterschrift?.datum &&
       formData.unterschrift?.nameInDruckbuchstaben
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate required fields
@@ -554,26 +561,118 @@ const Anamnesebogen = () => {
           : "Signature required",
         {
           description: language === "de"
-            ? "Liebe Patientin, lieber Patient, für die rechtssichere Übermittlung Ihrer Daten benötigen wir Ihre vollständige Unterschrift am Ende des Formulars. Bitte füllen Sie das Datum, Ihren Namen in Druckbuchstaben aus und bestätigen Sie die Datenschutzerklärung. Vielen Dank für Ihr Verständnis!"
-            : "Dear patient, for the legally secure transmission of your data, we require your complete signature at the end of the form. Please fill in the date, your name in block letters, and confirm the privacy policy. Thank you for your understanding!",
+            ? "Bitte füllen Sie das Datum, Ihren Namen in Druckbuchstaben aus, bestätigen Sie die Richtigkeit Ihrer Angaben und stimmen Sie der Datenschutzverordnung zu."
+            : "Please fill in the date, your name in block letters, confirm the accuracy of your information, and agree to the privacy policy.",
           duration: 8000,
         }
       );
       return;
     }
     
-    // Form data is handled securely - no logging of sensitive medical information
-    toast.success(
-      language === "de" ? "Anamnesebogen erfolgreich gesendet!" : "Medical history form submitted successfully!", 
-      {
-        description: language === "de" 
-          ? "Vielen Dank! Wir werden Ihre Angaben vor dem Termin prüfen."
-          : "Thank you! We will review your information before the appointment.",
-      }
-    );
+    setIsSubmitting(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('submit-anamnesis', {
+        body: {
+          action: "submit",
+          email: formData.email,
+          formData,
+          tempUserId: tempUserId || undefined,
+        },
+      });
+      
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Submission failed");
+      
+      setSubmissionId(data.submissionId || null);
+      if (data.tempUserId) setTempUserId(data.tempUserId);
+      setShowVerification(true);
+      
+      toast.success(
+        language === "de" ? "Bestätigungscode gesendet!" : "Verification code sent!",
+        {
+          description: language === "de"
+            ? `Ein 6-stelliger Code wurde an ${formData.email} gesendet.`
+            : `A 6-digit code has been sent to ${formData.email}.`,
+        }
+      );
+    } catch (error: any) {
+      console.error("Submit error:", error);
+      toast.error(
+        language === "de" ? "Fehler beim Absenden" : "Submission error",
+        {
+          description: error?.message || (language === "de"
+            ? "Bitte versuchen Sie es später erneut."
+            : "Please try again later."),
+        }
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    // Keep draft by default; uncomment if you want to clear after successful submission.
-    // if (draftStorageKey) localStorage.removeItem(draftStorageKey);
+  const handleVerifyCode = async (code: string) => {
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('submit-anamnesis', {
+        body: {
+          action: "confirm",
+          email: formData.email,
+          code,
+          submissionId,
+          tempUserId,
+          formData,
+        },
+      });
+      
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Verification failed");
+      
+      setShowVerification(false);
+      
+      // Clear draft after successful submission
+      if (draftStorageKey) localStorage.removeItem(draftStorageKey);
+      
+      toast.success(
+        language === "de" ? "Anamnesebogen erfolgreich übermittelt!" : "Medical history form submitted successfully!",
+        {
+          description: language === "de"
+            ? "Vielen Dank! Sie erhalten eine Bestätigung per E-Mail. Ihre Angaben werden vor dem Termin geprüft."
+            : "Thank you! You will receive a confirmation by email. Your information will be reviewed before the appointment.",
+          duration: 10000,
+        }
+      );
+    } catch (error: any) {
+      const errorMsg = error?.message || "";
+      if (errorMsg.includes("Ungültiger") || errorMsg.includes("abgelaufen")) {
+        toast.error(language === "de" ? "Ungültiger oder abgelaufener Code" : "Invalid or expired code");
+      } else {
+        toast.error(language === "de" ? "Verifizierung fehlgeschlagen" : "Verification failed");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('submit-anamnesis', {
+        body: {
+          action: "submit",
+          email: formData.email,
+          formData,
+          tempUserId: tempUserId || undefined,
+        },
+      });
+      
+      if (error) throw error;
+      if (data?.tempUserId) setTempUserId(data.tempUserId);
+      if (data?.submissionId) setSubmissionId(data.submissionId);
+      
+      toast.success(language === "de" ? "Neuer Code wurde gesendet!" : "New code has been sent!");
+    } catch {
+      toast.error(language === "de" ? "Fehler beim erneuten Senden" : "Error resending code");
+    }
   };
 
   const handleExportPdf = () => {
@@ -749,6 +848,16 @@ const Anamnesebogen = () => {
             </div>
           </div>
         )}
+
+        {/* Verification Dialog */}
+        <VerificationDialog
+          open={showVerification}
+          onOpenChange={setShowVerification}
+          email={formData.email || ""}
+          onVerify={handleVerifyCode}
+          onResend={handleResendCode}
+          isVerifying={isSubmitting}
+        />
       </div>
     </Layout>
   );
