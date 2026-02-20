@@ -88,12 +88,16 @@ $headers = [
 ];
 
 // E-Mail senden
-// Subject RFC 2047 UTF-8 kodieren, damit Umlaute korrekt dargestellt werden
-$encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+// Subject wird bereits RFC 2047 kodiert vom Sender geliefert - direkt durchreichen
+// Falls nicht kodiert (Legacy), UTF-8 Base64 kodieren
+if (strpos($subject, '=?UTF-8?') === 0) {
+    $encodedSubject = $subject; // already encoded
+} else {
+    $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+}
 
-// Envelope-From explizit setzen, um unerwünschtes Umschreiben zu vermeiden
+// Envelope-From explizit setzen
 $envelopeFrom = $from ?: 'info@rauch-heilpraktiker.de';
-// Use -f without escapeshellarg to avoid quoting issues on Plesk/Postfix
 $additionalParams = '-f ' . $envelopeFrom;
 $success = mail($to, $encodedSubject, $html, implode("\r\n", $headers), $additionalParams);
 

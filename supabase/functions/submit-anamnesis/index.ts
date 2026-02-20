@@ -51,6 +51,17 @@ function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// RFC 2047 encode subject for UTF-8 (fixes umlaut display in email clients)
+function encodeSubjectRfc2047(subject: string): string {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(subject);
+  // Convert to base64
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  const b64 = btoa(binary);
+  return `=?UTF-8?B?${b64}?=`;
+}
+
 async function sendViaRelay(
   to: string,
   subject: string,
@@ -67,7 +78,7 @@ async function sendViaRelay(
     },
     body: JSON.stringify({
       to,
-      subject,
+      subject: encodeSubjectRfc2047(subject),
       html,
       from: "noreply@rauch-heilpraktiker.de",
     }),
