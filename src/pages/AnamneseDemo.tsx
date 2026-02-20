@@ -111,7 +111,7 @@ const xaverDemoData: AnamneseFormData = {
   wohnort: "Augsburg",
   telefonPrivat: "0821 1234567",
   mobil: "0170 9876543",
-  email: "peter@rauch-heilpraktiker.de",
+  email: "praxis_rauch@icloud.com",
   versicherungstyp: "gesetzlich",
   versicherungsname: "AOK Bayern",
   versicherungsnummer: "A123456789",
