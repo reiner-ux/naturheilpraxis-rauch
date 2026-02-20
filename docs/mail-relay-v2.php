@@ -90,7 +90,9 @@ $headers = [
 // E-Mail senden
 // Envelope-From explizit setzen, um unerwünschtes Umschreiben zu vermeiden
 $envelopeFrom = $from ?: 'info@rauch-heilpraktiker.de';
-$success = mail($to, $subject, $html, implode("\r\n", $headers), '-f ' . escapeshellarg($envelopeFrom));
+// Use -f without escapeshellarg to avoid quoting issues on Plesk/Postfix
+$additionalParams = '-f ' . $envelopeFrom;
+$success = mail($to, $subject, $html, implode("\r\n", $headers), $additionalParams);
 
 if ($success) {
     relay_log('Mail OK: to=' . $to . ' envelopeFrom=' . $envelopeFrom);
