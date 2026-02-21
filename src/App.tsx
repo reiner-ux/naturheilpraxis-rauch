@@ -24,6 +24,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
 import NotFound from "./pages/NotFound";
 import Patientenaufklaerung from "./pages/Patientenaufklaerung";
+import Erstanmeldung from "./pages/Erstanmeldung";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/anamnesebogen" element={<ProtectedRoute><Anamnesebogen /></ProtectedRoute>} />
+              <Route path="/erstanmeldung" element={<ProtectedRoute><Erstanmeldung /></ProtectedRoute>} />
               <Route path="/anamnesebogen-demo" element={<AnamneseDemo />} />
               <Route path="/datenschutz" element={<Datenschutz />} />
               <Route path="/heilpraktiker" element={<Heilpraktiker />} />

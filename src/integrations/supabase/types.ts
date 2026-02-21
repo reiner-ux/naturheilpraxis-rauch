@@ -80,6 +80,39 @@ export type Database = {
         }
         Relationships: []
       }
+      iaa_submissions: {
+        Row: {
+          appointment_number: number
+          form_data: Json
+          id: string
+          status: string
+          submitted_at: string
+          therapist_data: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_number?: number
+          form_data?: Json
+          id?: string
+          status?: string
+          submitted_at?: string
+          therapist_data?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_number?: number
+          form_data?: Json
+          id?: string
+          status?: string
+          submitted_at?: string
+          therapist_data?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       practice_info: {
         Row: {
           content_de: string
