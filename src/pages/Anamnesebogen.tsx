@@ -48,7 +48,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { formSections as formSectionsData, initialFormData, AnamneseFormData } from "@/lib/anamneseFormData";
-import { generateEnhancedAnamnesePdf } from "@/lib/pdfExportEnhanced";
+import { generateEnhancedAnamnesePdf, generateAnamnesePdfBase64 } from "@/lib/pdfExportEnhanced";
 import PrintView from "@/components/anamnese/PrintView";
 import FilteredSummaryView from "@/components/anamnese/FilteredSummaryView";
 import SEOHead from "@/components/seo/SEOHead";
@@ -615,6 +615,14 @@ const Anamnesebogen = () => {
   const handleVerifyCode = async (code: string) => {
     setIsSubmitting(true);
     try {
+      // Generate PDF as Base64 for email attachment
+      let pdfBase64: string | undefined;
+      try {
+        pdfBase64 = await generateAnamnesePdfBase64({ formData, language });
+      } catch (e) {
+        console.warn("PDF generation failed, sending without attachment:", e);
+      }
+
       const { data, error } = await supabase.functions.invoke('submit-anamnesis', {
         body: {
           action: "confirm",
@@ -623,6 +631,7 @@ const Anamnesebogen = () => {
           submissionId,
           tempUserId,
           formData,
+          pdfBase64,
         },
       });
       
