@@ -28,10 +28,8 @@ export function Header() {
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
     { label: t("Erstanmeldung", "First Registration"), href: "/erstanmeldung" },
-    { label: t(nav.anamnesis.de, nav.anamnesis.en), href: "/anamnesebogen" },
     // Test link visible in preview and local dev, but NOT on published production site
     ...(isNonProduction ? [{ label: "Test", href: "/anamnesebogen?dev=true" }] : []),
-    { label: t(nav.privacy.de, nav.privacy.en), href: "/datenschutz" },
   ];
 
   const handleSignOut = async () => {
