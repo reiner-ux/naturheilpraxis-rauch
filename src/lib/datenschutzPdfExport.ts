@@ -16,7 +16,6 @@ export const generateDatenschutzPdf = ({ language }: DatenschutzPdfOptions) => {
   const contentWidth = pageWidth - 2 * margin;
   let yPosition = margin;
 
-  // Helper functions
   const addTitle = (text: string) => {
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
@@ -43,7 +42,6 @@ export const generateDatenschutzPdf = ({ language }: DatenschutzPdfOptions) => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     const lines = doc.splitTextToSize(text, contentWidth);
-    
     lines.forEach((line: string) => {
       checkPageBreak(6);
       doc.text(line, margin, yPosition);
@@ -79,8 +77,8 @@ export const generateDatenschutzPdf = ({ language }: DatenschutzPdfOptions) => {
   };
 
   // Title
-  addTitle(t("Datenschutzinformation", "Privacy Policy"));
-  addSubtitle(t("Naturheilpraxis Peter Rauch", "Naturheilpraxis Peter Rauch"));
+  addTitle(t("Patienteninformationen zum Datenschutz", "Patient Privacy Information"));
+  addSubtitle("Naturheilpraxis Peter Rauch");
   addSpacing(3);
 
   // Practice Info
@@ -104,85 +102,112 @@ export const generateDatenschutzPdf = ({ language }: DatenschutzPdfOptions) => {
   );
   yPosition += 15;
 
-  // Verantwortlicher
-  addSectionHeader(t("Verantwortlicher (Art. 4 Abs. 7 DSGVO)", "Data Controller (Art. 4(7) GDPR)"));
-  addParagraph("Peter Rauch, Heilpraktiker");
-  addParagraph("Friedrich-Deffner-Straße 19a, 86163 Augsburg");
-  addParagraph("Tel: 0821-2621462, E-Mail: info@rauch-heilpraktiker.de");
-  addSpacing(5);
-
   // Introduction
-  addSectionHeader(t("Einführung", "Introduction"));
   addParagraph(
     t(
-      "Liebe Patientin, lieber Patient, wir brauchen Ihre Daten, um Sie richtig zu behandeln. Ohne diese Daten dürfen wir Sie gesetzlich (DSGVO) nicht behandeln. Hier steht, wofür wir was brauchen und welche Rechte Sie haben.",
-      "Dear Patient, we need your data to treat you properly. Without this data, we are legally (GDPR) not allowed to treat you. Here you can find what we need your data for and what rights you have."
+      "Sehr geehrte Patientin, sehr geehrter Patient, der Schutz Ihrer personenbezogenen Daten ist für uns sehr wichtig. Nach der DSGVO (EU-Datenschutz-Grundverordnung) sind wir verpflichtet, Sie darüber zu informieren, zu welchem Zweck unsere Praxis Daten erhebt, speichert, weiterleitet oder sonst verarbeitet. Der Information können Sie auch entnehmen, welche Rechte Sie haben.",
+      "Dear Patient, the protection of your personal data is very important to us. Under the GDPR, we are obliged to inform you about the purpose for which our practice collects, stores, forwards or otherwise processes data. You can also find out what rights you have from this information."
     )
   );
 
   // Sections
   const sections = [
     {
-      title: t("Was wir von Ihnen haben", "What We Collect"),
+      title: t("Zweck der Datenverarbeitung", "Purpose of Data Processing"),
       content: t(
-        "Name, Adresse, E-Mail, Gesundheitsdaten (Anamnese, Diagnosen, Therapien), Messwerte von Geräten (Metatron, Vieva Pro, EAV, Trikombin).",
-        "Name, address, email, health data (medical history, diagnoses, therapies), measurements from devices (Metatron, Vieva Pro, EAV, Trikombin)."
+        "Die Datenverarbeitung erfolgt, um den Behandlungsvertrag zwischen Ihnen und Ihrem Heilpraktiker erfüllen zu können. Wir verarbeiten Ihre personenbezogenen Daten, insbesondere Ihre Gesundheitsdaten. Dazu zählen Anamnesen, Diagnosen, Therapievorschläge und Befunde, Messungen, Testungen, die wir oder andere Behandlungspersonen (Ärzte/Heilpraktiker usw.) erheben bzw. erhoben haben. Zu diesen Zwecken können uns auch andere Ärzte oder Psychotherapeuten, bei denen Sie in Behandlung sind, Daten zur Verfügung stellen (z.B. in Arztbriefen).",
+        "Data processing is carried out to fulfill the treatment contract between you and your practitioner. We process your personal data, in particular your health data. This includes medical histories, diagnoses, therapy suggestions and findings, measurements, tests that we or other treatment providers collect or have collected. Other doctors or psychotherapists may also provide us with data (e.g. in medical letters)."
       ),
     },
     {
-      title: t("Wofür wir Ihre Daten brauchen", "Purpose of Data Collection"),
+      title: t("Welche Daten wir erheben", "What Data We Collect"),
       content: t(
-        "Behandlung, Rechnungsversand per E-Mail, Kommunikation (Termine, Infos etc.).",
-        "Treatment, sending invoices via email, communication (appointments, information, etc.)."
+        "Name, Adresse, E-Mail, Gesundheitsdaten: Diagnose/n, Anamnese, Vorerkrankungen, durchgeführte Behandlungen, Behandlungsverlauf, Bilder, Befunde, personenbezogene Daten, bioelektrische Messdaten, Daten die durch die 5 Elemente Messung, die Metatron 5 Diagnostik, EAV Diagnostik, Blut Diagnose und des Vieva Gerätes ermittelt wurden, geführte Gespräche und Dokumentation.",
+        "Name, address, email, health data: diagnoses, medical history, pre-existing conditions, treatments performed, treatment progress, images, findings, personal data, bioelectric measurement data, data from 5 Elements Measurement, Metatron 5 Diagnostics, EAV Diagnostics, Blood Diagnosis and Vieva device, conversations and documentation."
       ),
     },
     {
-      title: t("Rechtsgrundlage", "Legal Basis"),
+      title: t("Voraussetzung für die Behandlung", "Prerequisite for Treatment"),
       content: t(
-        "Die Verarbeitung Ihrer Gesundheitsdaten erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Behandlungsvertrag) sowie Art. 9 Abs. 2 lit. h DSGVO (Gesundheitsversorgung). Für die 2-Faktor-Authentifizierung: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Datensicherheit).",
-        "Processing of your health data is based on Art. 6(1)(b) GDPR (treatment contract) and Art. 9(2)(h) GDPR (healthcare provision). For 2-factor authentication: Art. 6(1)(f) GDPR (legitimate interest in data security)."
-      ),
-    },
-    {
-      title: t("Datensicherheit", "Data Security"),
-      content: t(
-        "Ihre Daten werden durch folgende Maßnahmen geschützt: TLS-Verschlüsselung bei der Übertragung, verschlüsselte Speicherung in der Datenbank, Zwei-Faktor-Authentifizierung (2FA) per E-Mail, automatische Sitzungsbeendigung und Zugriffskontrolle nach dem Minimalprinzip (nur Sie und der Behandler haben Zugriff).",
-        "Your data is protected by: TLS encryption during transmission, encrypted database storage, two-factor authentication (2FA) via email, automatic session termination, and access control based on the principle of least privilege (only you and the practitioner have access)."
+        "Die Erhebung von Gesundheitsdaten ist Voraussetzung für Ihre Behandlung. Werden die notwendigen Informationen nicht erhoben oder bereitgestellt, kann eine sorgfältige Behandlung durch unsere Praxis nicht erfolgen. Es ist uns ohne Ihre Einwilligung nicht erlaubt, Ihre Daten zu verarbeiten – und damit nicht möglich, Ihre Anamnese, Ihren Namen, Ihre Krankheiten oder Ihre Probleme zu notieren. Somit dürfen wir Sie nicht behandeln. Auch auf E-Mails dürfen wir ohne Ihre Erlaubnis nicht antworten.",
+        "The collection of health data is a prerequisite for your treatment. Without your consent, we are not permitted to process your data and thus cannot record your medical history, name, illnesses or problems. We would not be allowed to treat you. We are also not permitted to respond to emails without your consent."
       ),
     },
     {
       title: t("Wer bekommt Ihre Daten?", "Who Receives Your Data?"),
       content: t(
-        "Nur andere Ärzte/Heilpraktiker (wenn nötig und mit Ihrer Zustimmung), Krankenkassen oder Steuerberater – sonst niemand ohne Ihre ausdrückliche Einwilligung. Ihre Daten werden nicht an Drittländer übermittelt.",
-        "Only other doctors/practitioners (if necessary and with your consent), health insurance companies or tax advisors – no one else without your explicit consent. Your data is not transferred to third countries."
+        "Wir übermitteln Ihre personenbezogenen Daten nur dann an Dritte, wenn dies gesetzlich erlaubt ist oder wenn Sie hierzu Ihre Einwilligung erteilt haben. Empfänger Ihrer personenbezogenen Daten können vor allem andere Heilpraktiker/Ärzte/Psychotherapeuten/Physiotherapeuten, Krankenversicherungen, Verrechnungsstellen, Steuerberater und Anwälte sein. Die Übermittlung erfolgt überwiegend zum Zwecke der Abrechnung der bei Ihnen erbrachten Leistungen. Ihre Daten werden nicht an Drittländer übermittelt.",
+        "We only transmit your personal data to third parties if legally permitted or with your consent. Recipients may include other practitioners, doctors, psychotherapists, physiotherapists, health insurance companies, billing centers, tax advisors and lawyers. Transmission is primarily for billing purposes. Your data is not transferred to third countries."
+      ),
+    },
+    {
+      title: t("Rechtsgrundlage", "Legal Basis"),
+      content: t(
+        "Rechtsgrundlage für die Verarbeitung Ihrer Daten ist Art. 9 Abs. 2 h DSGVO i.V.m. § 22 Abs. 1 Nr. 1 b BDSG sowie Art. 6 Abs. 1 b DSGVO (Behandlungsvertrag). Für die 2-Faktor-Authentifizierung: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Datensicherheit).",
+        "The legal basis for processing your data is Art. 9(2)(h) GDPR in conjunction with § 22(1)(1)(b) BDSG and Art. 6(1)(b) GDPR (treatment contract). For 2-factor authentication: Art. 6(1)(f) GDPR (legitimate interest in data security)."
+      ),
+    },
+    {
+      title: t("Datensicherheit", "Data Security"),
+      content: t(
+        "Ihre Daten werden durch folgende Maßnahmen geschützt: TLS-Verschlüsselung bei der Übertragung, verschlüsselte Speicherung in der Datenbank, Zwei-Faktor-Authentifizierung (2FA) per E-Mail, automatische Sitzungsbeendigung und Zugriffskontrolle nach dem Minimalprinzip.",
+        "Your data is protected by: TLS encryption during transmission, encrypted database storage, two-factor authentication (2FA) via email, automatic session termination, and access control based on the principle of least privilege."
       ),
     },
     {
       title: t("Wie lange speichern wir?", "Storage Duration"),
       content: t(
-        "Gemäß der berufsrechtlichen Aufbewahrungspflicht für Heilpraktiker: mindestens 10 Jahre nach Abschluss der Behandlung. Danach werden alle Daten sicher gelöscht.",
-        "According to professional retention requirements for naturopaths: at least 10 years after completion of treatment. After that, all data will be securely deleted."
+        "Wir bewahren Ihre personenbezogenen Daten nur solange auf, wie dies für die Durchführung der Behandlung erforderlich ist. Aufgrund rechtlicher Vorgaben sind wir dazu verpflichtet, diese Daten mindestens 10 Jahre nach Abschluss der Behandlung aufzubewahren (§ 630 f BGB). Nach anderen Vorschriften können sich längere Aufbewahrungsfristen ergeben, zum Beispiel 30 Jahre bei Röntgenaufzeichnungen laut Paragraf 28 Absatz 3 der Röntgenverordnung. Abrechnungsdaten und gesundheitsbezogene Analyse-Daten besitzen 10 Jahre Aufbewahrungspflicht.",
+        "We retain your data for as long as necessary for treatment. Legal requirements oblige us to retain data for at least 10 years after treatment (§ 630 f BGB). Longer periods may apply, e.g. 30 years for X-ray records. Billing and health analysis data must be retained for 10 years."
       ),
     },
     {
       title: t("Ihre Rechte", "Your Rights"),
       content: t(
-        "Sie haben das Recht auf: Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung nach Ablauf der Aufbewahrungsfrist (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20), Widerspruch (Art. 21) und Widerruf Ihrer Einwilligung jederzeit mit Wirkung für die Zukunft.",
-        "You have the right to: Access (Art. 15 GDPR), Rectification (Art. 16), Deletion after expiry of retention period (Art. 17), Restriction of processing (Art. 18), Data portability (Art. 20), Objection (Art. 21), and withdrawal of your consent at any time with effect for the future."
+        "Sie haben das Recht, über die Sie betreffenden personenbezogenen Daten Auskunft zu erhalten und können die Berichtigung unrichtiger Daten verlangen. Darüber hinaus steht Ihnen das Recht auf Löschung, Einschränkung der Datenverarbeitung sowie Datenübertragbarkeit zu. In den Fällen, in denen wir Ihr Einverständnis benötigen, haben Sie das Recht, die Einwilligung für die zukünftige Verarbeitung zu widerrufen.",
+        "You have the right to receive information about your personal data and can request correction of incorrect data. You also have the right to deletion, restriction of processing and data portability. Where we need your consent, you have the right to withdraw it for future processing."
+      ),
+    },
+    {
+      title: t("Auskunft über Ihre Daten", "Information About Your Data"),
+      content: t(
+        "Nach dem BDSG und DSGVO haben Sie ein Recht auf unentgeltliche Auskunft über Ihre gespeicherten Daten, sowie ggf. ein Recht auf Berichtigung, Sperrung oder Löschung von Daten. Richten Sie Ihre Anfrage bitte per E-Mail oder per Post unter eindeutiger Identifizierung Ihrer Person an: Peter Rauch, Friedrich-Deffner-Straße 19a, 86163 Augsburg.",
+        "Under the BDSG and GDPR, you have the right to free information about your stored data, as well as correction, blocking or deletion. Please direct your inquiry by email or post with clear identification to: Peter Rauch, Friedrich-Deffner-Straße 19a, 86163 Augsburg."
+      ),
+    },
+    {
+      title: t("Widerspruchsrecht", "Right of Objection"),
+      content: t(
+        "Sofern Sie der Erhebung, Verarbeitung oder Nutzung Ihrer Daten widersprechen wollen, können Sie Ihren Widerspruch per E-Mail, Fax oder Brief senden an: Peter Rauch, Friedrich-Deffner-Straße 19a, 86163 Augsburg, E-Mail: info@rauch-heilpraktiker.de.",
+        "If you wish to object to the collection, processing or use of your data, you can send your objection by email, fax or letter to: Peter Rauch, Friedrich-Deffner-Straße 19a, 86163 Augsburg, Email: info@rauch-heilpraktiker.de."
+      ),
+    },
+    {
+      title: t("Löschung", "Deletion"),
+      content: t(
+        "Daten werden sofort gelöscht, wenn der Zweck erfüllt ist und keine gesetzlichen Gründe mehr widersprechen. Bitte beachten Sie, dass Abrechnungsdaten und gesundheitsbezogene Analyse-Daten 10 Jahre Aufbewahrungspflicht besitzen und nicht gelöscht werden dürfen.",
+        "Data will be deleted immediately when the purpose has been fulfilled and no legal reasons prevent deletion. Please note that billing and health analysis data must be retained for 10 years and may not be deleted."
       ),
     },
     {
       title: t("Beschwerderecht", "Right to Complain"),
       content: t(
         "Sie haben das Recht, sich bei der zuständigen Aufsichtsbehörde zu beschweren: Bayerisches Landesamt für Datenschutzaufsicht (BayLDA), Promenade 18, 91522 Ansbach, www.lda.bayern.de",
-        "You have the right to lodge a complaint with the supervisory authority: Bavarian State Office for Data Protection Supervision (BayLDA), Promenade 18, 91522 Ansbach, Germany, www.lda.bayern.de"
+        "You have the right to lodge a complaint with the supervisory authority: Bavarian State Office for Data Protection Supervision (BayLDA), Promenade 18, 91522 Ansbach, www.lda.bayern.de"
+      ),
+    },
+    {
+      title: t("Newsletter & E-Mail-Kommunikation", "Newsletter & Email Communication"),
+      content: t(
+        "Für den Newsletter-Versand und die Kommunikation per E-Mail (Anfragen, Terminvergabe, Rechnungen etc.) erheben wir ausschließlich Ihren Vor- und Nachnamen sowie Ihre E-Mail-Adresse. Eine Weitergabe der Daten an Dritte erfolgt nicht. Sie haben das Recht, die Einwilligung jederzeit zu widerrufen.",
+        "For newsletter and email communication (inquiries, appointments, invoices etc.), we only collect your name and email. Data is not shared with third parties. You can withdraw consent at any time."
       ),
     },
     {
       title: t("KI-gestützte Plattform (Lovable)", "AI-Powered Platform (Lovable)"),
       content: t(
-        "Diese Website wurde mit Lovable erstellt, einer KI-gestützten Entwicklungsplattform. Die Plattform verarbeitet technische Daten zur Bereitstellung und Optimierung der Anwendung. Die Datenverarbeitung erfolgt auf Servern innerhalb der EU. Ihre Gesundheitsdaten werden ausschließlich in unserer eigenen, verschlüsselten Datenbank gespeichert und nicht an Lovable oder Dritte weitergegeben. Lovable hat keinen Zugriff auf Ihre personenbezogenen Daten oder Gesundheitsinformationen. Die KI-Komponenten werden nur für die technische Entwicklung verwendet, nicht für die Verarbeitung Ihrer Patientendaten.",
-        "This website was created with Lovable, an AI-powered development platform. The platform processes technical data to provide and optimize the application. Data processing takes place on servers within the EU. Your health data is stored exclusively in our own encrypted database and is not shared with Lovable or third parties. Lovable has no access to your personal data or health information. AI components are used only for technical development, not for processing your patient data."
+        "Diese Website wurde mit Lovable erstellt. Die Plattform verarbeitet technische Daten auf Servern innerhalb der EU. Ihre Gesundheitsdaten werden ausschließlich in unserer eigenen, verschlüsselten Datenbank gespeichert und nicht an Lovable oder Dritte weitergegeben. Lovable hat keinen Zugriff auf Ihre personenbezogenen Daten oder Gesundheitsinformationen.",
+        "This website was created with Lovable. The platform processes technical data on EU servers. Your health data is stored exclusively in our own encrypted database and is not shared with Lovable or third parties. Lovable has no access to your personal data or health information."
       ),
     },
   ];
@@ -195,41 +220,40 @@ export const generateDatenschutzPdf = ({ language }: DatenschutzPdfOptions) => {
 
   // Consent Section
   addSpacing(5);
-  addSectionHeader(t("Einwilligung für Behandlungsdaten", "Consent for Treatment Data"));
+  addSectionHeader(t("Einwilligung in die Nutzung medizinischer Daten", "Consent for Use of Medical Data"));
   addParagraph(
     t(
-      "Ich erlaube, dass meine Gesundheitsdaten (inkl. Messungen Metatron/Vieva Pro/EAV/Trikombin) für meine Behandlung gespeichert werden. E-Mail-Kommunikation (Rechnungen, Termine, Fragen, Anfragen für eine Bewertung) ist ok. Ich kann meine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen (per Mail an info@rauch-heilpraktiker.de).",
-      "I allow my health data (including Metatron/Vieva Pro/EAV/Trikombin measurements) to be stored for my treatment. Email communication (invoices, appointments, questions, review requests) is acceptable. I can withdraw my consent at any time with effect for the future (via email to info@rauch-heilpraktiker.de)."
+      "Mit Ihrer Einwilligung erlauben Sie Peter Rauch, Ihre medizinischen Daten im Rahmen des bestehenden Behandlungsvertrages zu verarbeiten. Hierzu gehören: Diagnose/n, Anamnese, Vorerkrankungen, durchgeführte Behandlungen, Behandlungsverlauf, Bilder, Befunde, bioelektrische Messdaten, Daten der 5 Elemente Messung, Metatron 5 Diagnostik, EAV Diagnostik, Blut Diagnose und des Vieva Gerätes, geführte Gespräche und Dokumentation.",
+      "With your consent, you allow Peter Rauch to process your medical data within the treatment contract. This includes: diagnoses, medical history, pre-existing conditions, treatments, treatment progress, images, findings, bioelectric measurement data, data from 5 Elements Measurement, Metatron 5 Diagnostics, EAV Diagnostics, Blood Diagnosis and Vieva device, conversations and documentation."
     )
   );
   addParagraph(
     t(
-      "Die Einwilligung erfolgt digital im Rahmen des Anamnesebogens mit 2-Faktor-Bestätigung gemäß § 126a BGB.",
-      "Consent is given digitally as part of the medical history form with 2-factor confirmation according to § 126a BGB."
+      "Die Daten werden ausschließlich zur Erfüllung des Behandlungsvertrages genutzt. Sie können jederzeit ohne Angabe von Gründen widerrufen (per Post oder E-Mail an info@rauch-heilpraktiker.de). Die Einwilligung erfolgt digital mit 2-Faktor-Bestätigung gemäß § 126a BGB.",
+      "Data is used exclusively for the treatment contract. You can withdraw at any time without giving reasons (by post or email to info@rauch-heilpraktiker.de). Consent is given digitally with 2-factor confirmation per § 126a BGB."
     )
   );
 
   // Contact
   addSpacing(5);
   addSectionHeader(t("Kontakt für Datenschutzanfragen", "Contact for Privacy Inquiries"));
+  addParagraph("Peter Rauch, Friedrich-Deffner-Straße 19a, 86163 Augsburg");
+  addParagraph("E-Mail: info@rauch-heilpraktiker.de | Tel: 0821-2621462");
   addParagraph(
     t(
-      "Bei Fragen zum Datenschutz oder zur Ausübung Ihrer Rechte wenden Sie sich bitte an:",
-      "For questions about data protection or to exercise your rights, please contact:"
+      "Es entstehen dabei keine anderen Kosten als die Portokosten bzw. die Übermittlungskosten nach den geltenden Tarifen.",
+      "No costs other than postal or transmission costs according to applicable tariffs will be incurred."
     )
   );
-  addParagraph("E-Mail: info@rauch-heilpraktiker.de | Tel: 0821-2621462");
 
   // Last Updated
   addSpacing(10);
   doc.setFontSize(9);
   doc.setFont("helvetica", "italic");
-  doc.text(t("Stand: Januar 2026", "Last updated: January 2026"), pageWidth / 2, yPosition, { align: "center" });
+  doc.text(t("Stand: Februar 2026", "Last updated: February 2026"), pageWidth / 2, yPosition, { align: "center" });
 
-  // Add footer with page numbers
   addFooter();
 
-  // Save
   const fileName = t("Datenschutzinformation_Naturheilpraxis_Rauch.pdf", "Privacy_Policy_Naturheilpraxis_Rauch.pdf");
   doc.save(fileName);
 };
