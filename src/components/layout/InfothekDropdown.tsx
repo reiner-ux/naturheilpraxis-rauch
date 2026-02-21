@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText } from "lucide-react";
+import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText, ClipboardList, ShieldCheck, FileSignature } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -12,46 +12,80 @@ interface InfothekItem {
   external?: boolean;
 }
 
-const infothekItems: InfothekItem[] = [
+interface InfothekGroup {
+  title: { de: string; en: string };
+  items: InfothekItem[];
+}
+
+const infothekGroups: InfothekGroup[] = [
   {
-    label: { de: "Was ist ein Heilpraktiker?", en: "What is a Naturopath?" },
-    href: "/heilpraktiker",
-    icon: Stethoscope,
-    description: { de: "Berufsbild und Behandlungsmethoden", en: "Profession and treatment methods" },
+    title: { de: "Für Patienten", en: "For Patients" },
+    items: [
+      {
+        label: { de: "Anamnesebogen", en: "Medical History" },
+        href: "/anamnesebogen",
+        icon: ClipboardList,
+        description: { de: "Medizinischer Fragebogen", en: "Medical questionnaire" },
+      },
+      {
+        label: { de: "Datenschutzerklärung", en: "Privacy Policy" },
+        href: "/datenschutz",
+        icon: ShieldCheck,
+        description: { de: "Informationen zum Datenschutz", en: "Privacy information" },
+      },
+      {
+        label: { de: "Patientenaufklärung", en: "Patient Information" },
+        href: "/patientenaufklaerung",
+        icon: FileSignature,
+        description: { de: "Kosten, Erstattung & Vereinbarung", en: "Costs, reimbursement & agreement" },
+      },
+    ],
   },
   {
-    label: { de: "Was ist Frequenztherapie?", en: "What is Frequency Therapy?" },
-    href: "/krankheit-ist-messbar.html",
-    icon: Zap,
-    description: { de: "Physikalische Grundlagen der Frequenztherapie", en: "Physical foundations of frequency therapy" },
-    external: true,
+    title: { de: "Wissen & Therapie", en: "Knowledge & Therapy" },
+    items: [
+      {
+        label: { de: "Was ist ein Heilpraktiker?", en: "What is a Naturopath?" },
+        href: "/heilpraktiker",
+        icon: Stethoscope,
+        description: { de: "Berufsbild und Behandlungsmethoden", en: "Profession and treatment methods" },
+      },
+      {
+        label: { de: "Was ist Frequenztherapie?", en: "What is Frequency Therapy?" },
+        href: "/krankheit-ist-messbar.html",
+        icon: Zap,
+        description: { de: "Physikalische Grundlagen der Frequenztherapie", en: "Physical foundations of frequency therapy" },
+        external: true,
+      },
+      {
+        label: { de: "Diamond Shield Zapper", en: "Diamond Shield Zapper" },
+        href: "/zapper-diamond-shield.html",
+        icon: Radio,
+        description: { de: "Frequenzgerät für Wellness und Erfahrungsheilkunde", en: "Frequency device for wellness" },
+        external: true,
+      },
+    ],
   },
   {
-    label: { de: "Diamond Shield Zapper", en: "Diamond Shield Zapper" },
-    href: "/zapper-diamond-shield.html",
-    icon: Radio,
-    description: { de: "Frequenzgerät für Wellness und Erfahrungsheilkunde", en: "Frequency device for wellness" },
-    external: true,
-  },
-  {
-    label: { de: "GebÜH", en: "Fee Schedule" },
-    href: "/gebueh",
-    icon: Euro,
-    description: { de: "Gebührenordnung für Heilpraktiker", en: "Fee schedule for practitioners" },
-  },
-  {
-    label: { de: "Patientenaufklärung", en: "Patient Information" },
-    href: "/patientenaufklaerung",
-    icon: FileText,
-    description: { de: "Kosten, Erstattung & Vereinbarung", en: "Costs, reimbursement & agreement" },
-  },
-  {
-    label: { de: "Häufige Fragen", en: "FAQ" },
-    href: "/faq",
-    icon: HelpCircle,
-    description: { de: "Antworten auf wichtige Fragen", en: "Answers to important questions" },
+    title: { de: "Praktisches", en: "Practical Info" },
+    items: [
+      {
+        label: { de: "GebÜH", en: "Fee Schedule" },
+        href: "/gebueh",
+        icon: Euro,
+        description: { de: "Gebührenordnung für Heilpraktiker", en: "Fee schedule for practitioners" },
+      },
+      {
+        label: { de: "Häufige Fragen", en: "FAQ" },
+        href: "/faq",
+        icon: HelpCircle,
+        description: { de: "Antworten auf wichtige Fragen", en: "Answers to important questions" },
+      },
+    ],
   },
 ];
+
+const allItems = infothekGroups.flatMap((g) => g.items);
 
 interface InfothekDropdownProps {
   isMobile?: boolean;
@@ -64,9 +98,8 @@ export function InfothekDropdown({ isMobile = false, onItemClick }: InfothekDrop
   const location = useLocation();
   const { t } = useLanguage();
 
-  const isInfothekActive = infothekItems.some((item) => location.pathname === item.href);
+  const isInfothekActive = allItems.some((item) => location.pathname === item.href);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -77,10 +110,82 @@ export function InfothekDropdown({ isMobile = false, onItemClick }: InfothekDrop
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close dropdown when route changes
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
+
+  const renderItem = (item: InfothekItem, compact = false) => {
+    const isActive = location.pathname === item.href;
+
+    if (item.external) {
+      return (
+        <a
+          key={item.href}
+          href={item.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => {
+            setIsOpen(false);
+            onItemClick?.();
+          }}
+          className={cn(
+            "flex items-start gap-3 rounded-lg transition-colors hover:bg-sage-50",
+            compact ? "px-3 py-2.5" : "p-3"
+          )}
+        >
+          {compact ? (
+            <>
+              <item.icon className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">{t(item.label.de, item.label.en)}</span>
+            </>
+          ) : (
+            <>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sage-100">
+                <item.icon className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-medium text-foreground">{t(item.label.de, item.label.en)}</div>
+                <div className="text-xs text-muted-foreground">{t(item.description.de, item.description.en)}</div>
+              </div>
+            </>
+          )}
+        </a>
+      );
+    }
+
+    return (
+      <Link
+        key={item.href}
+        to={item.href}
+        onClick={() => {
+          setIsOpen(false);
+          onItemClick?.();
+        }}
+        className={cn(
+          "flex items-start gap-3 rounded-lg transition-colors",
+          compact ? "px-3 py-2.5" : "p-3",
+          isActive ? "bg-sage-100 text-primary" : "hover:bg-sage-50"
+        )}
+      >
+        {compact ? (
+          <>
+            <item.icon className={cn("h-4 w-4 shrink-0 mt-0.5", isActive ? "text-primary" : "text-muted-foreground")} />
+            <span className={cn("text-sm", isActive ? "text-primary font-medium" : "text-muted-foreground")}>{t(item.label.de, item.label.en)}</span>
+          </>
+        ) : (
+          <>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sage-100">
+              <item.icon className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <div className={cn("text-sm font-medium", isActive ? "text-primary" : "text-foreground")}>{t(item.label.de, item.label.en)}</div>
+              <div className="text-xs text-muted-foreground">{t(item.description.de, item.description.en)}</div>
+            </div>
+          </>
+        )}
+      </Link>
+    );
+  };
 
   if (isMobile) {
     return (
@@ -98,45 +203,20 @@ export function InfothekDropdown({ isMobile = false, onItemClick }: InfothekDrop
             <BookOpen className="h-4 w-4" />
             {t("Infothek", "Info Center")}
           </span>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 transition-transform duration-200",
-              isOpen && "rotate-180"
-            )}
-          />
+          <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")} />
         </button>
         {isOpen && (
-          <div className="ml-4 space-y-1 border-l-2 border-sage-200 pl-4">
-            {infothekItems.map((item) => 
-              item.external ? (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={onItemClick}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors text-muted-foreground hover:bg-sage-50 hover:text-primary"
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <span>{t(item.label.de, item.label.en)}</span>
-                </a>
-              ) : (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={onItemClick}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                    location.pathname === item.href
-                      ? "bg-sage-100 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-sage-50 hover:text-primary"
-                  )}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <span>{t(item.label.de, item.label.en)}</span>
-                </Link>
-              )
-            )}
+          <div className="ml-4 space-y-3 border-l-2 border-sage-200 pl-4">
+            {infothekGroups.map((group) => (
+              <div key={group.title.de}>
+                <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {t(group.title.de, group.title.en)}
+                </div>
+                <div className="space-y-0.5">
+                  {group.items.map((item) => renderItem(item, true))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -154,75 +234,20 @@ export function InfothekDropdown({ isMobile = false, onItemClick }: InfothekDrop
       >
         <BookOpen className="mr-1 h-4 w-4" />
         {t("Infothek", "Info Center")}
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 transition-transform duration-200",
-            isOpen && "rotate-180"
-          )}
-        />
+        <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-72 animate-in fade-in-0 slide-in-from-top-2 rounded-xl border border-border bg-background p-2 shadow-elevated">
-          {infothekItems.map((item) => 
-            item.external ? (
-              <a
-                key={item.href}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  setIsOpen(false);
-                  onItemClick?.();
-                }}
-                className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-sage-50"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sage-100">
-                  <item.icon className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-foreground">
-                    {t(item.label.de, item.label.en)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t(item.description.de, item.description.en)}
-                  </div>
-                </div>
-              </a>
-            ) : (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => {
-                  setIsOpen(false);
-                  onItemClick?.();
-                }}
-                className={cn(
-                  "flex items-start gap-3 rounded-lg p-3 transition-colors",
-                  location.pathname === item.href
-                    ? "bg-sage-100 text-primary"
-                    : "hover:bg-sage-50"
-                )}
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sage-100">
-                  <item.icon className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <div
-                    className={cn(
-                      "text-sm font-medium",
-                      location.pathname === item.href ? "text-primary" : "text-foreground"
-                    )}
-                  >
-                    {t(item.label.de, item.label.en)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t(item.description.de, item.description.en)}
-                  </div>
-                </div>
-              </Link>
-            )
-          )}
+        <div className="absolute left-0 top-full z-50 mt-1 w-80 animate-in fade-in-0 slide-in-from-top-2 rounded-xl border border-border bg-background p-2 shadow-elevated">
+          {infothekGroups.map((group, idx) => (
+            <div key={group.title.de}>
+              {idx > 0 && <div className="my-1.5 border-t border-border/50" />}
+              <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                {t(group.title.de, group.title.en)}
+              </div>
+              {group.items.map((item) => renderItem(item))}
+            </div>
+          ))}
         </div>
       )}
     </div>
