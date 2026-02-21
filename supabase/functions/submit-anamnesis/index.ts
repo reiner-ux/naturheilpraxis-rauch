@@ -397,6 +397,13 @@ serve(async (req) => {
           .eq("id", submissionId);
       }
 
+      // Debug: Log PDF attachment status
+      console.log("PDF attachment status:", {
+        hasPdfBase64: !!pdfBase64,
+        pdfBase64Length: pdfBase64?.length || 0,
+        pdfBase64Preview: pdfBase64 ? pdfBase64.substring(0, 50) + "..." : "NONE",
+      });
+
       // Extract patient info
       const fd = formData || {};
       const patientName =
