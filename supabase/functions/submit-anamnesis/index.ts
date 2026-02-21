@@ -68,7 +68,7 @@ async function sendViaRelay(
   subject: string,
   html: string,
   attachment?: { filename: string; base64: string; contentType: string }
-): Promise<void> {
+): Promise<{ attachmentSent: boolean }> {
   const relaySecret = Deno.env.get("RELAY_SECRET");
   if (!relaySecret) throw new Error("Email service not configured");
 
@@ -94,6 +94,34 @@ async function sendViaRelay(
 
   const text = await resp.text();
   if (!resp.ok || text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+    // If sending WITH attachment failed, retry WITHOUT attachment
+    if (attachment) {
+      console.warn("Relay failed with attachment, retrying without. Status:", resp.status, text.substring(0, 200));
+      const fallbackPayload: Record<string, unknown> = {
+        to,
+        subject: encodeSubjectRfc2047(subject),
+        html: html + '\n<p style="color:#999;font-size:11px;">⚠️ Hinweis: Der PDF-Anhang konnte aus technischen Gründen nicht beigefügt werden. Bitte wenden Sie sich an die Praxis, falls Sie eine Kopie benötigen.</p>',
+        from: "noreply@rauch-heilpraktiker.de",
+      };
+      const fallbackResp = await fetch("https://rauch-heilpraktiker.de/mail-relay.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Relay-Token": relaySecret,
+        },
+        body: JSON.stringify(fallbackPayload),
+      });
+      const fallbackText = await fallbackResp.text();
+      if (!fallbackResp.ok) {
+        console.error("Relay fallback also failed:", fallbackResp.status, fallbackText.substring(0, 200));
+        throw new Error("Email delivery failed");
+      }
+      let fallbackResult;
+      try { fallbackResult = JSON.parse(fallbackText); } catch { throw new Error("Email service response error"); }
+      if (!fallbackResult.success) throw new Error("Email delivery failed");
+      console.log("Email sent successfully to", to, "(without attachment - fallback)");
+      return { attachmentSent: false };
+    }
     console.error("Relay error:", resp.status, text.substring(0, 200));
     throw new Error("Email delivery failed");
   }
@@ -107,7 +135,8 @@ async function sendViaRelay(
   }
 
   if (!result.success) throw new Error("Email delivery failed");
-  console.log("Email sent successfully to", to);
+  console.log("Email sent successfully to", to, attachment ? "(with attachment)" : "");
+  return { attachmentSent: !!attachment };
 }
 
 function escapeHtml(str: string): string {
