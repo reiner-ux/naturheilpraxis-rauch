@@ -540,6 +540,7 @@ const Anamnesebogen = () => {
     return !!(
       formData.unterschrift?.bestaetigung &&
       formData.unterschrift?.datenschutzEinwilligung &&
+      formData.unterschrift?.patientenaufklaerungAkzeptiert &&
       formData.unterschrift?.datum &&
       formData.unterschrift?.nameInDruckbuchstaben
     );

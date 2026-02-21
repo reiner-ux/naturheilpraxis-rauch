@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio } from "lucide-react";
+import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -38,6 +38,12 @@ const infothekItems: InfothekItem[] = [
     href: "/gebueh",
     icon: Euro,
     description: { de: "Gebührenordnung für Heilpraktiker", en: "Fee schedule for practitioners" },
+  },
+  {
+    label: { de: "Patientenaufklärung", en: "Patient Information" },
+    href: "/patientenaufklaerung",
+    icon: FileText,
+    description: { de: "Kosten, Erstattung & Vereinbarung", en: "Costs, reimbursement & agreement" },
   },
   {
     label: { de: "Häufige Fragen", en: "FAQ" },

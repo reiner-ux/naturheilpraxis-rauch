@@ -593,6 +593,7 @@ export const initialFormData = {
     nameInDruckbuchstaben: "",
     bestaetigung: false,
     datenschutzEinwilligung: false,
+    patientenaufklaerungAkzeptiert: false,
     bestaetigung2fa: false,
     erziehungsberechtigter: "",
   },

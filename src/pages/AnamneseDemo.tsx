@@ -348,6 +348,7 @@ const xaverDemoData: AnamneseFormData = {
     nameInDruckbuchstaben: "XAVER LOVABLE",
     bestaetigung: true,
     datenschutzEinwilligung: true,
+    patientenaufklaerungAkzeptiert: true,
     bestaetigung2fa: true,
     erziehungsberechtigter: "",
   },
