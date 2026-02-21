@@ -28,8 +28,8 @@ export function Header() {
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
     { label: t("Erstanmeldung", "First Registration"), href: "/erstanmeldung" },
-    // Test link visible in preview and local dev, but NOT on published production site
-    ...(isNonProduction ? [{ label: "Test", href: "/anamnesebogen?dev=true" }] : []),
+    // Test link only for admins in non-production environments
+    ...(isNonProduction && isAdmin ? [{ label: "Test", href: "/anamnesebogen?dev=true" }] : []),
   ];
 
   const handleSignOut = async () => {
@@ -82,18 +82,20 @@ export function Header() {
           {/* Auth Button Desktop */}
           {user ? (
             <div className="ml-2 flex items-center gap-2">
-              <Link
-                to="/dashboard"
-                className={cn(
-                  "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sage-100 hover:text-primary",
-                  location.pathname === "/dashboard"
-                    ? "bg-sage-100 text-primary"
-                    : "text-muted-foreground"
-                )}
-              >
-                <User className="h-4 w-4" />
-                {t("Dashboard", "Dashboard")}
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/dashboard"
+                  className={cn(
+                    "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sage-100 hover:text-primary",
+                    location.pathname === "/dashboard"
+                      ? "bg-sage-100 text-primary"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <User className="h-4 w-4" />
+                  {t("Dashboard", "Dashboard")}
+                </Link>
+              )}
               {isAdmin && (
                 <Link
                   to="/admin"
@@ -171,19 +173,21 @@ export function Header() {
             {/* Auth Button Mobile */}
             {user ? (
               <div className="mt-2 space-y-2">
-                <Link
-                  to="/dashboard"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
-                    location.pathname === "/dashboard"
-                      ? "bg-sage-100 text-primary"
-                      : "text-muted-foreground hover:bg-sage-50 hover:text-primary"
-                  )}
-                >
-                  <User className="h-4 w-4" />
-                  Dashboard
-                </Link>
+                {isAdmin && (
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+                      location.pathname === "/dashboard"
+                        ? "bg-sage-100 text-primary"
+                        : "text-muted-foreground hover:bg-sage-50 hover:text-primary"
+                    )}
+                  >
+                    <User className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                )}
                 {isAdmin && (
                   <Link
                     to="/admin"
