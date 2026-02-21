@@ -10,8 +10,8 @@
  */
 
 // ===== VERSION MARKER =====
-// Wenn diese Version läuft, erscheint "version": "2026-01-29-v2" in der Response
-$RELAY_VERSION = '2026-01-29-v2';
+// Wenn diese Version läuft, erscheint "version": "2026-02-21-v4" in der Response
+$RELAY_VERSION = '2026-02-21-v4';
 
 // CORS Headers für Edge Function Zugriff
 header('Content-Type: application/json');
@@ -54,11 +54,22 @@ if (empty($token) || !hash_equals($RELAY_SECRET, $token)) {
 
 // JSON Body lesen
 $input = file_get_contents('php://input');
+
+// Check for empty input (might indicate post_max_size exceeded)
+if (empty($input)) {
+    http_response_code(400);
+    $contentLength = $_SERVER['CONTENT_LENGTH'] ?? 'unknown';
+    $postMaxSize = ini_get('post_max_size');
+    relay_log("Empty input! CONTENT_LENGTH={$contentLength} post_max_size={$postMaxSize}");
+    echo json_encode(['success' => false, 'error' => "Empty request body (Content-Length: {$contentLength}, post_max_size: {$postMaxSize})", 'version' => $RELAY_VERSION]);
+    exit;
+}
+
 $data = json_decode($input, true);
 
 if (!$data) {
     http_response_code(400);
-    relay_log('Invalid JSON: remote=' . ($_SERVER['REMOTE_ADDR'] ?? '-') . ' raw=' . substr($input, 0, 500));
+    relay_log('Invalid JSON: remote=' . ($_SERVER['REMOTE_ADDR'] ?? '-') . ' input_len=' . strlen($input) . ' raw=' . substr($input, 0, 500));
     echo json_encode(['success' => false, 'error' => 'Invalid JSON', 'version' => $RELAY_VERSION]);
     exit;
 }
@@ -123,8 +134,9 @@ if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename
     
     $body .= '--' . $boundary . '--';
     
-    $success = mail($to, $encodedSubject, $body, implode("\r\n", $headers), $additionalParams);
-    relay_log('Multipart mail ' . ($success ? 'OK' : 'FAIL') . ': to=' . $to . ' attachment=' . $filename);
+    $success = @mail($to, $encodedSubject, $body, implode("\r\n", $headers), $additionalParams);
+    $lastError = error_get_last();
+    relay_log('Multipart mail ' . ($success ? 'OK' : 'FAIL') . ': to=' . $to . ' attachment=' . $filename . ' body_len=' . strlen($body) . ' base64_len=' . strlen($attachment['base64']) . ($lastError ? ' error=' . $lastError['message'] : ''));
 } else {
     // Simple HTML email (no attachment)
     $headers = [
