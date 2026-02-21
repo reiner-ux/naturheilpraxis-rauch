@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ExternalLink,
   Info,
+  Phone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,6 +88,7 @@ export default function Erstanmeldung() {
   const [aufklaerungAccepted, setAufklaerungAccepted] = useState(false);
   const [iaaData, setIaaData] = useState<Record<string, number>>({});
   const [iaaSubmitting, setIaaSubmitting] = useState(false);
+  const [terminConfirmed, setTerminConfirmed] = useState(false);
 
   // Check existing anamnesis submission
   const { data: anamnesisStatus } = useQuery({
@@ -196,18 +198,74 @@ export default function Erstanmeldung() {
                 "Please complete the following 4 documents for your first registration."
               )}
             </p>
-            <div className="mt-6 mx-auto max-w-md">
-              <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                <span>{t("Fortschritt", "Progress")}</span>
-                <span>{completedCount}/4</span>
+            {terminConfirmed && (
+              <div className="mt-6 mx-auto max-w-md">
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                  <span>{t("Fortschritt", "Progress")}</span>
+                  <span>{completedCount}/4</span>
+                </div>
+                <Progress value={progressPercent} className="h-2" />
               </div>
-              <Progress value={progressPercent} className="h-2" />
-            </div>
+            )}
           </div>
         </div>
       </div>
 
+      {/* Termin-Pflicht Gate */}
+      {!terminConfirmed && (
+        <div className="container py-8">
+          <div className="mx-auto max-w-2xl">
+            <Card className="border-primary/30 shadow-card">
+              <CardContent className="p-8 space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Phone className="h-7 w-7 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="font-serif text-xl font-semibold text-foreground">
+                      {t("Termin telefonisch vereinbaren", "Schedule Appointment by Phone")}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {t("Voraussetzung für die Erstanmeldung", "Prerequisite for first registration")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-sage-50 rounded-lg p-5 space-y-3">
+                  <p className="text-muted-foreground leading-relaxed">
+                    {t(
+                      "Bevor Sie die Erstanmeldung online ausfüllen können, bitten wir Sie, telefonisch einen Termin mit uns zu vereinbaren. Im persönlichen Gespräch klären wir Ihr Anliegen und besprechen den weiteren Ablauf.",
+                      "Before you can complete the first registration online, we ask you to schedule an appointment with us by phone. In a personal conversation, we will clarify your concerns and discuss the next steps."
+                    )}
+                  </p>
+                  <div className="flex items-center gap-3 text-lg font-semibold text-foreground">
+                    <Phone className="h-5 w-5 text-primary" />
+                    <span>0821-2621462</span>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3 bg-background border border-border rounded-lg p-4">
+                  <Checkbox
+                    id="termin-confirm"
+                    checked={terminConfirmed}
+                    onCheckedChange={(c) => setTerminConfirmed(!!c)}
+                    className="mt-1"
+                  />
+                  <Label htmlFor="termin-confirm" className="cursor-pointer leading-relaxed">
+                    {t(
+                      "Ich habe bereits telefonisch einen Termin in der Naturheilpraxis Peter Rauch vereinbart und möchte nun die Erstanmeldung ausfüllen.",
+                      "I have already scheduled an appointment by phone at the Naturopathic Practice Peter Rauch and would like to complete the first registration now."
+                    )}
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
       {/* Step indicators */}
+      {terminConfirmed && (
       <div className="border-b border-border bg-background sticky top-16 md:top-20 z-40">
         <div className="container">
           <div className="flex overflow-x-auto gap-1 py-2">
@@ -244,7 +302,9 @@ export default function Erstanmeldung() {
           </div>
         </div>
       </div>
+      )}
 
+      {terminConfirmed && (
       <div className="container py-8">
         <div className="mx-auto max-w-4xl">
 
@@ -546,6 +606,7 @@ export default function Erstanmeldung() {
           </div>
         </div>
       </div>
+      )}
     </Layout>
   );
 }
