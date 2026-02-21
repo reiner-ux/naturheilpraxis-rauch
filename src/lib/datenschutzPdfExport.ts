@@ -122,8 +122,8 @@ export const generateDatenschutzPdf = ({ language }: DatenschutzPdfOptions) => {
     {
       title: t("Welche Daten wir erheben", "What Data We Collect"),
       content: t(
-        "Name, Adresse, E-Mail, Gesundheitsdaten: Diagnose/n, Anamnese, Vorerkrankungen, durchgeführte Behandlungen, Behandlungsverlauf, Bilder, Befunde, personenbezogene Daten, bioelektrische Messdaten, Daten die durch die 5 Elemente Messung, die Metatron 5 Diagnostik, EAV Diagnostik, Blut Diagnose und des Vieva Gerätes ermittelt wurden, geführte Gespräche und Dokumentation.",
-        "Name, address, email, health data: diagnoses, medical history, pre-existing conditions, treatments performed, treatment progress, images, findings, personal data, bioelectric measurement data, data from 5 Elements Measurement, Metatron 5 Diagnostics, EAV Diagnostics, Blood Diagnosis and Vieva device, conversations and documentation."
+        "Name, Adresse, E-Mail, Gesundheitsdaten: Diagnose/n, Anamnese, Vorerkrankungen, durchgeführte Behandlungen, Behandlungsverlauf, Bilder, Befunde, personenbezogene Daten, bioelektrische Messdaten, Daten die durch die 5 Elemente Messung, die Metatron Analyse, EAV Diagnostik, Laborwerte, des Vieva Gerätes und des Trikombin Gerätes ermittelt wurden, geführte Gespräche und Dokumentation.",
+        "Name, address, email, health data: diagnoses, medical history, pre-existing conditions, treatments performed, treatment progress, images, findings, personal data, bioelectric measurement data, data from 5 Elements Measurement, Metatron Analysis, EAV Diagnostics, laboratory values, Vieva device and Trikombin device, conversations and documentation."
       ),
     },
     {
@@ -223,8 +223,8 @@ export const generateDatenschutzPdf = ({ language }: DatenschutzPdfOptions) => {
   addSectionHeader(t("Einwilligung in die Nutzung medizinischer Daten", "Consent for Use of Medical Data"));
   addParagraph(
     t(
-      "Mit Ihrer Einwilligung erlauben Sie Peter Rauch, Ihre medizinischen Daten im Rahmen des bestehenden Behandlungsvertrages zu verarbeiten. Hierzu gehören: Diagnose/n, Anamnese, Vorerkrankungen, durchgeführte Behandlungen, Behandlungsverlauf, Bilder, Befunde, bioelektrische Messdaten, Daten der 5 Elemente Messung, Metatron 5 Diagnostik, EAV Diagnostik, Blut Diagnose und des Vieva Gerätes, geführte Gespräche und Dokumentation.",
-      "With your consent, you allow Peter Rauch to process your medical data within the treatment contract. This includes: diagnoses, medical history, pre-existing conditions, treatments, treatment progress, images, findings, bioelectric measurement data, data from 5 Elements Measurement, Metatron 5 Diagnostics, EAV Diagnostics, Blood Diagnosis and Vieva device, conversations and documentation."
+      "Mit Ihrer Einwilligung erlauben Sie Peter Rauch, Ihre medizinischen Daten im Rahmen des bestehenden Behandlungsvertrages zu verarbeiten. Hierzu gehören: Diagnose/n, Anamnese, Vorerkrankungen, durchgeführte Behandlungen, Behandlungsverlauf, Bilder, Befunde, bioelektrische Messdaten, Daten der 5 Elemente Messung, Metatron Analyse, EAV Diagnostik, Laborwerte, des Vieva Gerätes und des Trikombin Gerätes, geführte Gespräche und Dokumentation.",
+      "With your consent, you allow Peter Rauch to process your medical data within the treatment contract. This includes: diagnoses, medical history, pre-existing conditions, treatments, treatment progress, images, findings, bioelectric measurement data, data from 5 Elements Measurement, Metatron Analysis, EAV Diagnostics, laboratory values, Vieva device and Trikombin device, conversations and documentation."
     )
   );
   addParagraph(
