@@ -23,6 +23,7 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
 import NotFound from "./pages/NotFound";
+import Patientenaufklaerung from "./pages/Patientenaufklaerung";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/faq" element={<FAQ />} />
               <Route path="/praxis-info" element={<PraxisInfo />} />
               <Route path="/impressum" element={<Impressum />} />
+              <Route path="/patientenaufklaerung" element={<Patientenaufklaerung />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/dashboard" element={<ProtectedRoute><PatientDashboard /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -207,6 +207,45 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
               )}
             </Label>
           </div>
+
+          {/* Patientenaufklärung Einwilligung */}
+          <div className="flex items-start space-x-3 pt-2">
+            <Checkbox
+              id="patientenaufklaerung"
+              checked={formData.unterschrift?.patientenaufklaerungAkzeptiert || false}
+              onCheckedChange={(checked) => updateUnterschrift("patientenaufklaerungAkzeptiert", !!checked)}
+              className="mt-1"
+            />
+            <Label htmlFor="patientenaufklaerung" className="font-medium cursor-pointer">
+              {language === "de" ? (
+                <>
+                  Ich habe die{" "}
+                  <Link
+                    to="/patientenaufklaerung"
+                    target="_blank"
+                    className="text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    Patientenaufklärung
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                  {" "}(Leistungserstattung, Preise, Terminregelung) gelesen und bin damit einverstanden. *
+                </>
+              ) : (
+                <>
+                  I have read and agree to the{" "}
+                  <Link
+                    to="/patientenaufklaerung"
+                    target="_blank"
+                    className="text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    Patient Information
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                  {" "}(fee reimbursement, pricing, appointment policy). *
+                </>
+              )}
+            </Label>
+          </div>
         </div>
 
         {/* Hinweis auf 2FA */}

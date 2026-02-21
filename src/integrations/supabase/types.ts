@@ -122,6 +122,51 @@ export type Database = {
         }
         Relationships: []
       }
+      practice_pricing: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean
+          label_de: string
+          label_en: string
+          note_de: string | null
+          note_en: string | null
+          price_text_de: string
+          price_text_en: string
+          service_key: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          label_de: string
+          label_en: string
+          note_de?: string | null
+          note_en?: string | null
+          price_text_de: string
+          price_text_en: string
+          service_key: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          label_de?: string
+          label_en?: string
+          note_de?: string | null
+          note_en?: string | null
+          price_text_de?: string
+          price_text_en?: string
+          service_key?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
