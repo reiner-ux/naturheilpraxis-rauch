@@ -86,7 +86,7 @@ if (strpos($subject, '=?UTF-8?') === 0) {
 }
 
 $envelopeFrom = $from ?: 'info@rauch-heilpraktiker.de';
-$additionalParams = '-f ' . escapeshellarg($envelopeFrom);
+$additionalParams = '-f ' . $envelopeFrom;
 
 // Check if attachment is present
 $attachment = $data['attachment'] ?? null;
