@@ -86,7 +86,12 @@ if (strpos($subject, '=?UTF-8?') === 0) {
 }
 
 $envelopeFrom = $from ?: 'info@rauch-heilpraktiker.de';
-$additionalParams = '-f ' . escapeshellarg($envelopeFrom);
+// WICHTIG: KEIN escapeshellarg() verwenden!
+// escapeshellarg() erzeugt: -f 'email@domain.de' (mit Anführungszeichen)
+// Auf diesem Server interpretiert der MTA die Anführungszeichen falsch,
+// wodurch die Mail nicht an $to zugestellt wird, sondern lokal an die
+// Default-Mailbox (info@) geroutet wird.
+$additionalParams = '-f ' . $envelopeFrom;
 
 // Check if attachment is present
 $attachment = $data['attachment'] ?? null;
