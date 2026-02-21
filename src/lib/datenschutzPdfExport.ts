@@ -150,8 +150,8 @@ export const generateDatenschutzPdf = ({ language }: DatenschutzPdfOptions) => {
     {
       title: t("Datensicherheit", "Data Security"),
       content: t(
-        "Ihre Daten werden durch folgende Maßnahmen geschützt: TLS-Verschlüsselung bei der Übertragung, verschlüsselte Speicherung in der Datenbank, Zwei-Faktor-Authentifizierung (2FA) per E-Mail, automatische Sitzungsbeendigung und Zugriffskontrolle nach dem Minimalprinzip.",
-        "Your data is protected by: TLS encryption during transmission, encrypted database storage, two-factor authentication (2FA) via email, automatic session termination, and access control based on the principle of least privilege."
+        "Ihre Daten werden auf unserer Online-Plattform (Lovable) durch folgende Maßnahmen geschützt: TLS-Verschlüsselung bei der Übertragung, verschlüsselte Speicherung in der Datenbank, Zwei-Faktor-Authentifizierung (2FA) per E-Mail, automatische Sitzungsbeendigung und Zugriffskontrolle nach dem Minimalprinzip. Diese Sicherheitsmaßnahmen betreffen ausschließlich den digitalen Datenverkehr über die Plattform. In der Praxis vor Ort werden Ihre Daten gemäß den berufsrechtlichen Vorgaben für Heilpraktiker aufbewahrt.",
+        "Your data is protected on our online platform (Lovable) by: TLS encryption during transmission, encrypted database storage, two-factor authentication (2FA) via email, automatic session termination, and access control based on the principle of least privilege. These security measures apply exclusively to digital data traffic via the platform. In the practice, your data is stored in accordance with professional regulations for naturopaths."
       ),
     },
     {
