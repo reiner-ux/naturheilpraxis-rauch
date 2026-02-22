@@ -1,8 +1,8 @@
 # Naturheilpraxis Peter Rauch – Vollständiger Wiederherstellungspunkt
 
-**Datum:** 2026-02-22
-**Projekt:** Patienten-App & Praxisverwaltungssystem
-**Version:** Produktiv
+**Datum:** 2026-02-22  
+**Projekt:** Patienten-App & Praxisverwaltungssystem  
+**Version:** Produktiv  
 
 ---
 
@@ -17,15 +17,15 @@
 7. [Datenbank-Schema (SQL)](#7-datenbank-schema-sql)
 8. [Edge Functions (vollständiger Quellcode)](#8-edge-functions-vollständiger-quellcode)
 9. [PHP Mail-Relay (vollständiger Quellcode)](#9-php-mail-relay-vollständiger-quellcode)
-10. [Seiten-Dokumentation (alle Pages)](#10-seiten-dokumentation-alle-pages)
-11. [Komponenten-Architektur](#11-komponenten-architektur)
-12. [Anamnesebogen-Datenmodell](#12-anamnesebogen-datenmodell)
-13. [IAA-Fragebogen](#13-iaa-fragebogen)
-14. [PDF-Export](#14-pdf-export)
-15. [i18n / Mehrsprachigkeit (vollständiger Quellcode)](#15-i18n--mehrsprachigkeit-vollständiger-quellcode)
-16. [SEO & Schema.org](#16-seo--schemaorg)
-17. [DSGVO & Cookie-Banner](#17-dsgvo--cookie-banner)
-18. [Admin-Dashboard](#18-admin-dashboard)
+10. [Internationalisierung (LanguageContext)](#10-internationalisierung)
+11. [SEO & Schema.org (vollständiger Quellcode)](#11-seo--schemaorg)
+12. [DSGVO & Cookie-Banner (vollständiger Quellcode)](#12-dsgvo--cookie-banner)
+13. [Admin-Prüfung (vollständiger Quellcode)](#13-admin-prüfung)
+14. [Utility-Funktionen](#14-utility-funktionen)
+15. [Seiten-Übersicht](#15-seiten-übersicht)
+16. [Komponenten-Architektur](#16-komponenten-architektur)
+17. [Abhängigkeiten (vollständig)](#17-abhängigkeiten)
+18. [Secrets & Umgebung](#18-secrets--umgebung)
 19. [Wiederherstellungsanleitung](#19-wiederherstellungsanleitung)
 
 ---
@@ -45,70 +45,12 @@
 | State | React Context + TanStack React Query | ^5.83.0 |
 | PDF-Export | jsPDF | ^4.0.0 |
 | Backend | Supabase (Lovable Cloud) | ^2.90.1 |
-| Fonts | Google Fonts (CDN) | – |
+| Fonts | Google Fonts (CDN): Playfair Display + Source Sans 3 | – |
 | Toasts | Sonner + shadcn/ui Toaster | ^1.7.4 |
 | Formulare | React Hook Form + Zod | ^7.61.1 / ^3.25.76 |
 | Datum | date-fns | ^3.6.0 |
 
-### Vollständige Abhängigkeiten (package.json dependencies)
-
-```json
-{
-  "@hookform/resolvers": "^3.10.0",
-  "@radix-ui/react-accordion": "^1.2.11",
-  "@radix-ui/react-alert-dialog": "^1.1.14",
-  "@radix-ui/react-aspect-ratio": "^1.1.7",
-  "@radix-ui/react-avatar": "^1.1.10",
-  "@radix-ui/react-checkbox": "^1.3.2",
-  "@radix-ui/react-collapsible": "^1.1.11",
-  "@radix-ui/react-context-menu": "^2.2.15",
-  "@radix-ui/react-dialog": "^1.1.14",
-  "@radix-ui/react-dropdown-menu": "^2.1.15",
-  "@radix-ui/react-hover-card": "^1.1.14",
-  "@radix-ui/react-label": "^2.1.7",
-  "@radix-ui/react-menubar": "^1.1.15",
-  "@radix-ui/react-navigation-menu": "^1.2.13",
-  "@radix-ui/react-popover": "^1.1.14",
-  "@radix-ui/react-progress": "^1.1.7",
-  "@radix-ui/react-radio-group": "^1.3.7",
-  "@radix-ui/react-scroll-area": "^1.2.9",
-  "@radix-ui/react-select": "^2.2.5",
-  "@radix-ui/react-separator": "^1.1.7",
-  "@radix-ui/react-slider": "^1.3.5",
-  "@radix-ui/react-slot": "^1.2.3",
-  "@radix-ui/react-switch": "^1.2.5",
-  "@radix-ui/react-tabs": "^1.1.12",
-  "@radix-ui/react-toast": "^1.2.14",
-  "@radix-ui/react-toggle": "^1.1.9",
-  "@radix-ui/react-toggle-group": "^1.1.10",
-  "@radix-ui/react-tooltip": "^1.2.7",
-  "@supabase/supabase-js": "^2.90.1",
-  "@tanstack/react-query": "^5.83.0",
-  "class-variance-authority": "^0.7.1",
-  "clsx": "^2.1.1",
-  "cmdk": "^1.1.1",
-  "date-fns": "^3.6.0",
-  "embla-carousel-react": "^8.6.0",
-  "input-otp": "^1.4.2",
-  "jspdf": "^4.0.0",
-  "lucide-react": "^0.462.0",
-  "next-themes": "^0.3.0",
-  "react": "^18.3.1",
-  "react-day-picker": "^8.10.1",
-  "react-dom": "^18.3.1",
-  "react-hook-form": "^7.61.1",
-  "react-resizable-panels": "^2.1.9",
-  "react-router-dom": "^6.30.1",
-  "recharts": "^2.15.4",
-  "sonner": "^1.7.4",
-  "tailwind-merge": "^2.6.0",
-  "tailwindcss-animate": "^1.0.7",
-  "vaul": "^0.9.9",
-  "zod": "^3.25.76"
-}
-```
-
-### Umgebungsvariablen (.env)
+### Umgebungsvariablen (.env – auto-generiert, NICHT manuell bearbeiten)
 
 ```bash
 VITE_SUPABASE_PROJECT_ID="jmebqjadlpltnqawoipb"
@@ -136,161 +78,147 @@ npm run build  # Produktions-Build
 
 ```
 ├── docs/
-│   ├── design-specification.md          # Design-Spezifikation (1527 Zeilen)
-│   ├── FULL-PROJECT-RESTORE-2026-02-22.md  # Diese Datei
-│   ├── PROJECT-DOCUMENTATION.md         # Kurz-Übersicht
-│   ├── mail-relay-v2.php                # PHP Mail-Relay Skript (Quellcode in Kap. 9)
-│   ├── mail-relay-v2.php.old            # Backup
-│   └── send-email-relay.php             # E-Mail-Relay (alt)
+│   ├── design-specification.md
+│   ├── FULL-PROJECT-RESTORE-2026-02-22.md  (Diese Datei)
+│   ├── PROJECT-DOCUMENTATION.md
+│   ├── mail-relay-v2.php
+│   ├── mail-relay-v2.php.old
+│   └── send-email-relay.php
 ├── public/
-│   ├── favicon.ico                      # Praxis-Favicon (20KB)
-│   ├── krankheit-ist-messbar.html       # Statische Info-Seite Frequenztherapie
-│   ├── placeholder.svg                  # Platzhalter-Bild
-│   ├── robots.txt                       # Suchmaschinen-Konfiguration
-│   └── zapper-diamond-shield.html       # Statische Info-Seite Diamond Shield
+│   ├── favicon.ico
+│   ├── krankheit-ist-messbar.html
+│   ├── placeholder.svg
+│   ├── robots.txt
+│   └── zapper-diamond-shield.html
 ├── src/
-│   ├── main.tsx                         # App-Einstiegspunkt
-│   ├── App.tsx                          # Router & Provider-Struktur (Quellcode in Kap. 5)
-│   ├── App.css                          # (leer/minimal)
-│   ├── index.css                        # Design-Tokens, Fonts, Animationen, Print-Styles (Quellcode in Kap. 4)
-│   ├── vite-env.d.ts                    # Vite TypeScript Deklarationen
+│   ├── main.tsx
+│   ├── App.tsx
+│   ├── App.css
+│   ├── index.css
+│   ├── vite-env.d.ts
 │   ├── assets/
-│   │   ├── hero-nature.jpg              # Hero-Hintergrundbild (Natur/Wald)
-│   │   ├── practice-icon.png            # Praxis-Icon (klein)
-│   │   └── practice-logo.png            # Praxis-Logo (groß)
+│   │   ├── hero-nature.jpg
+│   │   ├── practice-icon.png
+│   │   └── practice-logo.png
 │   ├── components/
-│   │   ├── CookieBanner.tsx             # DSGVO Cookie-Banner
-│   │   ├── LanguageSwitcher.tsx          # DE/EN Toggle
-│   │   ├── NavLink.tsx                  # Navigation Link
-│   │   ├── ProtectedRoute.tsx           # Auth-Guard mit Dev-Bypass (Quellcode in Kap. 6)
+│   │   ├── CookieBanner.tsx
+│   │   ├── LanguageSwitcher.tsx
+│   │   ├── NavLink.tsx
+│   │   ├── ProtectedRoute.tsx
 │   │   ├── admin/
-│   │   │   ├── FAQManager.tsx           # CRUD für FAQs
-│   │   │   ├── PracticeInfoManager.tsx  # CRUD für Praxis-Infos
-│   │   │   └── PricingManager.tsx       # CRUD für Preisliste
+│   │   │   ├── FAQManager.tsx
+│   │   │   ├── PracticeInfoManager.tsx
+│   │   │   └── PricingManager.tsx
 │   │   ├── anamnese/
-│   │   │   ├── IntroSection.tsx          # 0. Willkommen
-│   │   │   ├── PatientDataSection.tsx    # I. Patientendaten
-│   │   │   ├── FamilyHistorySection.tsx  # II. Familie
-│   │   │   ├── NeurologySection.tsx      # III. Kopf & Sinne
-│   │   │   ├── HeartSection.tsx          # IV. Herz & Kreislauf
-│   │   │   ├── LungSection.tsx           # V. Lunge & Atmung
-│   │   │   ├── DigestiveSection.tsx      # VI. Magen & Darm
-│   │   │   ├── LiverSection.tsx          # VII. Leber & Galle
-│   │   │   ├── KidneySection.tsx         # VIII. Niere & Blase
-│   │   │   ├── HormoneSection.tsx        # IX. Hormone
-│   │   │   ├── MusculoskeletalSection.tsx # X. Bewegungsapparat
-│   │   │   ├── WomenHealthSection.tsx    # XI. Frauengesundheit
-│   │   │   ├── MensHealthSection.tsx     # XI. Männergesundheit
-│   │   │   ├── SurgeriesSection.tsx      # XII. Unfälle & OPs
-│   │   │   ├── CancerSection.tsx         # XIII. Krebs
-│   │   │   ├── AllergiesSection.tsx      # XIV. Allergien
-│   │   │   ├── MedicationsSection.tsx    # XV. Medikamente
-│   │   │   ├── LifestyleSection.tsx      # XVI. Lebensweise
-│   │   │   ├── DentalSection.tsx         # XVII. Zahngesundheit
-│   │   │   ├── EnvironmentSection.tsx    # XVIII. Umwelt
-│   │   │   ├── InfectionsSection.tsx     # XIX. Infektionen
-│   │   │   ├── VaccinationsSection.tsx   # XX. Impfstatus
-│   │   │   ├── ComplaintsSection.tsx     # XXI. Beschwerden
-│   │   │   ├── PreferencesSection.tsx    # XXII. Präferenzen
-│   │   │   ├── SocialSection.tsx         # XXIII. Persönliches
-│   │   │   ├── SignatureSection.tsx      # XXIV. Unterschrift
-│   │   │   ├── FilteredSummaryView.tsx   # Zusammenfassungsansicht
-│   │   │   ├── PrintView.tsx             # Druckansicht
-│   │   │   ├── VerificationDialog.tsx    # 2FA Code-Eingabe Dialog
-│   │   │   ├── MedicalHistorySection.tsx # (Legacy)
+│   │   │   ├── IntroSection.tsx
+│   │   │   ├── PatientDataSection.tsx
+│   │   │   ├── FamilyHistorySection.tsx
+│   │   │   ├── NeurologySection.tsx
+│   │   │   ├── HeartSection.tsx
+│   │   │   ├── LungSection.tsx
+│   │   │   ├── DigestiveSection.tsx
+│   │   │   ├── LiverSection.tsx
+│   │   │   ├── KidneySection.tsx
+│   │   │   ├── HormoneSection.tsx
+│   │   │   ├── MusculoskeletalSection.tsx
+│   │   │   ├── WomenHealthSection.tsx
+│   │   │   ├── MensHealthSection.tsx
+│   │   │   ├── SurgeriesSection.tsx
+│   │   │   ├── CancerSection.tsx
+│   │   │   ├── AllergiesSection.tsx
+│   │   │   ├── MedicationsSection.tsx
+│   │   │   ├── LifestyleSection.tsx
+│   │   │   ├── DentalSection.tsx
+│   │   │   ├── EnvironmentSection.tsx
+│   │   │   ├── InfectionsSection.tsx
+│   │   │   ├── VaccinationsSection.tsx
+│   │   │   ├── ComplaintsSection.tsx
+│   │   │   ├── PreferencesSection.tsx
+│   │   │   ├── SocialSection.tsx
+│   │   │   ├── SignatureSection.tsx
+│   │   │   ├── FilteredSummaryView.tsx
+│   │   │   ├── PrintView.tsx
+│   │   │   ├── VerificationDialog.tsx
+│   │   │   ├── MedicalHistorySection.tsx (Legacy)
 │   │   │   └── shared/
-│   │   │       ├── DentalChart.tsx        # Zahnschema-Visualisierung
-│   │   │       ├── MultiEntryField.tsx    # Dynamische Mehrfach-Eingabe
-│   │   │       ├── MultiSelectCheckbox.tsx # Mehrfachauswahl
-│   │   │       ├── NumericInput.tsx       # Numerische Eingabe
-│   │   │       ├── SubConditionList.tsx   # Unter-Bedingungen
-│   │   │       ├── TemporalStatusSelect.tsx # Zeitl. Status (aktuell/früher)
-│   │   │       ├── ToothDiagram.tsx       # Interaktives Zahndiagramm
-│   │   │       └── YearMonthSelect.tsx    # Jahr/Monat Auswahl
+│   │   │       ├── DentalChart.tsx
+│   │   │       ├── MultiEntryField.tsx
+│   │   │       ├── MultiSelectCheckbox.tsx
+│   │   │       ├── NumericInput.tsx
+│   │   │       ├── SubConditionList.tsx
+│   │   │       ├── TemporalStatusSelect.tsx
+│   │   │       ├── ToothDiagram.tsx
+│   │   │       └── YearMonthSelect.tsx
 │   │   ├── home/
-│   │   │   ├── HeroSection.tsx           # Hero mit Naturbild + SVG-Welle
-│   │   │   ├── FeaturesSection.tsx       # 5 Feature-Karten
-│   │   │   └── InfoSection.tsx           # Info-Bereich mit Schopenhauer-Zitat
+│   │   │   ├── HeroSection.tsx
+│   │   │   ├── FeaturesSection.tsx
+│   │   │   └── InfoSection.tsx
 │   │   ├── iaa/
-│   │   │   └── IAAForm.tsx               # IAA Fragebogen-Formular (Slider 0-10)
+│   │   │   └── IAAForm.tsx
 │   │   ├── layout/
-│   │   │   ├── Header.tsx                # Sticky Header + Desktop/Mobile Navigation
-│   │   │   ├── Footer.tsx                # 4-Spalten Footer
-│   │   │   ├── Layout.tsx                # Wrapper: Header + Main + Footer
-│   │   │   └── InfothekDropdown.tsx      # Mega-Dropdown Navigation (3 Gruppen)
+│   │   │   ├── Header.tsx
+│   │   │   ├── Footer.tsx
+│   │   │   ├── Layout.tsx
+│   │   │   └── InfothekDropdown.tsx
 │   │   ├── seo/
-│   │   │   ├── SEOHead.tsx               # Dynamische Meta-Tags via useEffect
-│   │   │   └── SchemaOrg.tsx             # JSON-LD Schema.org (@graph)
-│   │   └── ui/                           # 50+ shadcn/ui Komponenten
-│   │       ├── accordion.tsx, alert.tsx, alert-dialog.tsx, aspect-ratio.tsx,
-│   │       │   avatar.tsx, badge.tsx, breadcrumb.tsx, button.tsx, calendar.tsx,
-│   │       │   card.tsx, carousel.tsx, chart.tsx, checkbox.tsx, collapsible.tsx,
-│   │       │   command.tsx, context-menu.tsx, dialog.tsx, drawer.tsx,
-│   │       │   dropdown-menu.tsx, form.tsx, hover-card.tsx, input.tsx,
-│   │       │   input-otp.tsx, label.tsx, menubar.tsx, navigation-menu.tsx,
-│   │       │   pagination.tsx, popover.tsx, progress.tsx, radio-group.tsx,
-│   │       │   resizable.tsx, scroll-area.tsx, select.tsx, separator.tsx,
-│   │       │   sheet.tsx, sidebar.tsx, skeleton.tsx, slider.tsx, sonner.tsx,
-│   │       │   switch.tsx, table.tsx, tabs.tsx, textarea.tsx, toast.tsx,
-│   │       │   toaster.tsx, toggle.tsx, toggle-group.tsx, tooltip.tsx,
-│   │       │   use-toast.ts
-│   │       └── (Standard shadcn/ui – unmodifiziert bis auf button.tsx)
+│   │   │   ├── SEOHead.tsx
+│   │   │   └── SchemaOrg.tsx
+│   │   └── ui/ (50+ shadcn/ui Komponenten)
 │   ├── contexts/
-│   │   ├── AuthContext.tsx               # Supabase Auth State (Quellcode in Kap. 6)
-│   │   └── LanguageContext.tsx           # DE/EN Sprachumschaltung
+│   │   ├── AuthContext.tsx
+│   │   └── LanguageContext.tsx
 │   ├── hooks/
-│   │   ├── use-mobile.tsx               # Mobile-Erkennung (768px Breakpoint)
-│   │   ├── use-toast.ts                 # Toast Hook (shadcn)
-│   │   └── useAdminCheck.ts             # Admin-Rolle prüfen via RPC has_role()
+│   │   ├── use-mobile.tsx
+│   │   ├── use-toast.ts
+│   │   └── useAdminCheck.ts
 │   ├── integrations/supabase/
-│   │   ├── client.ts                    # Supabase Client (auto-generiert, NICHT bearbeiten)
-│   │   └── types.ts                     # Datenbank-Typen (auto-generiert, NICHT bearbeiten)
+│   │   ├── client.ts    (auto-generiert, NICHT bearbeiten)
+│   │   └── types.ts     (auto-generiert, NICHT bearbeiten)
 │   ├── lib/
-│   │   ├── anamneseFormData.ts          # Formular-Datenmodell (605 Zeilen, ~250 Felder)
-│   │   ├── iaaQuestions.ts              # IAA Fragenkatalog (409 Zeilen, ~200 Fragen)
-│   │   ├── pdfExport.ts                 # PDF-Export basic (267 Zeilen)
-│   │   ├── pdfExportEnhanced.ts         # PDF-Export enhanced mit Branding (631 Zeilen)
-│   │   ├── datenschutzPdfExport.ts      # Datenschutz-PDF Export
-│   │   ├── medicalOptions.ts            # Medizinische Optionslisten
-│   │   ├── translations.ts             # Übersetzungen (Quellcode in Kap. 15)
-│   │   └── utils.ts                     # cn() Utility (clsx + tailwind-merge)
+│   │   ├── anamneseFormData.ts
+│   │   ├── iaaQuestions.ts
+│   │   ├── pdfExport.ts
+│   │   ├── pdfExportEnhanced.ts
+│   │   ├── datenschutzPdfExport.ts
+│   │   ├── medicalOptions.ts
+│   │   ├── translations.ts
+│   │   └── utils.ts
 │   ├── pages/
-│   │   ├── Index.tsx                    # Startseite (Hero + Features + Info)
-│   │   ├── Auth.tsx                     # Login/Register/Reset (861 Zeilen)
-│   │   ├── Anamnesebogen.tsx            # Hauptformular (879 Zeilen)
-│   │   ├── AnamneseDemo.tsx             # Demo mit Xaver Lovable (603 Zeilen)
-│   │   ├── Erstanmeldung.tsx            # 5-Schritt Onboarding (621 Zeilen)
-│   │   ├── Datenschutz.tsx              # DSGVO-Seite (300 Zeilen)
-│   │   ├── Patientenaufklaerung.tsx     # Kosten & Vereinbarung (342 Zeilen)
-│   │   ├── Heilpraktiker.tsx            # Info-Seite (206 Zeilen)
-│   │   ├── Gebueh.tsx                   # GebÜH-Übersicht (168 Zeilen)
-│   │   ├── Frequenztherapie.tsx         # Frequenztherapie-Info (203 Zeilen)
-│   │   ├── Ernaehrung.tsx              # Ernährungsratschläge (198 Zeilen)
-│   │   ├── FAQ.tsx                      # FAQ-Seite (DB-gesteuert, 122 Zeilen)
-│   │   ├── PraxisInfo.tsx              # Praxis-Info (DB-gesteuert, 115 Zeilen)
-│   │   ├── Impressum.tsx               # Impressum (236 Zeilen)
-│   │   ├── AdminDashboard.tsx           # Admin: FAQ/Info/Preise (129 Zeilen)
-│   │   ├── PatientDashboard.tsx         # Patienten-Dashboard (344 Zeilen)
-│   │   └── NotFound.tsx                 # 404-Seite
+│   │   ├── Index.tsx
+│   │   ├── Auth.tsx
+│   │   ├── Anamnesebogen.tsx
+│   │   ├── AnamneseDemo.tsx
+│   │   ├── Erstanmeldung.tsx
+│   │   ├── Datenschutz.tsx
+│   │   ├── Patientenaufklaerung.tsx
+│   │   ├── Heilpraktiker.tsx
+│   │   ├── Gebueh.tsx
+│   │   ├── Frequenztherapie.tsx
+│   │   ├── Ernaehrung.tsx
+│   │   ├── FAQ.tsx
+│   │   ├── PraxisInfo.tsx
+│   │   ├── Impressum.tsx
+│   │   ├── AdminDashboard.tsx
+│   │   ├── PatientDashboard.tsx
+│   │   └── NotFound.tsx
 │   └── test/
 │       ├── example.test.ts
 │       └── setup.ts
 ├── supabase/
-│   ├── config.toml                      # Supabase project_id Konfiguration
-│   ├── functions/
-│   │   ├── request-verification-code/index.ts  # 2FA Code anfordern (347 Zeilen, Quellcode in Kap. 8)
-│   │   ├── verify-code/index.ts                # 2FA Code verifizieren (324 Zeilen, Quellcode in Kap. 8)
-│   │   ├── submit-anamnesis/index.ts           # Anamnese einreichen (555 Zeilen, Quellcode in Kap. 8)
-│   │   └── send-verification-email/index.ts    # Legacy SMTP-basiert (126 Zeilen, nicht mehr aktiv)
-│   └── migrations/                      # DB-Migrationen (auto-generiert, read-only)
-├── .env                                 # Umgebungsvariablen (auto-generiert)
-├── components.json                      # shadcn/ui Konfiguration (Quellcode in Kap. 3)
+│   ├── config.toml
+│   └── functions/
+│       ├── request-verification-code/index.ts
+│       ├── verify-code/index.ts
+│       ├── submit-anamnesis/index.ts
+│       └── send-verification-email/index.ts (Legacy, nicht aktiv)
+├── .env
+├── components.json
 ├── eslint.config.js
-├── index.html                           # HTML-Einstiegspunkt (Quellcode in Kap. 3)
+├── index.html
 ├── postcss.config.js
-├── tailwind.config.ts                   # Tailwind-Konfiguration (Quellcode in Kap. 3)
+├── tailwind.config.ts
 ├── tsconfig.json / tsconfig.app.json / tsconfig.node.json
-├── vite.config.ts                       # Vite-Konfiguration (Quellcode in Kap. 3)
+├── vite.config.ts
 └── vitest.config.ts
 ```
 
@@ -306,10 +234,21 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  server: { host: "::", port: 8080, hmr: { overlay: false } },
+  server: {
+    host: "::",
+    port: 8080,
+    hmr: {
+      overlay: false,
+    },
+  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
-  resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 }));
 ```
 
@@ -321,17 +260,37 @@ export default defineConfig(({ mode }) => ({
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta Tags -->
     <title>Naturheilpraxis Peter Rauch | Heilpraktiker in Augsburg</title>
     <meta name="description" content="Naturheilpraxis Peter Rauch in Augsburg – ganzheitliche Therapien, Irisdiagnose, Darmsanierung und individuelle Beratung für Ihre Gesundheit." />
     <meta name="author" content="Peter Rauch, Heilpraktiker" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://rauch-heilpraktiker.de/" />
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://rauch-heilpraktiker.de/" />
     <meta property="og:title" content="Naturheilpraxis Peter Rauch | Heilpraktiker in Augsburg" />
+    <meta property="og:description" content="Naturheilpraxis Peter Rauch in Augsburg – ganzheitliche Therapien, Irisdiagnose, Darmsanierung und individuelle Beratung für Ihre Gesundheit." />
+    <meta property="og:image" content="https://id-preview--2a361a45-233a-4659-a3f4-a2f1dda0e86d.lovable.app/og-image.png" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content="Naturheilpraxis Peter Rauch" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://rauch-heilpraktiker.de/" />
+    <meta name="twitter:title" content="Naturheilpraxis Peter Rauch | Heilpraktiker in Augsburg" />
+    <meta name="twitter:description" content="Naturheilpraxis Peter Rauch in Augsburg – ganzheitliche Therapien, Irisdiagnose, Darmsanierung und individuelle Beratung für Ihre Gesundheit." />
+    <meta name="twitter:image" content="https://id-preview--2a361a45-233a-4659-a3f4-a2f1dda0e86d.lovable.app/og-image.png" />
+
+    <!-- Geo Tags for Local SEO -->
     <meta name="geo.region" content="DE-BY" />
     <meta name="geo.placename" content="Augsburg" />
     <meta name="geo.position" content="48.3561;10.9056" />
+    <meta name="ICBM" content="48.3561, 10.9056" />
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
@@ -339,7 +298,32 @@ export default defineConfig(({ mode }) => ({
 </html>
 ```
 
-### 3.3 tailwind.config.ts (VOLLSTÄNDIG)
+### 3.3 components.json
+
+```json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "src/index.css",
+    "baseColor": "slate",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  }
+}
+```
+
+### 3.4 tailwind.config.ts (VOLLSTÄNDIG)
 
 ```typescript
 import type { Config } from "tailwindcss";
@@ -451,119 +435,21 @@ export default {
 } satisfies Config;
 ```
 
-### 3.4 components.json (shadcn/ui Konfiguration)
-
-```json
-{
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "default",
-  "rsc": false,
-  "tsx": true,
-  "tailwind": {
-    "config": "tailwind.config.ts",
-    "css": "src/index.css",
-    "baseColor": "slate",
-    "cssVariables": true,
-    "prefix": ""
-  },
-  "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
-  }
-}
-```
-
-### 3.5 src/App.tsx (VOLLSTÄNDIG)
+### 3.5 src/main.tsx
 
 ```typescript
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import CookieBanner from "@/components/CookieBanner";
-import SchemaOrg from "@/components/seo/SchemaOrg";
-import Index from "./pages/Index";
-import Anamnesebogen from "./pages/Anamnesebogen";
-import AnamneseDemo from "./pages/AnamneseDemo";
-import Datenschutz from "./pages/Datenschutz";
-import Heilpraktiker from "./pages/Heilpraktiker";
-import Gebueh from "./pages/Gebueh";
-import Ernaehrung from "./pages/Ernaehrung";
-import Frequenztherapie from "./pages/Frequenztherapie";
-import FAQ from "./pages/FAQ";
-import PraxisInfo from "./pages/PraxisInfo";
-import Impressum from "./pages/Impressum";
-import Auth from "./pages/Auth";
-import AdminDashboard from "./pages/AdminDashboard";
-import PatientDashboard from "./pages/PatientDashboard";
-import NotFound from "./pages/NotFound";
-import Patientenaufklaerung from "./pages/Patientenaufklaerung";
-import Erstanmeldung from "./pages/Erstanmeldung";
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import "./index.css";
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <SchemaOrg />
-          <BrowserRouter>
-            <CookieBanner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/anamnesebogen" element={<ProtectedRoute><Anamnesebogen /></ProtectedRoute>} />
-              <Route path="/erstanmeldung" element={<ProtectedRoute><Erstanmeldung /></ProtectedRoute>} />
-              <Route path="/anamnesebogen-demo" element={<AnamneseDemo />} />
-              <Route path="/datenschutz" element={<Datenschutz />} />
-              <Route path="/heilpraktiker" element={<Heilpraktiker />} />
-              <Route path="/gebueh" element={<Gebueh />} />
-              <Route path="/ernaehrung" element={<Ernaehrung />} />
-              <Route path="/frequenztherapie" element={<Frequenztherapie />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/praxis-info" element={<PraxisInfo />} />
-              <Route path="/impressum" element={<Impressum />} />
-              <Route path="/patientenaufklaerung" element={<Patientenaufklaerung />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/dashboard" element={<ProtectedRoute><PatientDashboard /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </LanguageProvider>
-  </QueryClientProvider>
-);
-
-export default App;
-```
-
-### 3.6 src/lib/utils.ts
-
-```typescript
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+createRoot(document.getElementById("root")!).render(<App />);
 ```
 
 ---
 
 ## 4. Design System (vollständig mit komplettem CSS)
 
-### 4.1 src/index.css (VOLLSTÄNDIG)
+### src/index.css (VOLLSTÄNDIG)
 
 ```css
 @tailwind base;
@@ -821,104 +707,109 @@ export function cn(...inputs: ClassValue[]) {
 }
 ```
 
-### 4.2 Typografie-Zusammenfassung
-
-| Verwendung | Font | Gewichte | Tailwind |
-|---|---|---|---|
-| Body / Fließtext | Source Sans 3 | 300, 400, 500, 600 | `font-sans` |
-| Überschriften | Playfair Display | 400, 500, 600, 700 | `font-serif` |
-
-### 4.3 Farbpalette – Semantische Zuordnung
-
-| Token | HSL-Wert (Light) | Beschreibung | Verwendung |
-|---|---|---|---|
-| `--background` | 40 30% 97% | Warmer Elfenbein | Seiten-Hintergrund |
-| `--foreground` | 150 20% 15% | Dunkles Salbeigrün | Standard-Text |
-| `--primary` | 145 25% 36% | Salbeigrün | Buttons, Links, Branding |
-| `--secondary` | 35 35% 85% | Warmer Sandton | Sekundäre Elemente |
-| `--accent` | 18 45% 55% | Terracotta | Hervorhebungen, CTAs |
-| `--muted` | 145 15% 90% | Helles Salbei | Dezente Hintergründe |
-| `--destructive` | 0 65% 50% | Rot | Fehler, Lösch-Aktionen |
-| `--card` | 40 25% 95% | Warmes Weiß | Karten-Hintergrund |
-
-### 4.4 Button-Varianten (aus button.tsx)
-
-| Variante | CSS-Klassen |
-|---|---|
-| `default` | `bg-primary text-primary-foreground hover:bg-sage-600 shadow-soft` |
-| `destructive` | `bg-destructive text-destructive-foreground hover:bg-destructive/90` |
-| `outline` | `border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground` |
-| `secondary` | `bg-secondary text-secondary-foreground hover:bg-secondary/80` |
-| `ghost` | `hover:bg-sage-100 hover:text-primary` |
-| `link` | `text-primary underline-offset-4 hover:underline` |
-| `hero` | `bg-primary shadow-elevated text-base px-8 py-6 rounded-xl hover:bg-sage-600 transition-all duration-300 hover:-translate-y-0.5` |
-| `accent` | `bg-accent text-accent-foreground hover:bg-terracotta-light shadow-soft` |
-
 ---
 
 ## 5. Routing & Navigation
 
-### 5.1 Route-Tabelle
+### src/App.tsx (VOLLSTÄNDIG)
 
-| Pfad | Seite | Auth | Beschreibung |
+```typescript
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import CookieBanner from "@/components/CookieBanner";
+import SchemaOrg from "@/components/seo/SchemaOrg";
+import Index from "./pages/Index";
+import Anamnesebogen from "./pages/Anamnesebogen";
+import AnamneseDemo from "./pages/AnamneseDemo";
+import Datenschutz from "./pages/Datenschutz";
+import Heilpraktiker from "./pages/Heilpraktiker";
+import Gebueh from "./pages/Gebueh";
+import Ernaehrung from "./pages/Ernaehrung";
+import Frequenztherapie from "./pages/Frequenztherapie";
+import FAQ from "./pages/FAQ";
+import PraxisInfo from "./pages/PraxisInfo";
+import Impressum from "./pages/Impressum";
+import Auth from "./pages/Auth";
+import AdminDashboard from "./pages/AdminDashboard";
+import PatientDashboard from "./pages/PatientDashboard";
+import NotFound from "./pages/NotFound";
+import Patientenaufklaerung from "./pages/Patientenaufklaerung";
+import Erstanmeldung from "./pages/Erstanmeldung";
+
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <SchemaOrg />
+          <BrowserRouter>
+            <CookieBanner />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/anamnesebogen" element={<ProtectedRoute><Anamnesebogen /></ProtectedRoute>} />
+              <Route path="/erstanmeldung" element={<ProtectedRoute><Erstanmeldung /></ProtectedRoute>} />
+              <Route path="/anamnesebogen-demo" element={<AnamneseDemo />} />
+              <Route path="/datenschutz" element={<Datenschutz />} />
+              <Route path="/heilpraktiker" element={<Heilpraktiker />} />
+              <Route path="/gebueh" element={<Gebueh />} />
+              <Route path="/ernaehrung" element={<Ernaehrung />} />
+              <Route path="/frequenztherapie" element={<Frequenztherapie />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/praxis-info" element={<PraxisInfo />} />
+              <Route path="/impressum" element={<Impressum />} />
+              <Route path="/patientenaufklaerung" element={<Patientenaufklaerung />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/dashboard" element={<ProtectedRoute><PatientDashboard /></ProtectedRoute>} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </LanguageProvider>
+  </QueryClientProvider>
+);
+
+export default App;
+```
+
+### Routen-Übersicht
+
+| Pfad | Seite | Geschützt | Beschreibung |
 |---|---|---|---|
-| `/` | Index | Nein | Startseite (Hero + Features + Info) |
-| `/auth` | Auth | Nein | Login / Registrierung / Passwort-Reset |
-| `/anamnesebogen` | Anamnesebogen | **Ja** | 26-teiliger Fragebogen |
-| `/anamnesebogen-demo` | AnamneseDemo | Nein | Demo mit Testdaten |
-| `/erstanmeldung` | Erstanmeldung | **Ja** | 5-Schritt Onboarding |
-| `/datenschutz` | Datenschutz | Nein | DSGVO-Erklärung |
-| `/heilpraktiker` | Heilpraktiker | Nein | Info-Seite |
-| `/gebueh` | Gebueh | Nein | GebÜH-Übersicht |
-| `/ernaehrung` | Ernaehrung | Nein | Ernährungstipps |
+| `/` | Index | Nein | Startseite mit Hero, Features, Info |
+| `/auth` | Auth | Nein | Login/Registrierung/Passwort-Reset mit 2FA |
+| `/anamnesebogen` | Anamnesebogen | **Ja** | 25-Sektionen Anamnese-Formular |
+| `/erstanmeldung` | Erstanmeldung | **Ja** | 5-Schritt Onboarding-Workflow |
+| `/anamnesebogen-demo` | AnamneseDemo | Nein | Demo mit Beispieldaten (Xaver Lovable) |
+| `/datenschutz` | Datenschutz | Nein | DSGVO-Datenschutzerklärung |
+| `/heilpraktiker` | Heilpraktiker | Nein | Info über Heilpraktiker-Beruf |
+| `/gebueh` | Gebueh | Nein | GebÜH-Preisübersicht |
+| `/ernaehrung` | Ernaehrung | Nein | Ernährungsratschläge |
 | `/frequenztherapie` | Frequenztherapie | Nein | Frequenztherapie-Info |
 | `/faq` | FAQ | Nein | FAQ (DB-gesteuert) |
 | `/praxis-info` | PraxisInfo | Nein | Praxis-Info (DB-gesteuert) |
 | `/impressum` | Impressum | Nein | Impressum |
-| `/patientenaufklaerung` | Patientenaufklaerung | Nein | Kosten & Regelungen |
-| `/admin` | AdminDashboard | Admin | Admin-Dashboard |
+| `/patientenaufklaerung` | Patientenaufklaerung | Nein | Kosten & Vereinbarung |
+| `/admin` | AdminDashboard | Nein (intern geprüft) | Admin: FAQ/Info/Preise verwalten |
 | `/dashboard` | PatientDashboard | **Ja** | Patienten-Dashboard |
-| `*` | NotFound | Nein | 404-Seite |
-
-### 5.2 Provider-Hierarchie
-
-```
-QueryClientProvider → LanguageProvider → AuthProvider → TooltipProvider
-  → Toaster + Sonner + SchemaOrg → BrowserRouter → CookieBanner + Routes
-```
-
-### 5.3 Header-Navigation
-
-**Desktop (≥ lg):**
-- Start, Erstanmeldung, Test (nur Admin+Preview)
-- Infothek-Dropdown (3 Gruppen: Für Patienten, Wissen & Therapie, Praktisches)
-- Sprachumschalter (DE/EN)
-- Login/Logout + Dashboard/Admin (wenn eingeloggt + Admin)
-
-**Mobile (< lg):**
-- Hamburger-Menü mit Slide-Up Animation
-- Infothek als aufklappbare Gruppe
-
-### 5.4 Infothek-Dropdown Inhalte
-
-- **Für Patienten:** Anamnesebogen, Datenschutzerklärung, Patientenaufklärung
-- **Wissen & Therapie:** Heilpraktiker, Frequenztherapie (→ /krankheit-ist-messbar.html), Diamond Shield (→ /zapper-diamond-shield.html)
-- **Praktisches:** GebÜH, FAQ
-
-### 5.5 Footer
-
-4-Spalten Grid: Brand/Logo, Quick Links, Kontakt, Website-Link.
-
-**Praxis-Kontaktdaten:**
-- Telefon: 0821-2621462
-- E-Mail: info@rauch-heilpraktiker.de
-- Adresse: Friedrich-Deffner-Straße 19a, 86163 Augsburg
 
 ---
 
 ## 6. Authentifizierung & Sicherheit (vollständiger Quellcode)
 
-### 6.1 AuthContext.tsx (VOLLSTÄNDIG)
+### src/contexts/AuthContext.tsx
 
 ```typescript
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -940,6 +831,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
@@ -948,6 +840,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -979,7 +872,7 @@ export const useAuth = () => {
 };
 ```
 
-### 6.2 ProtectedRoute.tsx (VOLLSTÄNDIG)
+### src/components/ProtectedRoute.tsx
 
 ```typescript
 import React from 'react';
@@ -996,11 +889,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // Development bypass: ?dev=true in Preview/Dev-Umgebungen
+  // Development bypass: Available in dev mode AND preview environments
+  // Add ?dev=true to URL to skip authentication during testing
   const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('localhost');
   const devBypass = isNonProduction && searchParams.get('dev') === 'true';
 
   if (devBypass) {
+    // Development mode bypass - only works in non-production builds
     return <>{children}</>;
   }
 
@@ -1013,6 +908,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!user) {
+    // Redirect to auth page, saving the intended destination
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
@@ -1022,221 +918,250 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 export default ProtectedRoute;
 ```
 
-### 6.3 Auth-Flow (Auth.tsx – 861 Zeilen)
-
-**3 Modi:** `login` | `registration` | `password_reset`
-**2 Schritte:** `credentials` → `verification`
-
-**Login-Flow:**
-1. E-Mail + Passwort eingeben
-2. `signInWithPassword()` → sofort `signOut()` (Passwort prüfen ohne Session)
-3. Edge Function `request-verification-code` → 6-stelliger Code per E-Mail
-4. Code eingeben → Edge Function `verify-code` → Magic Link hashed_token
-5. `verifyOtp({ token_hash, type: 'magiclink' })` → Session erstellt
-6. Weiterleitung zu `/anamnesebogen`
-
-**Registrierung-Flow:**
-1. E-Mail + Passwort + Passwort-Bestätigung
-2. Edge Function `request-verification-code` → erstellt User (unbestätigt) + sendet Code
-3. Code eingeben → Edge Function `verify-code` → bestätigt E-Mail (`email_confirm: true`)
-4. `signInWithPassword()` → Session erstellt
-
-**Passwort-Reset-Flow:**
-1. E-Mail eingeben → Edge Function sendet Code
-2. Code + neues Passwort eingeben → Edge Function aktualisiert Passwort
-
-### 6.4 Admin-Prüfung (useAdminCheck.ts)
-
-```typescript
-// Verwendet: supabase.rpc('has_role', { _user_id, _role: 'admin' })
-// Gibt { isAdmin: boolean, loading: boolean } zurück
-```
-
-### 6.5 Validierung
-
-- E-Mail: `z.string().email().max(255)`
-- Passwort: `z.string().min(8)`
-- OTP-Code: 6-stellig via `InputOTP`
+**Sicherheitskonzept:**
+- `?dev=true` Bypass funktioniert NUR in Preview/Development, NICHT in Produktion
+- Geschützte Routen: `/anamnesebogen`, `/erstanmeldung`, `/dashboard`
+- Admin-Zugang: Intern über `useAdminCheck` Hook geprüft (RPC `has_role()`)
+- 2FA für Login, Registrierung, Passwort-Reset und Anamnesebogen-Einreichung
 
 ---
 
 ## 7. Datenbank-Schema (SQL)
 
-### 7.1 Enums
+### Enums
 
 ```sql
 CREATE TYPE public.app_role AS ENUM ('admin', 'patient');
 CREATE TYPE public.language_code AS ENUM ('de', 'en');
 ```
 
-### 7.2 Tabellen
+### Tabelle: profiles
 
-#### profiles
 ```sql
 CREATE TABLE public.profiles (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users NOT NULL UNIQUE,
-  email TEXT NOT NULL,
-  first_name TEXT,
-  last_name TEXT,
-  date_of_birth DATE,
-  phone TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL,
+  email text NOT NULL,
+  first_name text,
+  last_name text,
+  date_of_birth date,
+  phone text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
+
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY "Users can view their own profile" ON profiles FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own profile" ON profiles FOR UPDATE USING (auth.uid() = user_id);
+-- Kein DELETE erlaubt
 ```
 
-#### anamnesis_submissions
-```sql
-CREATE TABLE public.anamnesis_submissions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users NOT NULL,
-  form_data JSONB NOT NULL,
-  status TEXT DEFAULT 'draft',  -- draft, pending_verification, submitted, verified, reviewed
-  submitted_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  signature_data TEXT  -- JSON: { verified_at, method, legal_basis }
-);
-ALTER TABLE anamnesis_submissions ENABLE ROW LEVEL SECURITY;
-```
+### Tabelle: user_roles
 
-#### iaa_submissions
-```sql
-CREATE TABLE public.iaa_submissions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users NOT NULL,
-  form_data JSONB DEFAULT '{}',
-  status TEXT DEFAULT 'draft',
-  submitted_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  therapist_data JSONB,
-  appointment_number INTEGER DEFAULT 1
-);
-ALTER TABLE iaa_submissions ENABLE ROW LEVEL SECURITY;
-```
-
-#### verification_codes
-```sql
-CREATE TABLE public.verification_codes (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users NOT NULL,
-  code TEXT NOT NULL,
-  type TEXT DEFAULT 'login',  -- login, registration, password_reset, anamnesis
-  expires_at TIMESTAMPTZ NOT NULL,
-  used BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-#### user_roles
 ```sql
 CREATE TABLE public.user_roles (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users NOT NULL,
-  role app_role DEFAULT 'patient',
-  created_at TIMESTAMPTZ DEFAULT now()
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL,
+  role app_role NOT NULL DEFAULT 'patient',
+  created_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own roles" ON user_roles FOR SELECT USING (auth.uid() = user_id);
+-- Kein INSERT/UPDATE/DELETE erlaubt (nur via Trigger/Admin)
 ```
 
-#### faqs
+### Tabelle: anamnesis_submissions
+
+```sql
+CREATE TABLE public.anamnesis_submissions (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL,
+  form_data jsonb NOT NULL,
+  status text NOT NULL DEFAULT 'draft',
+  submitted_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  signature_data text
+);
+
+ALTER TABLE anamnesis_submissions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own submissions" ON anamnesis_submissions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own submissions" ON anamnesis_submissions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own submissions" ON anamnesis_submissions FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own submissions" ON anamnesis_submissions FOR DELETE USING (auth.uid() = user_id);
+```
+
+### Tabelle: iaa_submissions
+
+```sql
+CREATE TABLE public.iaa_submissions (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL,
+  form_data jsonb NOT NULL DEFAULT '{}'::jsonb,
+  therapist_data jsonb DEFAULT '{}'::jsonb,
+  appointment_number integer NOT NULL DEFAULT 1,
+  status text NOT NULL DEFAULT 'draft',
+  submitted_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE iaa_submissions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own IAA" ON iaa_submissions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own IAA" ON iaa_submissions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own IAA" ON iaa_submissions FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Admins can manage all IAA" ON iaa_submissions FOR ALL
+  USING (EXISTS (SELECT 1 FROM user_roles WHERE user_roles.user_id = auth.uid() AND user_roles.role = 'admin'));
+```
+
+### Tabelle: verification_codes
+
+```sql
+CREATE TABLE public.verification_codes (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL,
+  code text NOT NULL,
+  type text NOT NULL DEFAULT 'login',
+  expires_at timestamptz NOT NULL,
+  used boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE verification_codes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own verification codes" ON verification_codes FOR SELECT USING (auth.uid() = user_id);
+-- INSERT/UPDATE/DELETE nur via Edge Functions mit Service Role Key
+```
+
+### Tabelle: faqs
+
 ```sql
 CREATE TABLE public.faqs (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  question_de TEXT NOT NULL,
-  question_en TEXT NOT NULL,
-  answer_de TEXT NOT NULL,
-  answer_en TEXT NOT NULL,
-  sort_order INTEGER DEFAULT 0,
-  is_published BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  question_de text NOT NULL,
+  question_en text NOT NULL,
+  answer_de text NOT NULL,
+  answer_en text NOT NULL,
+  sort_order integer NOT NULL DEFAULT 0,
+  is_published boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE faqs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view published faqs" ON faqs FOR SELECT USING (is_published = true);
+CREATE POLICY "Admins can view all faqs" ON faqs FOR SELECT USING (has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can insert faqs" ON faqs FOR INSERT WITH CHECK (has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can update faqs" ON faqs FOR UPDATE USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can delete faqs" ON faqs FOR DELETE USING (has_role(auth.uid(), 'admin'));
 ```
 
-#### practice_info
+### Tabelle: practice_info
+
 ```sql
 CREATE TABLE public.practice_info (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  slug TEXT NOT NULL,
-  title_de TEXT NOT NULL,
-  title_en TEXT NOT NULL,
-  content_de TEXT NOT NULL,
-  content_en TEXT NOT NULL,
-  icon TEXT,
-  sort_order INTEGER DEFAULT 0,
-  is_published BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  slug text NOT NULL,
+  title_de text NOT NULL,
+  title_en text NOT NULL,
+  content_de text NOT NULL,
+  content_en text NOT NULL,
+  icon text,
+  sort_order integer NOT NULL DEFAULT 0,
+  is_published boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE practice_info ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view published practice info" ON practice_info FOR SELECT USING (is_published = true);
+CREATE POLICY "Admins can view all practice_info" ON practice_info FOR SELECT USING (has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can insert practice_info" ON practice_info FOR INSERT WITH CHECK (has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can update practice_info" ON practice_info FOR UPDATE USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can delete practice_info" ON practice_info FOR DELETE USING (has_role(auth.uid(), 'admin'));
 ```
 
-#### practice_pricing
+### Tabelle: practice_pricing
+
 ```sql
 CREATE TABLE public.practice_pricing (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  service_key TEXT NOT NULL,
-  label_de TEXT NOT NULL,
-  label_en TEXT NOT NULL,
-  price_text_de TEXT NOT NULL,
-  price_text_en TEXT NOT NULL,
-  note_de TEXT,
-  note_en TEXT,
-  sort_order INTEGER DEFAULT 0,
-  is_published BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  service_key text NOT NULL,
+  label_de text NOT NULL,
+  label_en text NOT NULL,
+  price_text_de text NOT NULL,
+  price_text_en text NOT NULL,
+  note_de text DEFAULT '',
+  note_en text DEFAULT '',
+  sort_order integer NOT NULL DEFAULT 0,
+  is_published boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE practice_pricing ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view published pricing" ON practice_pricing FOR SELECT USING (is_published = true);
+CREATE POLICY "Admins can manage pricing" ON practice_pricing FOR ALL
+  USING (EXISTS (SELECT 1 FROM user_roles WHERE user_roles.user_id = auth.uid() AND user_roles.role = 'admin'));
 ```
 
-### 7.3 Datenbank-Funktion
+### Datenbank-Funktionen
 
 ```sql
-CREATE OR REPLACE FUNCTION public.has_role(_role app_role, _user_id UUID)
-RETURNS BOOLEAN AS $$
+-- Admin-Rolle prüfen
+CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role app_role)
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.user_roles
     WHERE user_id = _user_id AND role = _role
-  );
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
-```
+  )
+$$;
 
-### 7.4 RLS-Policies (Empfohlen)
+-- Neuen Benutzer automatisch anlegen (Trigger auf auth.users)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  INSERT INTO public.profiles (user_id, email) VALUES (NEW.id, NEW.email);
+  INSERT INTO public.user_roles (user_id, role) VALUES (NEW.id, 'patient');
+  RETURN NEW;
+END;
+$$;
 
-```sql
--- profiles: Benutzer können nur eigene Profile lesen/bearbeiten
-CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Trigger: handle_new_user wird bei INSERT auf auth.users ausgelöst
+-- (Wird automatisch von Supabase verwaltet)
 
--- anamnesis_submissions: Nur eigene Einreichungen
-CREATE POLICY "Users can view own submissions" ON anamnesis_submissions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own submissions" ON anamnesis_submissions FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own submissions" ON anamnesis_submissions FOR UPDATE USING (auth.uid() = user_id);
-
--- iaa_submissions: Nur eigene Einreichungen
-CREATE POLICY "Users can view own iaa" ON iaa_submissions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own iaa" ON iaa_submissions FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own iaa" ON iaa_submissions FOR UPDATE USING (auth.uid() = user_id);
-
--- faqs: Öffentlich lesbar
-CREATE POLICY "Anyone can read published faqs" ON faqs FOR SELECT USING (is_published = true);
-
--- practice_info: Öffentlich lesbar
-CREATE POLICY "Anyone can read published practice info" ON practice_info FOR SELECT USING (is_published = true);
-
--- practice_pricing: Öffentlich lesbar
-CREATE POLICY "Anyone can read published pricing" ON practice_pricing FOR SELECT USING (is_published = true);
-
--- user_roles: Nur eigene Rolle lesen
-CREATE POLICY "Users can view own roles" ON user_roles FOR SELECT USING (auth.uid() = user_id);
+-- updated_at automatisch aktualisieren
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO 'public'
+AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$;
 ```
 
 ---
 
 ## 8. Edge Functions (vollständiger Quellcode)
 
-### 8.1 request-verification-code/index.ts (VOLLSTÄNDIG – 347 Zeilen)
+### 8.1 request-verification-code/index.ts (347 Zeilen)
 
 ```typescript
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -1248,6 +1173,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation schema
 const verificationRequestSchema = z.object({
   email: z.string()
     .email("Ungültige E-Mail-Adresse")
@@ -1267,7 +1193,7 @@ const verificationRequestSchema = z.object({
 
 type VerificationRequest = z.infer<typeof verificationRequestSchema>;
 
-// In-memory rate limiting (per function instance)
+// Simple in-memory rate limiting (per function instance)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const MAX_REQUESTS_PER_WINDOW = 5;
@@ -1275,19 +1201,27 @@ const MAX_REQUESTS_PER_WINDOW = 5;
 function checkRateLimit(identifier: string): boolean {
   const now = Date.now();
   const record = rateLimitMap.get(identifier);
+  
   if (!record || now > record.resetTime) {
     rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) return false;
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+  
   record.count++;
   return true;
 }
 
+// Clean up old entries periodically
 function cleanupRateLimitMap() {
   const now = Date.now();
   for (const [key, value] of rateLimitMap.entries()) {
-    if (now > value.resetTime) rateLimitMap.delete(key);
+    if (now > value.resetTime) {
+      rateLimitMap.delete(key);
+    }
   }
 }
 
@@ -1297,7 +1231,9 @@ function generateCode(): string {
 
 async function sendVerificationEmail(email: string, code: string, type: "login" | "registration" | "password_reset"): Promise<void> {
   const relaySecret = Deno.env.get("RELAY_SECRET");
-  if (!relaySecret) throw new Error("Email service not configured");
+  if (!relaySecret) {
+    throw new Error("Email service not configured");
+  }
 
   let subject: string;
   let bodyText: string;
@@ -1319,30 +1255,47 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
 
   const htmlContent = `
     <!DOCTYPE html>
-    <html><head><meta charset="utf-8">
-    <style>
-      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-      .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a7c59; }
-      .code-box { background: #f5f5f5; border: 2px solid #4a7c59; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0; }
-      .code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #4a7c59; }
-      .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
-    </style></head><body>
-    <div class="container">
-      <div class="header"><h1 style="color: #4a7c59; margin: 0;">Naturheilpraxis Rauch</h1></div>
-      <p>Guten Tag,</p>
-      <p>${bodyText}</p>
-      <div class="code-box"><div class="code">${code}</div></div>
-      <p>Dieser Code ist <strong>10 Minuten</strong> gültig.</p>
-      <p>Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren.</p>
-      <div class="footer">
-        <p>Mit freundlichen Grüßen,<br>Ihre Naturheilpraxis Rauch</p>
-        <p>Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht auf diese E-Mail.</p>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a7c59; }
+        .code-box { background: #f5f5f5; border: 2px solid #4a7c59; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0; }
+        .code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #4a7c59; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1 style="color: #4a7c59; margin: 0;">Naturheilpraxis Rauch</h1>
+        </div>
+        
+        <p>Guten Tag,</p>
+        
+        <p>${bodyText}</p>
+        
+        <div class="code-box">
+          <div class="code">${code}</div>
+        </div>
+        
+        <p>Dieser Code ist <strong>10 Minuten</strong> gültig.</p>
+        
+        <p>Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren.</p>
+        
+        <div class="footer">
+          <p>Mit freundlichen Grüßen,<br>Ihre Naturheilpraxis Rauch</p>
+          <p>Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht auf diese E-Mail.</p>
+        </div>
       </div>
-    </div></body></html>
+    </body>
+    </html>
   `;
 
   const relayUrl = "https://rauch-heilpraktiker.de/mail-relay.php";
+
   console.log(`[relay] sending ${type} code`);
   
   const response = await fetch(relayUrl, {
@@ -1356,60 +1309,98 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
       subject: subject,
       html: htmlContent,
       from: "info@rauch-heilpraktiker.de",
-      meta: { type, source: "lovable-cloud-request-verification-code" },
+      meta: {
+        type,
+        source: "lovable-cloud-request-verification-code",
+      },
     }),
   });
 
   const responseText = await response.text();
+  
   if (responseText.trim().startsWith("<!DOCTYPE") || responseText.trim().startsWith("<html")) {
     console.error("Relay returned HTML instead of JSON");
     throw new Error("Email service temporarily unavailable");
   }
+
   if (!response.ok) {
     console.error("Relay error:", response.status);
     throw new Error("Email service error");
   }
 
   let result;
-  try { result = JSON.parse(responseText); } catch { throw new Error("Email service response error"); }
-  if (!result.success) throw new Error("Email delivery failed");
+  try {
+    result = JSON.parse(responseText);
+  } catch {
+    console.error("Failed to parse relay response");
+    throw new Error("Email service response error");
+  }
+
+  if (!result.success) {
+    throw new Error("Email delivery failed");
+  }
+
   console.log("Email sent successfully");
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  // Periodic cleanup
   cleanupRateLimitMap();
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
+    // Parse and validate request body
     let rawBody: unknown;
-    try { rawBody = await req.json(); } catch {
-      return new Response(JSON.stringify({ error: "Ungültiges Anfrageformat" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    try {
+      rawBody = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Ungültiges Anfrageformat" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const parseResult = verificationRequestSchema.safeParse(rawBody);
     if (!parseResult.success) {
       const firstError = parseResult.error.errors[0]?.message || "Ungültige Eingabe";
-      return new Response(JSON.stringify({ error: firstError }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      console.error("Validation error:", parseResult.error.errors);
+      return new Response(
+        JSON.stringify({ error: firstError }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const { email, type, password, userId: providedUserId } = parseResult.data;
 
+    // Rate limiting check
     const rateLimitKey = `${email}:${type}`;
     if (!checkRateLimit(rateLimitKey)) {
-      return new Response(JSON.stringify({ error: "Zu viele Anfragen. Bitte warten Sie 15 Minuten." }),
-        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      console.warn(`Rate limit exceeded for ${rateLimitKey}`);
+      return new Response(
+        JSON.stringify({ error: "Zu viele Anfragen. Bitte warten Sie 15 Minuten." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Resolve userId by email via profiles table
+    // Resolve userId by email using the profiles table
     const { data: profile, error: profileError } = await supabase
-      .from("profiles").select("user_id").eq("email", email).maybeSingle();
-    if (profileError) throw new Error("User verification failed");
+      .from("profiles")
+      .select("user_id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error("profile lookup error:", profileError);
+      throw new Error("User verification failed");
+    }
+
     const existingUserId = profile?.user_id || null;
 
     let userId: string;
@@ -1417,67 +1408,112 @@ const handler = async (req: Request): Promise<Response> => {
     if (type === "login") {
       userId = providedUserId || existingUserId || "";
       if (!userId) {
-        return new Response(JSON.stringify({ error: "Benutzer nicht gefunden. Bitte registrieren Sie sich zuerst." }),
-          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } });
+        return new Response(
+          JSON.stringify({ error: "Benutzer nicht gefunden. Bitte registrieren Sie sich zuerst." }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
       }
     } else if (type === "registration") {
       if (existingUserId) {
-        return new Response(JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
-          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } });
-      }
-      if (!password || password.length < 8) {
-        return new Response(JSON.stringify({ error: "Passwort muss mindestens 8 Zeichen lang sein" }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+        return new Response(
+          JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
+          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
       }
 
+      if (!password || password.length < 8) {
+        return new Response(
+          JSON.stringify({ error: "Passwort muss mindestens 8 Zeichen lang sein" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Create user now (unconfirmed), then verify via code.
       const { data: created, error: createError } = await supabase.auth.admin.createUser({
-        email, password, email_confirm: false,
+        email,
+        password,
+        email_confirm: false,
       });
+
       if (createError || !created?.user?.id) {
-        if (createError?.message?.toLowerCase().includes("already") || createError?.message?.toLowerCase().includes("registered")) {
-          return new Response(JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
-            { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } });
+        console.error("createUser error:", createError);
+        if (createError?.message?.toLowerCase().includes("already") || 
+            createError?.message?.toLowerCase().includes("registered")) {
+          return new Response(
+            JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
+            { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
         }
         throw new Error("Registration failed");
       }
+
       userId = created.user.id;
     } else if (type === "password_reset") {
       if (!existingUserId) {
-        return new Response(JSON.stringify({ success: true, message: "Falls ein Konto existiert, wurde ein Code gesendet." }),
-          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
+        // Don't reveal if email exists or not for security
+        return new Response(
+          JSON.stringify({ success: true, message: "Falls ein Konto existiert, wurde ein Code gesendet." }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
       }
       userId = existingUserId;
     } else {
       throw new Error("Invalid request type");
     }
 
+    // Generate 6-digit code
     const code = generateCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Delete old unused codes
-    await supabase.from("verification_codes").delete()
-      .eq("user_id", userId).eq("type", type).eq("used", false);
+    // Delete old unused codes for this user + type
+    await supabase
+      .from("verification_codes")
+      .delete()
+      .eq("user_id", userId)
+      .eq("type", type)
+      .eq("used", false);
 
-    const { error: insertError } = await supabase.from("verification_codes").insert({
-      user_id: userId, code, type, expires_at: expiresAt.toISOString(),
-    });
-    if (insertError) throw insertError;
+    const { error: insertError } = await supabase
+      .from("verification_codes")
+      .insert({
+        user_id: userId,
+        code,
+        type,
+        expires_at: expiresAt.toISOString(),
+      });
 
+    if (insertError) {
+      console.error("insert verification_codes error:", insertError);
+      throw insertError;
+    }
+
+    // Send verification email
     await sendVerificationEmail(email, code, type);
 
-    return new Response(JSON.stringify({ success: true, message: "Bestätigungscode wurde gesendet", userId }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    console.log(`Verification code sent for ${type}`);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Bestätigungscode wurde gesendet",
+        userId,
+      }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
   } catch (error: unknown) {
     console.error("Error requesting verification code:", error);
-    return new Response(JSON.stringify({ error: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut." }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    // Return generic error message to prevent information leakage
+    return new Response(
+      JSON.stringify({ error: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut." }),
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
   }
 };
 
 serve(handler);
 ```
 
-### 8.2 verify-code/index.ts (VOLLSTÄNDIG – 324 Zeilen)
+### 8.2 verify-code/index.ts (324 Zeilen)
 
 ```typescript
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -1489,112 +1525,324 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation schema
 const verifyCodeSchema = z.object({
-  email: z.string().email().max(255).transform(val => val.trim().toLowerCase()),
-  code: z.string().length(6).regex(/^\d{6}$/),
-  type: z.enum(["login", "registration", "password_reset"]),
-  password: z.string().min(8).max(128).optional(),
-  newPassword: z.string().min(8).max(128).optional(),
+  email: z.string()
+    .email("Ungültige E-Mail-Adresse")
+    .max(255, "E-Mail-Adresse zu lang")
+    .transform(val => val.trim().toLowerCase()),
+  code: z.string()
+    .length(6, "Code muss 6 Ziffern haben")
+    .regex(/^\d{6}$/, "Code muss aus 6 Ziffern bestehen"),
+  type: z.enum(["login", "registration", "password_reset"], {
+    errorMap: () => ({ message: "Ungültiger Anfrage-Typ" })
+  }),
+  password: z.string()
+    .min(8, "Passwort muss mindestens 8 Zeichen lang sein")
+    .max(128, "Passwort zu lang")
+    .optional(),
+  newPassword: z.string()
+    .min(8, "Neues Passwort muss mindestens 8 Zeichen lang sein")
+    .max(128, "Passwort zu lang")
+    .optional(),
 });
 
-// Rate limiting: 10 attempts per hour
+type VerifyCodeRequest = z.infer<typeof verifyCodeSchema>;
+
+// Rate limiting for verification attempts (prevents brute force)
 const verifyAttemptMap = new Map<string, { count: number; resetTime: number }>();
+const VERIFY_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const MAX_VERIFY_ATTEMPTS_PER_WINDOW = 10;
 
 function checkVerifyRateLimit(identifier: string): boolean {
   const now = Date.now();
   const record = verifyAttemptMap.get(identifier);
+  
   if (!record || now > record.resetTime) {
-    verifyAttemptMap.set(identifier, { count: 1, resetTime: now + 60 * 60 * 1000 });
+    verifyAttemptMap.set(identifier, { count: 1, resetTime: now + VERIFY_RATE_LIMIT_WINDOW_MS });
     return true;
   }
-  if (record.count >= 10) return false;
+  
+  if (record.count >= MAX_VERIFY_ATTEMPTS_PER_WINDOW) {
+    return false;
+  }
+  
   record.count++;
   return true;
 }
 
+function cleanupVerifyAttemptMap() {
+  const now = Date.now();
+  for (const [key, value] of verifyAttemptMap.entries()) {
+    if (now > value.resetTime) {
+      verifyAttemptMap.delete(key);
+    }
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // Periodic cleanup
+  cleanupVerifyAttemptMap();
+  
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
+    // Parse and validate request body
     let rawBody: unknown;
-    try { rawBody = await req.json(); } catch {
-      return new Response(JSON.stringify({ error: "Ungültiges Anfrageformat" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    try {
+      rawBody = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Ungültiges Anfrageformat" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const parseResult = verifyCodeSchema.safeParse(rawBody);
     if (!parseResult.success) {
-      return new Response(JSON.stringify({ error: parseResult.error.errors[0]?.message || "Ungültige Eingabe" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      const firstError = parseResult.error.errors[0]?.message || "Ungültige Eingabe";
+      console.error("Validation error:", parseResult.error.errors);
+      return new Response(
+        JSON.stringify({ error: firstError }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const { email, code, type, newPassword } = parseResult.data;
 
-    if (!checkVerifyRateLimit(`verify:${email}`)) {
-      return new Response(JSON.stringify({ error: "Zu viele Versuche. Bitte warten Sie eine Stunde." }),
-        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    // Rate limiting check for verification attempts
+    const rateLimitKey = `verify:${email}`;
+    if (!checkVerifyRateLimit(rateLimitKey)) {
+      console.warn(`Verify rate limit exceeded for ${email}`);
+      return new Response(
+        JSON.stringify({ error: "Zu viele Versuche. Bitte warten Sie eine Stunde." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-
-    // Helper: lookup user by email in profiles
-    const { data: profile } = await supabase.from("profiles").select("user_id").eq("email", email).maybeSingle();
-    if (!profile?.user_id) {
-      return new Response(JSON.stringify({ error: "Benutzer nicht gefunden" }),
-        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } });
-    }
-
-    // Find valid verification code
-    const { data: vc, error: vcError } = await supabase.from("verification_codes")
-      .select("*").eq("user_id", profile.user_id).eq("code", code).eq("type", type)
-      .eq("used", false).gt("expires_at", new Date().toISOString()).single();
-
-    if (vcError || !vc) {
-      return new Response(JSON.stringify({ error: "Ungültiger oder abgelaufener Code" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
-    }
-
-    // Mark code as used
-    await supabase.from("verification_codes").update({ used: true }).eq("id", vc.id);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     if (type === "registration") {
+      // Resolve userId via profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("profile lookup error:", profileError);
+        throw new Error("User verification failed");
+      }
+
+      if (!profile?.user_id) {
+        return new Response(
+          JSON.stringify({ error: "Benutzer nicht gefunden" }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Find valid verification code
+      const { data: verificationCode, error: codeError } = await supabase
+        .from("verification_codes")
+        .select("*")
+        .eq("user_id", profile.user_id)
+        .eq("code", code)
+        .eq("type", "registration")
+        .eq("used", false)
+        .gt("expires_at", new Date().toISOString())
+        .single();
+
+      if (codeError || !verificationCode) {
+        return new Response(
+          JSON.stringify({ error: "Ungültiger oder abgelaufener Code" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Mark code as used
+      await supabase
+        .from("verification_codes")
+        .update({ used: true })
+        .eq("id", verificationCode.id);
+
       // Confirm email
-      await supabase.auth.admin.updateUserById(profile.user_id, { email_confirm: true });
-      return new Response(JSON.stringify({ success: true, message: "Registrierung erfolgreich", userId: profile.user_id }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      const { error: confirmError } = await supabase.auth.admin.updateUserById(profile.user_id, {
+        email_confirm: true,
+      });
+
+      if (confirmError) {
+        throw confirmError;
+      }
+
+      console.log("User verified successfully");
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Registrierung erfolgreich",
+          userId: profile.user_id,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
 
     } else if (type === "login") {
-      // Generate magic link token
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("profile lookup error:", profileError);
+        throw new Error("User verification failed");
+      }
+
+      if (!profile?.user_id) {
+        return new Response(
+          JSON.stringify({ error: "Benutzer nicht gefunden" }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Find valid verification code
+      const { data: verificationCode, error: codeError } = await supabase
+        .from("verification_codes")
+        .select("*")
+        .eq("user_id", profile.user_id)
+        .eq("code", code)
+        .eq("type", "login")
+        .eq("used", false)
+        .gt("expires_at", new Date().toISOString())
+        .single();
+
+      if (codeError || !verificationCode) {
+        return new Response(
+          JSON.stringify({ error: "Ungültiger oder abgelaufener Code" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Mark code as used
+      await supabase
+        .from("verification_codes")
+        .update({ used: true })
+        .eq("id", verificationCode.id);
+
+      // Generate a magic link for sign-in
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-        type: "magiclink", email,
+        type: "magiclink",
+        email: email,
       });
-      if (linkError) throw linkError;
+
+      if (linkError) {
+        throw linkError;
+      }
+
       const token = linkData.properties.hashed_token;
-      return new Response(JSON.stringify({ success: true, message: "2FA erfolgreich verifiziert", token, userId: profile.user_id }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
+
+      console.log("2FA verified successfully");
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "2FA erfolgreich verifiziert",
+          token,
+          userId: profile.user_id,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
 
     } else if (type === "password_reset") {
-      if (!newPassword || newPassword.length < 8) {
-        return new Response(JSON.stringify({ error: "Neues Passwort muss mindestens 8 Zeichen lang sein" }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
-      }
-      await supabase.auth.admin.updateUserById(profile.user_id, { password: newPassword });
-      return new Response(JSON.stringify({ success: true, message: "Passwort erfolgreich zurückgesetzt" }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
-    }
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("email", email)
+        .maybeSingle();
 
-    throw new Error("Invalid request type");
+      if (profileError) {
+        console.error("profile lookup error:", profileError);
+        throw new Error("User verification failed");
+      }
+
+      if (!profile?.user_id) {
+        return new Response(
+          JSON.stringify({ error: "Benutzer nicht gefunden" }),
+          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Find valid verification code
+      const { data: verificationCode, error: codeError } = await supabase
+        .from("verification_codes")
+        .select("*")
+        .eq("user_id", profile.user_id)
+        .eq("code", code)
+        .eq("type", "password_reset")
+        .eq("used", false)
+        .gt("expires_at", new Date().toISOString())
+        .single();
+
+      if (codeError || !verificationCode) {
+        return new Response(
+          JSON.stringify({ error: "Ungültiger oder abgelaufener Code" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      if (!newPassword || newPassword.length < 8) {
+        return new Response(
+          JSON.stringify({ error: "Neues Passwort muss mindestens 8 Zeichen lang sein" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // Mark code as used
+      await supabase
+        .from("verification_codes")
+        .update({ used: true })
+        .eq("id", verificationCode.id);
+
+      // Update password
+      const { error: updateError } = await supabase.auth.admin.updateUserById(profile.user_id, {
+        password: newPassword,
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      console.log("Password reset successfully");
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Passwort erfolgreich zurückgesetzt",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+
+    } else {
+      throw new Error("Invalid request type");
+    }
   } catch (error: unknown) {
     console.error("Error verifying code:", error);
-    return new Response(JSON.stringify({ error: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut." }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    // Return generic error message to prevent information leakage
+    return new Response(
+      JSON.stringify({ error: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut." }),
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
   }
 };
 
 serve(handler);
 ```
 
-### 8.3 submit-anamnesis/index.ts (VOLLSTÄNDIG – 555 Zeilen)
+### 8.3 submit-anamnesis/index.ts (555 Zeilen)
 
 ```typescript
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -1609,112 +1857,626 @@ const corsHeaders = {
 
 const requestSchema = z.object({
   action: z.enum(["submit", "confirm"]),
-  email: z.string().email().max(255).transform((v) => v.trim().toLowerCase()),
+  email: z
+    .string()
+    .email("Ungültige E-Mail-Adresse")
+    .max(255)
+    .transform((v) => v.trim().toLowerCase()),
   formData: z.record(z.any()).optional(),
-  code: z.string().length(6).regex(/^\d{6}$/).optional(),
+  code: z
+    .string()
+    .length(6)
+    .regex(/^\d{6}$/)
+    .optional(),
   submissionId: z.string().uuid().optional().nullable(),
   tempUserId: z.string().uuid().optional().nullable(),
   pdfBase64: z.string().optional(),
 });
 
-// Rate limiting + generateCode + encodeSubjectRfc2047 + sendViaRelay + escapeHtml
-// (siehe vollständigen Quellcode im Repository: supabase/functions/submit-anamnesis/index.ts)
+// In-memory rate limiting
+const rateLimitMap = new Map<
+  string,
+  { count: number; resetTime: number }
+>();
 
-// KERNLOGIK:
-// ACTION "submit":
-//   1. Rate-Limit prüfen
-//   2. formData in DB speichern (Update bestehender Draft oder neuer Insert)
-//   3. Status auf "pending_verification" setzen
-//   4. 6-stelligen Code generieren + in verification_codes speichern (Typ: anamnesis, 10 Min gültig)
-//   5. Code-E-Mail an Patient senden (§ 126a BGB Hinweis)
-//   6. Rückgabe: { submissionId, tempUserId }
-//
-// ACTION "confirm":
-//   1. Rate-Limit für Verifizierung prüfen (10/Stunde)
-//   2. Code in verification_codes verifizieren
-//   3. Code als used markieren
-//   4. Submission-Status auf "verified" setzen + signature_data speichern
-//   5. Praxis-Benachrichtigung: E-Mail an info@rauch-heilpraktiker.de mit PDF-Anhang
-//   6. Patienten-Bestätigung: E-Mail mit PDF-Anhang
-//   7. Fallback: Wenn PDF-Anhang zu groß → E-Mail ohne Anhang + Hinweis
+function checkRateLimit(
+  key: string,
+  max = 5,
+  windowMs = 15 * 60 * 1000
+): boolean {
+  const now = Date.now();
+  const r = rateLimitMap.get(key);
+  if (!r || now > r.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+  if (r.count >= max) return false;
+  r.count++;
+  return true;
+}
 
-// MAIL-RELAY: https://rauch-heilpraktiker.de/mail-relay.php
-// RFC 2047 Encoding für UTF-8 Subject (Umlaute in E-Mail-Betreff)
-// PDF-Anhang: Base64-encodiert, Dateiname: Anamnesebogen_[Name]_[Datum].pdf
+function generateCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// RFC 2047 encode subject for UTF-8 (fixes umlaut display in email clients)
+function encodeSubjectRfc2047(subject: string): string {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(subject);
+  // Convert to base64
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  const b64 = btoa(binary);
+  return `=?UTF-8?B?${b64}?=`;
+}
+
+async function sendViaRelay(
+  to: string,
+  subject: string,
+  html: string,
+  attachment?: { filename: string; base64: string; contentType: string }
+): Promise<{ attachmentSent: boolean }> {
+  const relaySecret = Deno.env.get("RELAY_SECRET");
+  if (!relaySecret) throw new Error("Email service not configured");
+
+  const payload: Record<string, unknown> = {
+    to,
+    subject: encodeSubjectRfc2047(subject),
+    html,
+    from: "noreply@rauch-heilpraktiker.de",
+  };
+
+  if (attachment) {
+    payload.attachment = attachment;
+  }
+
+  const resp = await fetch("https://rauch-heilpraktiker.de/mail-relay.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Relay-Token": relaySecret,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const text = await resp.text();
+  if (!resp.ok || text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+    // If sending WITH attachment failed, retry WITHOUT attachment
+    if (attachment) {
+      console.warn("Relay failed with attachment, retrying without. Status:", resp.status, text.substring(0, 200));
+      const fallbackPayload: Record<string, unknown> = {
+        to,
+        subject: encodeSubjectRfc2047(subject),
+        html: html + '\n<p style="color:#999;font-size:11px;">⚠️ Hinweis: Der PDF-Anhang konnte aus technischen Gründen nicht beigefügt werden. Bitte wenden Sie sich an die Praxis, falls Sie eine Kopie benötigen.</p>',
+        from: "noreply@rauch-heilpraktiker.de",
+      };
+      const fallbackResp = await fetch("https://rauch-heilpraktiker.de/mail-relay.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Relay-Token": relaySecret,
+        },
+        body: JSON.stringify(fallbackPayload),
+      });
+      const fallbackText = await fallbackResp.text();
+      if (!fallbackResp.ok) {
+        console.error("Relay fallback also failed:", fallbackResp.status, fallbackText.substring(0, 200));
+        throw new Error("Email delivery failed");
+      }
+      let fallbackResult;
+      try { fallbackResult = JSON.parse(fallbackText); } catch { throw new Error("Email service response error"); }
+      if (!fallbackResult.success) throw new Error("Email delivery failed");
+      console.log("Email sent successfully to", to, "(without attachment - fallback)");
+      return { attachmentSent: false };
+    }
+    console.error("Relay error:", resp.status, text.substring(0, 200));
+    throw new Error("Email delivery failed");
+  }
+
+  let result;
+  try {
+    result = JSON.parse(text);
+  } catch {
+    console.error("Failed to parse relay response");
+    throw new Error("Email service response error");
+  }
+
+  if (!result.success) throw new Error("Email delivery failed");
+  console.log("Email sent successfully to", to, attachment ? "(with attachment)" : "");
+  return { attachmentSent: !!attachment };
+}
+
+function escapeHtml(str: string): string {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Ungültiges Anfrageformat" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const parseResult = requestSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const firstError =
+        parseResult.error.errors[0]?.message || "Ungültige Eingabe";
+      console.error("Validation error:", parseResult.error.errors);
+      return new Response(JSON.stringify({ error: firstError }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { action, email, formData, code, submissionId, tempUserId, pdfBase64 } =
+      parseResult.data;
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Try to get userId from auth header
+    let userId: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.replace("Bearer ", "");
+        const {
+          data: { user },
+        } = await supabase.auth.getUser(token);
+        userId = user?.id || null;
+      } catch {
+        /* not authenticated - ok for dev mode */
+      }
+    }
+
+    // ── ACTION: SUBMIT ──────────────────────────────────────────────
+    if (action === "submit") {
+      if (!formData) {
+        return new Response(
+          JSON.stringify({ error: "Formulardaten fehlen" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      if (!checkRateLimit(`submit:${email}`)) {
+        return new Response(
+          JSON.stringify({
+            error: "Zu viele Anfragen. Bitte warten Sie 15 Minuten.",
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Use existing tempUserId if resending, or create new
+      const effectiveUserId =
+        userId || tempUserId || crypto.randomUUID();
+      let submId: string | null = null;
+
+      // Save to database if authenticated
+      if (userId) {
+        // Check if a draft already exists for this user
+        const { data: existing } = await supabase
+          .from("anamnesis_submissions")
+          .select("id")
+          .eq("user_id", userId)
+          .in("status", ["draft", "pending_verification"])
+          .order("submitted_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (existing) {
+          // Update existing draft
+          const { error: updateError } = await supabase
+            .from("anamnesis_submissions")
+            .update({
+              form_data: formData,
+              status: "pending_verification",
+            })
+            .eq("id", existing.id);
+
+          if (updateError) {
+            console.error("DB update error:", updateError);
+            throw new Error("Failed to save submission");
+          }
+          submId = existing.id;
+        } else {
+          const { data: sub, error: subError } = await supabase
+            .from("anamnesis_submissions")
+            .insert({
+              user_id: userId,
+              form_data: formData,
+              status: "pending_verification",
+            })
+            .select("id")
+            .single();
+
+          if (subError) {
+            console.error("DB insert error:", subError);
+            throw new Error("Failed to save submission");
+          }
+          submId = sub.id;
+        }
+      }
+
+      // Generate 6-digit verification code
+      const verCode = generateCode();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      // Clean old unused codes
+      await supabase
+        .from("verification_codes")
+        .delete()
+        .eq("user_id", effectiveUserId)
+        .eq("type", "anamnesis")
+        .eq("used", false);
+
+      const { error: codeError } = await supabase
+        .from("verification_codes")
+        .insert({
+          user_id: effectiveUserId,
+          code: verCode,
+          type: "anamnesis",
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (codeError) {
+        console.error("Code insert error:", codeError);
+        throw new Error("Failed to create verification code");
+      }
+
+      // Send verification code email
+      const patientName =
+        `${formData.vorname || ""} ${formData.nachname || ""}`.trim() ||
+        "Patient";
+
+      await sendViaRelay(
+        email,
+        "Ihr Bestätigungscode – Anamnesebogen – Naturheilpraxis Rauch",
+        `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+  .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a7c59; }
+  .code-box { background: #f5f5f5; border: 2px solid #4a7c59; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0; }
+  .code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #4a7c59; }
+  .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+</style>
+</head><body>
+<div class="container">
+  <div class="header"><h1 style="color: #4a7c59; margin: 0;">Naturheilpraxis Rauch</h1></div>
+  <p>Guten Tag ${escapeHtml(patientName)},</p>
+  <p>vielen Dank für das Ausfüllen des Anamnesebogens. Um Ihre digitale Unterschrift rechtssicher zu bestätigen (§&nbsp;126a BGB), verwenden Sie bitte den folgenden Code:</p>
+  <div class="code-box"><div class="code">${verCode}</div></div>
+  <p>Dieser Code ist <strong>10 Minuten</strong> gültig.</p>
+  <p>Falls Sie diesen Anamnesebogen nicht ausgefüllt haben, können Sie diese E-Mail ignorieren.</p>
+  <div class="footer"><p>Mit freundlichen Grüßen,<br>Ihre Naturheilpraxis Rauch</p></div>
+</div></body></html>`
+      );
+
+      console.log("Anamnesis verification code sent for", email);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          submissionId: submId,
+          tempUserId: userId ? undefined : effectiveUserId,
+          message: "Bestätigungscode wurde gesendet",
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // ── ACTION: CONFIRM ─────────────────────────────────────────────
+    if (action === "confirm") {
+      if (!code) {
+        return new Response(
+          JSON.stringify({ error: "Code ist erforderlich" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      if (!checkRateLimit(`verify:${email}`, 10, 60 * 60 * 1000)) {
+        return new Response(
+          JSON.stringify({
+            error: "Zu viele Versuche. Bitte warten Sie eine Stunde.",
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      const effectiveUserId = userId || tempUserId;
+      if (!effectiveUserId) {
+        return new Response(
+          JSON.stringify({ error: "Benutzer-Identifikation fehlt" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Verify code
+      const { data: vc, error: vcError } = await supabase
+        .from("verification_codes")
+        .select("*")
+        .eq("user_id", effectiveUserId)
+        .eq("code", code)
+        .eq("type", "anamnesis")
+        .eq("used", false)
+        .gt("expires_at", new Date().toISOString())
+        .single();
+
+      if (vcError || !vc) {
+        return new Response(
+          JSON.stringify({
+            error: "Ungültiger oder abgelaufener Code",
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Mark code as used
+      await supabase
+        .from("verification_codes")
+        .update({ used: true })
+        .eq("id", vc.id);
+
+      // Update submission status if exists
+      if (submissionId) {
+        await supabase
+          .from("anamnesis_submissions")
+          .update({
+            status: "verified",
+            signature_data: JSON.stringify({
+              verified_at: new Date().toISOString(),
+              method: "email_2fa",
+              legal_basis: "§ 126a BGB",
+            }),
+          })
+          .eq("id", submissionId);
+      }
+
+      // Extract patient info
+      const fd = formData || {};
+      const patientName =
+        `${fd.vorname || ""} ${fd.nachname || ""}`.trim() || "Unbekannt";
+      const patientEmail = email;
+      const patientPhone = String(fd.telefon || fd.mobil || "-");
+      const patientDob = String(fd.geburtsdatum || "-");
+      const submittedAt = new Date().toLocaleString("de-DE", {
+        timeZone: "Europe/Berlin",
+      });
+
+      // Build PDF attachment info
+      const pdfFilename = `Anamnesebogen_${escapeHtml(patientName).replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const pdfAttachment = pdfBase64 ? {
+        filename: pdfFilename,
+        base64: pdfBase64,
+        contentType: "application/pdf",
+      } : undefined;
+
+      // ── Send notification to practice ──
+      await sendViaRelay(
+        "info@rauch-heilpraktiker.de",
+        `Neuer Anamnesebogen eingegangen: ${escapeHtml(patientName)}`,
+        `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+  .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a7c59; }
+  .info-box { background: #f0f7f0; border: 1px solid #4a7c59; border-radius: 8px; padding: 15px; margin: 20px 0; }
+  .label { font-weight: bold; color: #4a7c59; }
+  .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+</style>
+</head><body>
+<div class="container">
+  <div class="header"><h1 style="color: #4a7c59; margin: 0;">Neuer Anamnesebogen</h1></div>
+  <p>Ein neuer Anamnesebogen wurde eingereicht und digital verifiziert:</p>
+  <div class="info-box">
+    <p><span class="label">Patient:</span> ${escapeHtml(patientName)}</p>
+    <p><span class="label">E-Mail:</span> ${escapeHtml(patientEmail)}</p>
+    <p><span class="label">Telefon:</span> ${escapeHtml(patientPhone)}</p>
+    <p><span class="label">Geburtsdatum:</span> ${escapeHtml(patientDob)}</p>
+    <p><span class="label">Eingereicht am:</span> ${escapeHtml(submittedAt)}</p>
+    <p><span class="label">Status:</span> ✅ Digital verifiziert (§&nbsp;126a BGB)</p>
+  </div>
+  <p>📎 Der vollständige Anamnesebogen ist als <strong>PDF im Anhang</strong> beigefügt.</p>
+  <div class="footer"><p>Automatische Benachrichtigung – Naturheilpraxis Rauch</p></div>
+</div></body></html>`,
+        pdfAttachment
+      );
+
+      // ── Send confirmation to patient ──
+      await sendViaRelay(
+        patientEmail,
+        "Bestätigung: Ihr Anamnesebogen wurde erfolgreich übermittelt – Naturheilpraxis Rauch",
+        `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+  .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a7c59; }
+  .success-box { background: #f0f7f0; border: 2px solid #4a7c59; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0; }
+  .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+</style>
+</head><body>
+<div class="container">
+  <div class="header"><h1 style="color: #4a7c59; margin: 0;">Naturheilpraxis Rauch</h1></div>
+  <p>Guten Tag ${escapeHtml(patientName)},</p>
+  <div class="success-box">
+    <h2 style="color: #4a7c59;">✅ Anamnesebogen erfolgreich übermittelt</h2>
+    <p>Ihr Anamnesebogen wurde am ${escapeHtml(submittedAt)} erfolgreich übermittelt und digital verifiziert.</p>
+  </div>
+  <p>Ihre Angaben werden vor Ihrem Termin von Peter Rauch geprüft, um eine optimale Behandlung zu gewährleisten.</p>
+  <p>Bei Fragen erreichen Sie uns unter:</p>
+  <ul>
+    <li>E-Mail: info@rauch-heilpraktiker.de</li>
+    <li>Telefon: 0821-4504050</li>
+  </ul>
+   <p>📎 Eine Kopie Ihres Anamnesebogens finden Sie als <strong>PDF im Anhang</strong> dieser E-Mail.</p>
+  <div class="footer">
+    <p>Mit freundlichen Grüßen,<br>Ihre Naturheilpraxis Rauch</p>
+    <p style="font-size: 11px; color: #999;">Diese E-Mail wurde automatisch generiert. Ihre Gesundheitsdaten werden gemäß DSGVO geschützt und mit einer Aufbewahrungsfrist von 10 Jahren gespeichert.</p>
+  </div>
+</div></body></html>`,
+        pdfAttachment
+      );
+
+      console.log("Anamnesis confirmed and emails sent for", email);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Anamnesebogen erfolgreich übermittelt",
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    return new Response(JSON.stringify({ error: "Ungültige Aktion" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error: unknown) {
+    console.error("Error in submit-anamnesis:", error);
+    return new Response(
+      JSON.stringify({
+        error:
+          "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+});
 ```
-
-**Hinweis:** Der vollständige 555-Zeilen-Quellcode befindet sich in `supabase/functions/submit-anamnesis/index.ts` im Repository. Die Kernlogik ist oben dokumentiert. Für einen vollständigen Restore diese Datei 1:1 aus dem Repository verwenden.
-
-### 8.4 send-verification-email/index.ts (LEGACY – nicht mehr aktiv)
-
-Diese Funktion verwendete einen direkten SMTP-Client (`denomailer`) und wurde durch das PHP-Mail-Relay ersetzt. Sie ist im Repository noch vorhanden, wird aber nicht mehr aufgerufen.
-
-### 8.5 Secrets (Edge Functions)
-
-| Secret | Zweck | Wo gesetzt |
-|---|---|---|
-| `RELAY_SECRET` | Auth-Token für PHP Mail-Relay | Lovable Cloud Secrets |
-| `SUPABASE_SERVICE_ROLE_KEY` | Admin-Operationen | Automatisch verfügbar |
-| `SUPABASE_URL` | Supabase-Endpoint | Automatisch verfügbar |
 
 ---
 
 ## 9. PHP Mail-Relay (vollständiger Quellcode)
 
-### 9.1 docs/mail-relay-v2.php (VOLLSTÄNDIG)
-
-**Server-Pfad:** `/var/www/vhosts/rauch-heilpraktiker.de/httpdocs/mail-relay.php`
+### docs/mail-relay-v2.php
 
 ```php
 <?php
 /**
  * E-Mail Relay Endpoint für Naturheilpraxis Rauch - VERSION 2
+ * 
+ * WICHTIG: Diese Datei muss auf dem Server unter /mail-relay.php liegen!
+ * 
+ * INSTALLATION:
+ * 1. Diese Datei auf Ihren Server kopieren nach: /var/www/vhosts/rauch-heilpraktiker.de/httpdocs/mail-relay.php
+ * 2. Den RELAY_SECRET Wert unten durch denselben Wert ersetzen, den Sie in Lovable Cloud eingegeben haben
  */
 
+// ===== VERSION MARKER =====
+// Wenn diese Version läuft, erscheint "version": "2026-02-21-v4" in der Response
 $RELAY_VERSION = '2026-02-21-v4';
 
+// CORS Headers für Edge Function Zugriff
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Relay-Token');
 
+// Debug-Log Funktion - schreibt nach mail-debug.log im selben Verzeichnis
 function relay_log($message) {
     $line = '[' . date('c') . '] ' . $message . "\n";
     @file_put_contents(__DIR__ . '/mail-debug.log', $line, FILE_APPEND);
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
+// OPTIONS Preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+// Nur POST erlauben
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'error' => 'Method not allowed', 'version' => $RELAY_VERSION]);
     exit;
 }
 
-// RELAY_SECRET muss mit dem Wert in Lovable Cloud Secrets übereinstimmen
+// ============================================
+// WICHTIG: Ersetzen Sie diesen Wert durch Ihr Secret!
+// ============================================
 $RELAY_SECRET = '998a476a-cf1c-7443-ea47-3e329d70e934';
 
+// Token validieren
 $token = $_SERVER['HTTP_X_RELAY_TOKEN'] ?? '';
 if (empty($token) || !hash_equals($RELAY_SECRET, $token)) {
     http_response_code(401);
-    relay_log('Unauthorized request');
+    relay_log('Unauthorized request: remote=' . ($_SERVER['REMOTE_ADDR'] ?? '-') . ' ua=' . ($_SERVER['HTTP_USER_AGENT'] ?? '-'));
     echo json_encode(['success' => false, 'error' => 'Unauthorized', 'version' => $RELAY_VERSION]);
     exit;
 }
 
+// JSON Body lesen
 $input = file_get_contents('php://input');
+
+// Check for empty input (might indicate post_max_size exceeded)
 if (empty($input)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Empty request body', 'version' => $RELAY_VERSION]);
+    $contentLength = $_SERVER['CONTENT_LENGTH'] ?? 'unknown';
+    $postMaxSize = ini_get('post_max_size');
+    relay_log("Empty input! CONTENT_LENGTH={$contentLength} post_max_size={$postMaxSize}");
+    echo json_encode(['success' => false, 'error' => "Empty request body (Content-Length: {$contentLength}, post_max_size: {$postMaxSize})", 'version' => $RELAY_VERSION]);
     exit;
 }
 
 $data = json_decode($input, true);
+
 if (!$data) {
     http_response_code(400);
+    relay_log('Invalid JSON: remote=' . ($_SERVER['REMOTE_ADDR'] ?? '-') . ' input_len=' . strlen($input) . ' raw=' . substr($input, 0, 500));
     echo json_encode(['success' => false, 'error' => 'Invalid JSON', 'version' => $RELAY_VERSION]);
     exit;
 }
 
+// Pflichtfelder prüfen
 $to = filter_var($data['to'] ?? '', FILTER_VALIDATE_EMAIL);
 $subject = trim($data['subject'] ?? '');
 $html = $data['html'] ?? '';
@@ -1722,11 +2484,14 @@ $from = filter_var($data['from'] ?? 'info@rauch-heilpraktiker.de', FILTER_VALIDA
 
 if (!$to || !$subject || !$html) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Missing required fields', 'version' => $RELAY_VERSION]);
+    relay_log('Missing fields: to=' . ($data['to'] ?? '-') . ' subject_len=' . strlen($subject) . ' html_len=' . strlen((string)$html));
+    echo json_encode(['success' => false, 'error' => 'Missing required fields: to, subject, html', 'version' => $RELAY_VERSION]);
     exit;
 }
 
-// Subject encoding (RFC 2047 UTF-8 Base64)
+relay_log('Accepted: to=' . $to . ' from=' . ($from ?: '-') . ' subject=' . $subject . ' has_attachment=' . (isset($data['attachment']) ? 'yes' : 'no'));
+
+// Subject encoding
 if (strpos($subject, '=?UTF-8?') === 0) {
     $encodedSubject = $subject;
 } else {
@@ -1734,13 +2499,20 @@ if (strpos($subject, '=?UTF-8?') === 0) {
 }
 
 $envelopeFrom = $from ?: 'info@rauch-heilpraktiker.de';
+// WICHTIG: KEIN escapeshellarg() verwenden!
+// escapeshellarg() erzeugt: -f 'email@domain.de' (mit Anführungszeichen)
+// Auf diesem Server interpretiert der MTA die Anführungszeichen falsch,
+// wodurch die Mail nicht an $to zugestellt wird, sondern lokal an die
+// Default-Mailbox (info@) geroutet wird.
 $additionalParams = '-f ' . $envelopeFrom;
 
+// Check if attachment is present
 $attachment = $data['attachment'] ?? null;
 
 if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename'])) {
-    // Multipart MIME mit PDF-Anhang
+    // Multipart MIME email with attachment
     $boundary = '----=_Part_' . md5(uniqid(microtime(true)));
+    
     $headers = [
         'MIME-Version: 1.0',
         'Content-Type: multipart/mixed; boundary="' . $boundary . '"',
@@ -1753,16 +2525,22 @@ if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename
     $body .= 'Content-Type: text/html; charset=UTF-8' . "\r\n";
     $body .= 'Content-Transfer-Encoding: 8bit' . "\r\n\r\n";
     $body .= $html . "\r\n\r\n";
+    
     $body .= '--' . $boundary . "\r\n";
-    $body .= 'Content-Type: ' . ($attachment['contentType'] ?? 'application/octet-stream') . '; name="' . $attachment['filename'] . '"' . "\r\n";
-    $body .= 'Content-Disposition: attachment; filename="' . $attachment['filename'] . '"' . "\r\n";
+    $contentType = $attachment['contentType'] ?? 'application/octet-stream';
+    $filename = $attachment['filename'];
+    $body .= 'Content-Type: ' . $contentType . '; name="' . $filename . '"' . "\r\n";
+    $body .= 'Content-Disposition: attachment; filename="' . $filename . '"' . "\r\n";
     $body .= 'Content-Transfer-Encoding: base64' . "\r\n\r\n";
     $body .= chunk_split($attachment['base64']) . "\r\n";
+    
     $body .= '--' . $boundary . '--';
     
     $success = @mail($to, $encodedSubject, $body, implode("\r\n", $headers), $additionalParams);
+    $lastError = error_get_last();
+    relay_log('Multipart mail ' . ($success ? 'OK' : 'FAIL') . ': to=' . $to . ' attachment=' . $filename . ' body_len=' . strlen($body) . ' base64_len=' . strlen($attachment['base64']) . ($lastError ? ' error=' . $lastError['message'] : ''));
 } else {
-    // Einfache HTML-Mail
+    // Simple HTML email (no attachment)
     $headers = [
         'MIME-Version: 1.0',
         'Content-type: text/html; charset=UTF-8',
@@ -1770,11 +2548,18 @@ if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename
         'Reply-To: ' . $from,
         'X-Mailer: PHP/' . phpversion()
     ];
+    
     $success = mail($to, $encodedSubject, $html, implode("\r\n", $headers), $additionalParams);
+    relay_log('Simple mail ' . ($success ? 'OK' : 'FAIL') . ': to=' . $to);
 }
 
 if ($success) {
-    echo json_encode(['success' => true, 'message' => 'Email sent', 'version' => $RELAY_VERSION, 'has_attachment' => !empty($attachment)]);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Email sent',
+        'version' => $RELAY_VERSION,
+        'has_attachment' => !empty($attachment),
+    ]);
 } else {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Failed to send email', 'version' => $RELAY_VERSION]);
@@ -1783,436 +2568,549 @@ if ($success) {
 
 ---
 
-## 10. Seiten-Dokumentation (alle Pages)
+## 10. Internationalisierung
 
-### 10.1 Index (Startseite)
-
-**Datei:** `src/pages/Index.tsx` (17 Zeilen)
-**Aufbau:** `Layout > SEOHead + HeroSection + FeaturesSection + InfoSection`
-
-**HeroSection:** Vollbild-Naturbild (`hero-nature.jpg`) mit Gradient-Overlay (`from-sage-700/90 via-sage-600/80 to-sage-500/70`). Titel: "Ganzheitliche Heilkunde für Körper und Seele". Zwei CTAs: "Anamnesebogen ausfüllen" (hero-Variante) + "Häufige Fragen" (outline). Dekorative SVG-Welle.
-
-**FeaturesSection:** 5 Feature-Karten (Anamnesebogen [accent], Heilpraktiker, Frequenztherapie, GebÜH, FAQ). Grid: `md:grid-cols-2 lg:grid-cols-3`. Hover: `-translate-y-1`.
-
-**InfoSection:** 2-Spalten. Links: 3 Benefits. Rechts: Schopenhauer-Zitat.
-
-### 10.2 Auth (Login/Register/Reset)
-
-**Datei:** `src/pages/Auth.tsx` (861 Zeilen)
-**Details:** Siehe Kapitel 6.3.
-
-### 10.3 Anamnesebogen (Hauptformular)
-
-**Datei:** `src/pages/Anamnesebogen.tsx` (879 Zeilen)
-**Schutz:** `ProtectedRoute`
-
-**Layout-Auswahl:** Wizard (Schritt für Schritt) oder Accordion (alle sichtbar)
-**26 Sektionen:** Intro bis Unterschrift
-**Features:**
-- Auto-Save: LocalStorage (`anamnesebogen_form_data`) mit 2s Debounce
-- Sektionsfarben: Jede Sektion hat eigene Hintergrundfarbe
-- Druckansicht: `PrintView`
-- Zusammenfassung: `FilteredSummaryView` (nur ausgefüllte Felder)
-- PDF-Export: `generateEnhancedAnamnesePdf`
-- 2FA-Signatur: `VerificationDialog` → Edge Function `submit-anamnesis`
-
-### 10.4 AnamneseDemo
-
-**Datei:** `src/pages/AnamneseDemo.tsx` (603 Zeilen)
-**Zugang:** Öffentlich, URL: `/anamnesebogen-demo`
-**Inhalt:** Vorausgefülltes Formular mit "Xaver Lovable" (geb. 01.12.1976). Vollständige Testdaten.
-
-### 10.5 Erstanmeldung (5-Schritt-Onboarding)
-
-**Datei:** `src/pages/Erstanmeldung.tsx` (621 Zeilen)
-**Schutz:** `ProtectedRoute`
-
-**Gate:** Telefontermin-Bestätigung
-**5 Schritte:**
-1. Übersicht (4 Dokumente als Karten)
-2. Anamnesebogen (Link + Status)
-3. Datenschutz (DSGVO-Text + Checkbox)
-4. Patientenaufklärung (Kosten + Checkbox)
-5. IAA-Fragebogen (Slider 0-10, Submit an DB)
-
-### 10.6 Weitere Seiten
-
-| Seite | Datei | Zeilen | Inhalt |
-|---|---|---|---|
-| Datenschutz | Datenschutz.tsx | 300 | 14 DSGVO-Sektionen + PDF-Download |
-| Patientenaufklärung | Patientenaufklaerung.tsx | 342 | GKV-Hinweis, Kosten, Preisliste (DB), 48h-Regel |
-| FAQ | FAQ.tsx | 122 | Accordion, DB-gesteuert (`faqs`-Tabelle) |
-| PraxisInfo | PraxisInfo.tsx | 115 | DB-gesteuert (`practice_info`), Schopenhauer-Zitat |
-| Heilpraktiker | Heilpraktiker.tsx | 206 | Qualifikation, Zulassung, Methoden |
-| Gebueh | Gebueh.tsx | 168 | GebÜH-Erklärung + Beispiel-Tabelle |
-| Frequenztherapie | Frequenztherapie.tsx | 203 | 4 Anwendungsgebiete, Behandlungsablauf |
-| Ernaehrung | Ernaehrung.tsx | 198 | 4 Grundtipps, Empfehlungen |
-| Impressum | Impressum.tsx | 236 | §5 TMG, Kontakt, BDH-Mitgliedschaft |
-| AdminDashboard | AdminDashboard.tsx | 129 | 3 Tabs: FAQs, Praxis-Info, Preise |
-| PatientDashboard | PatientDashboard.tsx | 344 | Anamnese-Übersicht, PDF-Download |
-| NotFound | NotFound.tsx | ~30 | 404-Seite |
-
----
-
-## 11. Komponenten-Architektur
-
-### 11.1 Layout-System
-
-```
-Layout (flex min-h-screen flex-col)
-├── Header (sticky top-0 z-50, backdrop-blur)
-│   ├── Logo (Leaf-Icon + "Naturheilpraxis" / "Peter Rauch")
-│   ├── Desktop-Nav (navItems + InfothekDropdown + LanguageSwitcher + Auth)
-│   └── Mobile-Nav (Hamburger → slide-up Dropdown)
-├── Main (flex-1)
-│   └── {children}
-└── Footer (border-t bg-card)
-    └── 4-Spalten Grid + Copyright
-```
-
-### 11.2 Anamnese-Sektionskomponenten
-
-Jede Sektion empfängt `formData`, `updateFormData(field, value)` und `language`.
-
-**Shared-Komponenten:**
-| Komponente | Funktion |
-|---|---|
-| `MultiSelectCheckbox` | Checkboxen mit Mehrfachauswahl |
-| `MultiEntryField` | Dynamische Liste (Medikamente, OPs, etc.) |
-| `TemporalStatusSelect` | "aktuell" / "seit [Jahr]" / "früher" |
-| `YearMonthSelect` | Jahr+Monat Auswahl |
-| `NumericInput` | Zahlenfeld mit Einheit |
-| `DentalChart` / `ToothDiagram` | Interaktives 32-Zahn-Schema (FDI-Nomenklatur) |
-| `SubConditionList` | Unterbedingungen bei Ja/Nein |
-
-### 11.3 VerificationDialog
-
-Modal mit 6-stelligem OTP (`InputOTP` von shadcn). Zeigt E-Mail, Timer, Resend-Button.
-
----
-
-## 12. Anamnesebogen-Datenmodell
-
-**Datei:** `src/lib/anamneseFormData.ts` (605 Zeilen)
-
-### 12.1 formSections (26 Sektionen)
-
-| # | ID | Titel (DE) | Emoji | Farbe |
-|---|---|---|---|---|
-| 0 | intro | Willkommen | 👋 | emerald |
-| 1 | patientData | I. Patientendaten | 👤 | blue |
-| 2 | familyHistory | II. Familie | 👨‍👩‍👧 | cyan |
-| 3 | neurology | III. Kopf & Sinne | 🧠 | purple |
-| 4 | heart | IV. Herz & Kreislauf | ❤️ | red |
-| 5 | lung | V. Lunge & Atmung | 🫁 | sky |
-| 6 | digestive | VI. Magen & Darm | 🍽️ | orange |
-| 7 | liver | VII. Leber & Galle | 🫀 | amber |
-| 8 | kidney | VIII. Niere & Blase | 💧 | blue |
-| 9 | hormone | IX. Hormone | ⚡ | yellow |
-| 10 | musculoskeletal | X. Bewegungsapparat | 🦴 | stone |
-| 11 | womenHealth | XI. Frauengesundheit | 👩 | pink |
-| 12 | mensHealth | XI. Männergesundheit | 👨 | blue |
-| 13 | surgeries | XII. Unfälle & OPs | 🏥 | red |
-| 14 | cancer | XIII. Krebs | ⚠️ | amber |
-| 15 | allergies | XIV. Allergien | 🤧 | yellow |
-| 16 | medications | XV. Medikamente | 💊 | purple |
-| 17 | lifestyle | XVI. Lebensweise | 🌿 | green |
-| 18 | dental | XVII. Zahngesundheit | 🦷 | cyan |
-| 19 | environment | XVIII. Umwelt | 🌍 | teal |
-| 20 | infections | XIX. Infektionen | 🦠 | rose |
-| 21 | vaccinations | XX. Impfstatus | 💉 | indigo |
-| 22 | complaints | XXI. Beschwerden | 📋 | slate |
-| 23 | preferences | XXII. Präferenzen | ✨ | violet |
-| 24 | social | XXIII. Persönliches | 🏠 | sky |
-| 25 | signature | XXIV. Unterschrift | ✍️ | stone |
-
-### 12.2 initialFormData – Hauptbereiche (~250+ Felder)
-
-- **Patientendaten:** nachname, vorname, geburtsdatum, geschlecht, kontaktdaten, versicherung, beruf, körpermaße
-- **Familie:** 12 Erkrankungen mit Verwandten-Zuordnung
-- **Kopf&Sinne:** Augen (10 Sub), Ohren (7 Sub), Sinusitis, Kopfschmerzen (8 Sub)
-- **Herz:** 14 Bedingungen (Blutdruck, Rhythmus, Schrittmacher, etc.)
-- **Lunge:** 11 Bedingungen (Asthma, Bronchitis, COPD, etc.)
-- **Magen&Darm:** 14 Bedingungen + Durst/Appetit/Ernährungstyp
-- **Leber:** 8 Bedingungen (Hepatitis A/B/C, Zirrhose, etc.)
-- **Niere:** 8 Bedingungen
-- **Hormone:** Schilddrüse (10 Sub), Hypophyse (5 Sub), Nebenniere (5 Sub)
-- **Bewegungsapparat:** HWS/BWS/LWS + 8 Gelenke (beidseitig)
-- **Frauen:** Gynäkologischer Bereich (20+ Felder)
-- **Männer:** Prostata (6 Sub), Hoden (6 Sub)
-- **Unfälle/OPs:** Operationen-Liste, Nuklearmedizin
-- **Krebs:** TNM-Stadium, Therapien, Metastasen
-- **Allergien:** Inhalation, Nahrung, Medikamente, Kontakt
-- **Medikamente:** Aktuelle Liste (Name, Dosis, Grund)
-- **Lebensweise:** Rauchen, Alkohol, Sport, Schlaf, Stress
-- **Zahngesundheit:** 32-Zähne-Schema, Parodontitis, Bruxismus
-- **Umwelt:** Chemosensibilität (14 Stoffe), Körperbelastungen
-- **Infektionen:** Tropenreise, Zeckenbiss, Borreliose
-- **Impfungen:** 10 Standard + COVID (4 Dosen + Long-COVID)
-- **Beschwerden:** Hauptbeschwerde, Schmerzqualität/-intensität (0-10)
-- **Präferenzen:** 12 Therapiemethoden
-- **Soziales:** Familienstand, Kinder, Wohnumfeld
-- **Unterschrift:** Ort, Datum, Bestätigungen, 2FA
-
-**TypeScript-Typ:** `export type AnamneseFormData = typeof initialFormData;`
-
----
-
-## 13. IAA-Fragebogen
-
-**Datei:** `src/lib/iaaQuestions.ts` (409 Zeilen)
-
-### 13.1 Datenstruktur
+### src/contexts/LanguageContext.tsx (VOLLSTÄNDIG)
 
 ```typescript
-interface IAAQuestion { id: string; textDe: string; textEn: string; hintDe?: string; hintEn?: string; }
-interface IAACategory { id: string; titleDe: string; titleEn: string; questions: IAAQuestion[]; }
-```
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-### 13.2 Kategorien (19 Patienten + 1 Therapeut)
+export type Language = 'de' | 'en';
 
-| ID | Titel (DE) | Fragen |
-|---|---|---|
-| stuhl | Stuhlverhalten | 14 |
-| blaehungen | Blähungen / Winde | 8 |
-| nahrung | Nahrungsmittelunverträglichkeiten | 11 |
-| appetit | Appetit / Magen | 14 |
-| allergien | Allergien | 5 |
-| niere | Durst / Niere / Blase | 12 |
-| schlaf | Schlaf | 3 |
-| atmung | Bewegung / Atmung | 16 |
-| haut | Haut | 7 |
-| bewegungsapparat | Bewegungsapparat | 26 |
-| immunsystem | Abwehr / Immunsystem | 11 |
-| ohren | Ohren / Gehör | 7 |
-| zaehne | Zähne | 6 |
-| lymphe | Lymphe | 4 |
-| nerven | Nervensystem / Kopfschmerzen | 8 |
-| psyche | Psyche / Vitalität | 14 |
-| herz | Herz-Kreislauf und Gefäße | 19 |
-| sucht | Sucht / Hormone | 9 |
-| geschlecht | Geschlechtsspezifisch | 12 |
-| augen | Augen | 14 |
-| blockaden | Blockaden | 3 |
-| **therapeut** | **Therapeut-Bereich (Entgiftung)** | **10** |
-
-**Gesamt:** ~200 Fragen, Bewertung per Slider 0-10.
-**Speicherung:** `{ "1.1": 3, "1.2": 5, ... }` in `iaa_submissions.form_data`
-
----
-
-## 14. PDF-Export
-
-### 14.1 Basic Export (pdfExport.ts, 267 Zeilen)
-
-Einfacher jsPDF-Export. Sektionsheader in Blau, Checkboxen, Seitenzahlen.
-
-### 14.2 Enhanced Export (pdfExportEnhanced.ts, 631 Zeilen)
-
-**Branding-Farben (RGB):**
-- Primary: `rgb(76, 140, 74)` – Praxisgrün
-- Secondary: `rgb(91, 173, 88)` – Helles Grün
-- Text: `rgb(51, 51, 51)`, Muted: `rgb(120, 120, 120)`
-
-**Praxis-Info im Header/Footer:**
-```
-Naturheilpraxis Peter Rauch
-Peter Rauch, Heilpraktiker
-Friedrich-Deffner-Straße 19a, 86163 Augsburg
-Tel: 0821-2621462 | info@rauch-heilpraktiker.de
-```
-
-**Features:** Grüner Header-Balken, Patient-Info-Box, Sektionsheader mit Emoji, Checkbox-Felder, Footer mit Disclaimer.
-
-**Funktionen:**
-- `generateEnhancedAnamnesePdf()`: Speichert PDF lokal als Download
-- `generateAnamnesePdfBase64()`: Gibt Base64-String zurück (für E-Mail-Anhang)
-
-### 14.3 Datenschutz-PDF (datenschutzPdfExport.ts)
-
-Exportiert die DSGVO-Erklärung als PDF mit Praxis-Branding.
-
----
-
-## 15. i18n / Mehrsprachigkeit (vollständiger Quellcode)
-
-### 15.1 LanguageContext
-
-```typescript
-type Language = 'de' | 'en';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (de: string, en: string) => string;
 }
+
+// Default values for context to prevent errors during hot reload
+const defaultContext: LanguageContextType = {
+  language: 'de',
+  setLanguage: () => {},
+  t: (de: string) => de,
+};
+
+const LanguageContext = createContext<LanguageContextType>(defaultContext);
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [language, setLanguageState] = useState<Language>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('language');
+      return (saved === 'en' ? 'en' : 'de') as Language;
+    }
+    return 'de';
+  });
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('language', lang);
+    }
+  };
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  const t = (de: string, en: string) => {
+    return language === 'de' ? de : en;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  return useContext(LanguageContext);
+}
 ```
 
-Sprache in `localStorage.language` persistiert. `document.documentElement.lang` wird gesetzt.
+---
 
-### 15.2 translations.ts (VOLLSTÄNDIG)
+## 11. SEO & Schema.org (vollständiger Quellcode)
+
+### src/components/seo/SchemaOrg.tsx
 
 ```typescript
-export const translations = {
-  nav: {
-    home: { de: 'Start', en: 'Home' },
-    anamnesis: { de: 'Anamnesebogen', en: 'Medical History' },
-    privacy: { de: 'Datenschutz', en: 'Privacy Policy' },
-    practitioner: { de: 'Was ist ein Heilpraktiker?', en: 'What is a Naturopath?' },
-    fees: { de: 'GebÜH', en: 'Fee Schedule' },
-    frequencyTherapy: { de: 'Frequenztherapie', en: 'Frequency Therapy' },
-    infothek: { de: 'Infothek', en: 'Info Center' },
-    nutrition: { de: 'Ernährung', en: 'Nutrition' },
-    faq: { de: 'FAQ', en: 'FAQ' },
-    practice: { de: 'Praxis-Info', en: 'Practice Info' },
-    impressum: { de: 'Impressum', en: 'Legal Notice' },
-  },
-  header: {
-    practice: { de: 'Naturheilpraxis', en: 'Naturopathic Practice' },
-    owner: { de: 'Peter Rauch', en: 'Peter Rauch' },
-    openMenu: { de: 'Menü öffnen', en: 'Open menu' },
-  },
-  faq: {
-    title: { de: 'Häufig gestellte Fragen', en: 'Frequently Asked Questions' },
-    subtitle: { de: 'Antworten auf die wichtigsten Fragen rund um die Behandlung', en: 'Answers to the most important questions about treatment' },
-    notFound: { de: 'Ihre Frage war nicht dabei?', en: 'Your question wasn\'t listed?' },
-    contact: { de: 'Kontaktieren Sie mich gerne direkt – ich beantworte Ihre Fragen persönlich.', en: 'Feel free to contact me directly – I\'ll answer your questions personally.' },
-    call: { de: 'Anrufen', en: 'Call' },
-    toAnamnesis: { de: 'Zum Anamnesebogen', en: 'To Medical History Form' },
-  },
-  practiceInfo: {
-    title: { de: 'Über die Praxis', en: 'About the Practice' },
-    subtitle: { de: 'Wichtige Informationen zu meiner Naturheilpraxis', en: 'Important information about my naturopathic practice' },
-    quote: { de: '"Gesundheit ist nicht alles, aber ohne Gesundheit ist alles nichts."', en: '"Health is not everything, but without health, everything is nothing."' },
-    quoteAuthor: { de: '— Arthur Schopenhauer', en: '— Arthur Schopenhauer' },
-  },
-  common: {
-    loading: { de: 'Laden...', en: 'Loading...' },
-    error: { de: 'Fehler beim Laden', en: 'Error loading' },
-  },
-} as const;
+import { useEffect } from "react";
 
-export type TranslationKey = keyof typeof translations;
+const SchemaOrg = () => {
+  useEffect(() => {
+    const schemaId = "schema-org-medical-business";
+    
+    const existing = document.getElementById(schemaId);
+    if (existing) {
+      existing.remove();
+    }
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "MedicalBusiness",
+          "@id": "https://rauch-heilpraktiker.de/#business",
+          name: "Naturheilpraxis Peter Rauch",
+          alternateName: "Heilpraktiker Peter Rauch",
+          description: "Naturheilpraxis für ganzheitliche Therapien, Irisdiagnose, Darmsanierung und individuelle Gesundheitsberatung in Augsburg.",
+          url: "https://rauch-heilpraktiker.de",
+          telephone: "+49-821-2621462",
+          email: "info@rauch-heilpraktiker.de",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "Friedrich-Deffner-Straße 19a",
+            addressLocality: "Augsburg",
+            postalCode: "86163",
+            addressCountry: "DE",
+            addressRegion: "Bayern"
+          },
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: 48.3561,
+            longitude: 10.9056
+          },
+          openingHoursSpecification: [
+            {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              opens: "09:00",
+              closes: "18:00"
+            }
+          ],
+          priceRange: "€€",
+          currenciesAccepted: "EUR",
+          paymentAccepted: "Cash, EC Card",
+          founder: {
+            "@type": "Person",
+            "@id": "https://rauch-heilpraktiker.de/#person",
+            name: "Peter Rauch",
+            jobTitle: "Heilpraktiker",
+            description: "Staatlich geprüfter Heilpraktiker nach dem Heilpraktikergesetz"
+          },
+          medicalSpecialty: ["Naturopathy", "Holistic Medicine", "Alternative Medicine"],
+          availableService: [
+            { "@type": "MedicalTherapy", name: "Irisdiagnose", description: "Diagnose durch Analyse der Iris" },
+            { "@type": "MedicalTherapy", name: "Darmsanierung", description: "Ganzheitliche Darmgesundheit und Mikrobiom-Therapie" },
+            { "@type": "MedicalTherapy", name: "Entgiftungstherapie", description: "Unterstützung der körpereigenen Entgiftungsprozesse" }
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://rauch-heilpraktiker.de/#website",
+          url: "https://rauch-heilpraktiker.de",
+          name: "Naturheilpraxis Peter Rauch",
+          publisher: { "@id": "https://rauch-heilpraktiker.de/#business" },
+          inLanguage: ["de-DE", "en-US"]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://rauch-heilpraktiker.de/#breadcrumb",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Startseite", item: "https://rauch-heilpraktiker.de/" }
+          ]
+        }
+      ]
+    };
+
+    const script = document.createElement("script");
+    script.id = schemaId;
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+
+    return () => {
+      const scriptToRemove = document.getElementById(schemaId);
+      if (scriptToRemove) {
+        scriptToRemove.remove();
+      }
+    };
+  }, []);
+
+  return null;
+};
+
+export default SchemaOrg;
 ```
 
-### 15.3 Verwendung in Komponenten
+---
 
-```tsx
-const { t, language } = useLanguage();
-<h1>{t("Willkommen", "Welcome")}</h1>
-// DB-gesteuert:
-{language === 'de' ? faq.question_de : faq.question_en}
+## 12. DSGVO & Cookie-Banner (vollständiger Quellcode)
+
+### src/components/CookieBanner.tsx
+
+```typescript
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Cookie, X } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Link } from "react-router-dom";
+
+const CookieBanner = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const { t } = useLanguage();
+
+  useEffect(() => {
+    const consent = localStorage.getItem("cookie-consent");
+    if (!consent) {
+      const timer = setTimeout(() => setIsVisible(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleAccept = () => {
+    localStorage.setItem("cookie-consent", "accepted");
+    localStorage.setItem("cookie-consent-date", new Date().toISOString());
+    setIsVisible(false);
+  };
+
+  const handleDecline = () => {
+    localStorage.setItem("cookie-consent", "declined");
+    localStorage.setItem("cookie-consent-date", new Date().toISOString());
+    setIsVisible(false);
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-in slide-in-from-bottom-5 duration-500">
+      <div className="max-w-4xl mx-auto bg-card border border-border rounded-xl shadow-elevated p-6">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+            <Cookie className="w-5 h-5 text-primary" />
+          </div>
+          
+          <div className="flex-1 space-y-3">
+            <h3 className="font-semibold text-foreground">
+              {t("Cookie-Einstellungen", "Cookie Settings")}
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {t(
+                "Wir verwenden technisch notwendige Cookies, um die Funktionalität unserer Website zu gewährleisten. Diese Cookies speichern keine personenbezogenen Daten. Weitere Informationen finden Sie in unserer ",
+                "We use technically necessary cookies to ensure the functionality of our website. These cookies do not store personal data. For more information, please see our "
+              )}
+              <Link to="/datenschutz" className="text-primary hover:underline">
+                {t("Datenschutzerklärung", "Privacy Policy")}
+              </Link>.
+            </p>
+            
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Button onClick={handleAccept} size="sm">
+                {t("Alle akzeptieren", "Accept All")}
+              </Button>
+              <Button onClick={handleDecline} variant="outline" size="sm">
+                {t("Nur notwendige", "Necessary Only")}
+              </Button>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleDecline}
+            className="flex-shrink-0 p-1 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={t("Schließen", "Close")}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CookieBanner;
 ```
 
 ---
 
-## 16. SEO & Schema.org
+## 13. Admin-Prüfung (vollständiger Quellcode)
 
-### 16.1 SEOHead.tsx
+### src/hooks/useAdminCheck.ts
 
-Dynamische Meta-Tags via `useEffect` + `document.createElement`. Props: `title`, `description`, `canonical`, `ogImage`.
+```typescript
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-### 16.2 SchemaOrg.tsx
+export const useAdminCheck = () => {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-JSON-LD `@graph` mit:
-- `MedicalBusiness` (Name, Adresse, Öffnungszeiten Mo-Fr 9-18, Geo, Services)
-- `WebSite` (Name, URL, Sprachen)
-- `BreadcrumbList`
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        setIsLoading(false);
+        return;
+      }
 
-**Services:** Irisdiagnose, Darmsanierung, Entgiftungstherapie
+      try {
+        const { data, error } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin'
+        });
+
+        if (error) {
+          console.error('Error checking admin role:', error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(data === true);
+        }
+      } catch (error) {
+        console.error('Error checking admin role:', error);
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAdminRole();
+  }, [user]);
+
+  return { isAdmin, isLoading };
+};
+```
 
 ---
 
-## 17. DSGVO & Cookie-Banner
+## 14. Utility-Funktionen
 
-### 17.1 CookieBanner.tsx
+### src/lib/utils.ts
 
-- Erscheint nach 1s Delay wenn kein `cookie-consent` in localStorage
-- Buttons: "Alle akzeptieren" / "Nur notwendige"
-- Speichert `cookie-consent` + `cookie-consent-date` in localStorage
+```typescript
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-### 17.2 Datenschutz-Seite
-
-14 Sektionen mit vollständigem DSGVO-Text (DE + EN). PDF-Download.
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
 
 ---
 
-## 18. Admin-Dashboard
+## 15. Seiten-Übersicht
 
-### 18.1 Zugang
+| Datei | Zeilen | Beschreibung |
+|---|---|---|
+| `Index.tsx` | ~350 | Startseite: Hero + Features + Info-Bereich |
+| `Auth.tsx` | ~860 | Login, Registrierung, Passwort-Reset mit 2FA (Tabs + OTP) |
+| `Anamnesebogen.tsx` | ~880 | 25-Sektionen Formular, Wizard/Accordion, Auto-Save, PDF, 2FA |
+| `AnamneseDemo.tsx` | ~600 | Demo mit Testdaten "Xaver Lovable" |
+| `Erstanmeldung.tsx` | ~620 | 5-Schritt Onboarding (Gatekeeper → Anamnese → DSGVO → Aufklärung → IAA) |
+| `Datenschutz.tsx` | ~300 | DSGVO-Datenschutzerklärung mit PDF-Download |
+| `Patientenaufklaerung.tsx` | ~340 | Kosten & Behandlungsvereinbarung |
+| `Heilpraktiker.tsx` | ~200 | Info über Heilpraktiker-Beruf |
+| `Gebueh.tsx` | ~170 | GebÜH-Preisübersicht (DB-gesteuert) |
+| `Frequenztherapie.tsx` | ~200 | Frequenztherapie-Info |
+| `Ernaehrung.tsx` | ~200 | Ernährungsratschläge |
+| `FAQ.tsx` | ~120 | FAQ-Seite (DB-gesteuert, Accordion) |
+| `PraxisInfo.tsx` | ~115 | Praxis-Info (DB-gesteuert) |
+| `Impressum.tsx` | ~240 | Impressum |
+| `AdminDashboard.tsx` | ~130 | Admin: FAQ/Info/Preise CRUD (Tabs) |
+| `PatientDashboard.tsx` | ~340 | Patienten-Dashboard (Formulare, Status) |
+| `NotFound.tsx` | ~20 | 404-Seite |
 
-Nur für User mit `app_role = 'admin'` in `user_roles`-Tabelle. Prüfung via `useAdminCheck()` → `has_role` RPC.
+---
 
-### 18.2 Funktionen
+## 16. Komponenten-Architektur
 
-3 Tabs:
-1. **FAQs:** CRUD für `faqs`-Tabelle
-2. **Praxis-Info:** CRUD für `practice_info`-Tabelle
-3. **Preise:** CRUD für `practice_pricing`-Tabelle
+### Provider-Hierarchie (von außen nach innen)
+
+```
+QueryClientProvider
+  └─ LanguageProvider
+       └─ AuthProvider
+            └─ TooltipProvider
+                 ├─ Toaster (shadcn/ui)
+                 ├─ Sonner
+                 ├─ SchemaOrg (JSON-LD)
+                 └─ BrowserRouter
+                      ├─ CookieBanner
+                      └─ Routes
+```
+
+### Layout-Struktur
+
+```
+Layout
+  ├─ Header (sticky)
+  │    ├─ Logo + Praxis-Name
+  │    ├─ Desktop-Navigation (NavLink-Komponenten)
+  │    ├─ InfothekDropdown (Mega-Menü, 3 Spalten)
+  │    ├─ LanguageSwitcher (DE/EN)
+  │    ├─ Auth-Buttons (Login/Dashboard)
+  │    └─ Mobile-Hamburger (Sheet)
+  ├─ Main (children)
+  └─ Footer (4-Spalten)
+```
+
+### Anamnese-Sektionen (25 Stück, Reihenfolge)
+
+0. IntroSection – Willkommen
+1. PatientDataSection – Stammdaten (Name, Geburtsdatum, etc.)
+2. FamilyHistorySection – Familiengeschichte
+3. NeurologySection – Kopf & Sinne
+4. HeartSection – Herz & Kreislauf
+5. LungSection – Lunge & Atmung
+6. DigestiveSection – Magen & Darm
+7. LiverSection – Leber & Galle
+8. KidneySection – Niere & Blase
+9. HormoneSection – Hormone & Stoffwechsel
+10. MusculoskeletalSection – Bewegungsapparat
+11. WomenHealthSection – Frauengesundheit (konditional)
+12. MensHealthSection – Männergesundheit (konditional)
+13. SurgeriesSection – Unfälle & Operationen
+14. CancerSection – Krebserkrankungen
+15. AllergiesSection – Allergien & Unverträglichkeiten
+16. MedicationsSection – Medikamente & Nahrungsergänzung
+17. LifestyleSection – Lebensweise (Ernährung, Sport, Schlaf)
+18. DentalSection – Zahngesundheit (interaktives Zahndiagramm)
+19. EnvironmentSection – Umweltbelastungen
+20. InfectionsSection – Infektionen
+21. VaccinationsSection – Impfstatus
+22. ComplaintsSection – Aktuelle Beschwerden (Freitext)
+23. PreferencesSection – Behandlungspräferenzen
+24. SocialSection – Persönliches & Soziales
+25. SignatureSection – Digitale Unterschrift + Einwilligung
+
+---
+
+## 17. Abhängigkeiten (vollständig)
+
+```json
+{
+  "@hookform/resolvers": "^3.10.0",
+  "@radix-ui/react-accordion": "^1.2.11",
+  "@radix-ui/react-alert-dialog": "^1.1.14",
+  "@radix-ui/react-aspect-ratio": "^1.1.7",
+  "@radix-ui/react-avatar": "^1.1.10",
+  "@radix-ui/react-checkbox": "^1.3.2",
+  "@radix-ui/react-collapsible": "^1.1.11",
+  "@radix-ui/react-context-menu": "^2.2.15",
+  "@radix-ui/react-dialog": "^1.1.14",
+  "@radix-ui/react-dropdown-menu": "^2.1.15",
+  "@radix-ui/react-hover-card": "^1.1.14",
+  "@radix-ui/react-label": "^2.1.7",
+  "@radix-ui/react-menubar": "^1.1.15",
+  "@radix-ui/react-navigation-menu": "^1.2.13",
+  "@radix-ui/react-popover": "^1.1.14",
+  "@radix-ui/react-progress": "^1.1.7",
+  "@radix-ui/react-radio-group": "^1.3.7",
+  "@radix-ui/react-scroll-area": "^1.2.9",
+  "@radix-ui/react-select": "^2.2.5",
+  "@radix-ui/react-separator": "^1.1.7",
+  "@radix-ui/react-slider": "^1.3.5",
+  "@radix-ui/react-slot": "^1.2.3",
+  "@radix-ui/react-switch": "^1.2.5",
+  "@radix-ui/react-tabs": "^1.1.12",
+  "@radix-ui/react-toast": "^1.2.14",
+  "@radix-ui/react-toggle": "^1.1.9",
+  "@radix-ui/react-toggle-group": "^1.1.10",
+  "@radix-ui/react-tooltip": "^1.2.7",
+  "@supabase/supabase-js": "^2.90.1",
+  "@tanstack/react-query": "^5.83.0",
+  "class-variance-authority": "^0.7.1",
+  "clsx": "^2.1.1",
+  "cmdk": "^1.1.1",
+  "date-fns": "^3.6.0",
+  "embla-carousel-react": "^8.6.0",
+  "input-otp": "^1.4.2",
+  "jspdf": "^4.0.0",
+  "lucide-react": "^0.462.0",
+  "next-themes": "^0.3.0",
+  "react": "^18.3.1",
+  "react-day-picker": "^8.10.1",
+  "react-dom": "^18.3.1",
+  "react-hook-form": "^7.61.1",
+  "react-resizable-panels": "^2.1.9",
+  "react-router-dom": "^6.30.1",
+  "recharts": "^2.15.4",
+  "sonner": "^1.7.4",
+  "tailwind-merge": "^2.6.0",
+  "tailwindcss-animate": "^1.0.7",
+  "vaul": "^0.9.9",
+  "zod": "^3.25.76"
+}
+```
+
+---
+
+## 18. Secrets & Umgebung
+
+### Konfigurierte Secrets (Lovable Cloud)
+
+| Secret Name | Beschreibung |
+|---|---|
+| `RELAY_SECRET` | Auth-Token für PHP Mail-Relay (`998a476a-cf1c-7443-ea47-3e329d70e934`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Admin-Key für Edge Functions |
+| `SUPABASE_URL` | Supabase Project URL |
+| `SUPABASE_ANON_KEY` | Öffentlicher Supabase Key |
+| `SUPABASE_PUBLISHABLE_KEY` | Öffentlicher Key (Frontend) |
+| `SUPABASE_DB_URL` | Datenbank-URL |
+| `SMTP_HOST` | SMTP Server (Legacy, nicht aktiv) |
+| `SMTP_PORT` | SMTP Port (Legacy) |
+| `SMTP_USER` | SMTP Benutzer (Legacy) |
+| `SMTP_PASSWORD` | SMTP Passwort (Legacy) |
+| `LOVABLE_API_KEY` | Lovable AI API Key |
+
+### PHP Mail-Relay Deployment
+
+- **Server-Pfad:** `/var/www/vhosts/rauch-heilpraktiker.de/httpdocs/mail-relay.php`
+- **URL:** `https://rauch-heilpraktiker.de/mail-relay.php`
+- **Authentifizierung:** `X-Relay-Token` Header mit `RELAY_SECRET`
+- **Log-Datei:** `mail-debug.log` im selben Verzeichnis
+- **Envelope-Sender:** `noreply@rauch-heilpraktiker.de` (via `-f` Flag)
 
 ---
 
 ## 19. Wiederherstellungsanleitung
 
-### 19.1 Frontend
+### Schritt 1: Projekt erstellen
 
-1. Repository klonen / alle Dateien wiederherstellen
-2. `npm install` (oder `bun install`)
-3. `.env` konfigurieren mit korrekten Supabase-Werten
-4. `npm run dev` zum Testen (Port 8080)
-5. `npm run build` für Produktions-Build
-
-### 19.2 Datenbank
-
-1. SQL-Schema aus Kapitel 7 im SQL-Editor ausführen (Enums → Tabellen → Funktion)
-2. RLS-Policies aus Kapitel 7.4 aktivieren
-3. Admin-User manuell in `user_roles` eintragen:
-   ```sql
-   INSERT INTO user_roles (user_id, role) VALUES ('[ADMIN_USER_ID]', 'admin');
-   ```
-
-### 19.3 Edge Functions
-
-1. Dateien aus Kapitel 8 in `supabase/functions/` anlegen
-2. Deployen:
-   ```bash
-   supabase functions deploy request-verification-code
-   supabase functions deploy verify-code
-   supabase functions deploy submit-anamnesis
-   ```
-3. Secret setzen:
-   ```bash
-   supabase secrets set RELAY_SECRET="998a476a-cf1c-7443-ea47-3e329d70e934"
-   ```
-
-### 19.4 Mail-Relay
-
-PHP-Skript aus Kapitel 9 auf `rauch-heilpraktiker.de` deployen:
 ```bash
-scp docs/mail-relay-v2.php user@server:/var/www/vhosts/rauch-heilpraktiker.de/httpdocs/mail-relay.php
+# Neues Lovable-Projekt erstellen oder Repository klonen
+git clone <REPOSITORY_URL>
+cd naturheilpraxis-rauch
+npm install
 ```
 
-### 19.5 Kritische Secrets
+### Schritt 2: Datenbank einrichten
 
-| Secret | Wert | Wo gesetzt |
-|---|---|---|
-| `RELAY_SECRET` | `998a476a-cf1c-7443-ea47-3e329d70e934` | Lovable Cloud Secrets + PHP-Datei |
-| `SUPABASE_SERVICE_ROLE_KEY` | (automatisch) | Automatisch verfügbar |
-| `SUPABASE_URL` | (automatisch) | Automatisch verfügbar |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Anon-Key (siehe .env) | .env-Datei |
+1. In Lovable Cloud die SQL-Skripte aus Kapitel 7 ausführen
+2. Enums erstellen (`app_role`, `language_code`)
+3. Alle 7 Tabellen erstellen mit RLS-Policies
+4. Funktionen erstellen (`has_role`, `handle_new_user`, `update_updated_at_column`)
+5. Trigger auf `auth.users` für `handle_new_user` einrichten
 
-### 19.6 Projekt herunterladen
+### Schritt 3: Edge Functions deployen
 
-**Methode 1 – GitHub (empfohlen):**
-1. Projekt mit GitHub verbinden (Einstellungen → GitHub → Verbinden)
-2. Repository klonen: `git clone [REPO_URL]`
-3. Alle Dateien sind lokal verfügbar
+Die Edge Functions in `supabase/functions/` werden automatisch von Lovable Cloud deployt.
 
-**Methode 2 – Export-Button:**
-1. Im Editor oben rechts auf das Pfeil-nach-oben-Symbol klicken (Desktop)
-2. Oder auf dem Handy: `...` → "Publish"
+### Schritt 4: Secrets konfigurieren
+
+Alle Secrets aus Kapitel 18 in Lovable Cloud → Secrets eintragen.
+
+### Schritt 5: PHP Mail-Relay
+
+1. `docs/mail-relay-v2.php` auf den Server kopieren nach `/mail-relay.php`
+2. `$RELAY_SECRET` im PHP-Skript muss mit dem Cloud-Secret übereinstimmen
+
+### Schritt 6: Frontend starten
+
+```bash
+npm run dev    # Entwicklung
+npm run build  # Produktion
+```
+
+### Schritt 7: Admin-Benutzer anlegen
+
+```sql
+-- Bestehenden Benutzer zum Admin machen
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('<USER_UUID>', 'admin');
+```
 
 ---
 
-*Ende der vollständigen Wiederherstellungsdokumentation*
-*Erstellt: 2026-02-22 | Naturheilpraxis Peter Rauch Patienten-App*
-*Dokumentationsumfang: ~1800 Zeilen mit vollständigem Quellcode aller kritischen Dateien*
+_Ende des Wiederherstellungsdokuments – Erstellt am 2026-02-22_
