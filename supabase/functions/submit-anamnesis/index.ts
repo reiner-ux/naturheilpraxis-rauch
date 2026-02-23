@@ -453,9 +453,12 @@ serve(async (req) => {
         contentType: "application/pdf",
       } : undefined;
 
-      // ── Send notification to practice ──
-      await sendViaRelay(
-        "info@rauch-heilpraktiker.de",
+      // ── Send notification to practice (both email addresses) ──
+      const practiceEmails = ["info@rauch-heilpraktiker.de", "praxis_rauch@icloud.com"];
+      
+      for (const practiceEmail of practiceEmails) {
+        await sendViaRelay(
+          practiceEmail,
         `Neuer Anamnesebogen eingegangen: ${escapeHtml(patientName)}`,
         `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
@@ -483,7 +486,8 @@ serve(async (req) => {
   <div class="footer"><p>Automatische Benachrichtigung – Naturheilpraxis Rauch</p></div>
 </div></body></html>`,
         pdfAttachment
-      );
+        );
+      }
 
       // ── Send confirmation to patient ──
       await sendViaRelay(
