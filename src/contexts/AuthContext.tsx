@@ -28,13 +28,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let isMounted = true;
 
     const checkAdminRole = async (userId: string) => {
+      console.log('[AuthContext] Checking admin role for:', userId);
       try {
         const { data, error } = await supabase.rpc('has_role', {
           _user_id: userId,
           _role: 'admin'
         });
+        console.log('[AuthContext] Admin check result:', { data, error });
         if (isMounted) setIsAdmin(!error && data === true);
-      } catch {
+      } catch (e) {
+        console.error('[AuthContext] Admin check error:', e);
         if (isMounted) setIsAdmin(false);
       }
     };
@@ -58,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('[AuthContext] Initial session:', session?.user?.email, session?.user?.id);
         if (!isMounted) return;
 
         setSession(session);
