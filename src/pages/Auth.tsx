@@ -79,7 +79,23 @@ const Auth: React.FC = () => {
         );
       }
 
-      // Sign out immediately - we need 2FA verification first
+      // Check if user is admin – admins skip 2FA
+      const { data: isAdminData } = await supabase.rpc('has_role', {
+        _user_id: signInData.user?.id,
+        _role: 'admin',
+      });
+
+      if (isAdminData === true) {
+        // Admin: direct login, no 2FA needed
+        toast({
+          title: language === 'de' ? 'Willkommen!' : 'Welcome!',
+          description: language === 'de' ? 'Admin-Anmeldung erfolgreich.' : 'Admin login successful.',
+        });
+        navigate('/');
+        return;
+      }
+
+      // Non-admin: Sign out and require 2FA
       await supabase.auth.signOut();
 
       // Request 2FA code
