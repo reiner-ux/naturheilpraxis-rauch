@@ -25,9 +25,9 @@ export function Header() {
   
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
+    // Test link always visible in non-production environments
+    ...(isNonProduction ? [{ label: "🧪 Test", href: "/anamnesebogen?dev=true" }] : []),
     { label: t("Erstanmeldung", "First Registration"), href: "/erstanmeldung" },
-    // Test link only for admins in non-production environments
-    ...(isNonProduction && isAdmin ? [{ label: "Test", href: "/anamnesebogen?dev=true" }] : []),
   ];
 
   const handleSignOut = async () => {
