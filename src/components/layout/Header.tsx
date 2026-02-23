@@ -23,7 +23,7 @@ export function Header() {
   const header = translations.header;
 
   // Show Test link in non-production environments (preview + local dev)
-  const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('localhost');
+  const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('localhost');
   
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
