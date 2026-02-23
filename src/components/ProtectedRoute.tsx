@@ -14,7 +14,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Development bypass: Available in dev mode AND preview environments
   // Add ?dev=true to URL to skip authentication during testing
-  const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('localhost');
+  const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('localhost');
   const devBypass = isNonProduction && searchParams.get('dev') === 'true';
 
   if (devBypass) {
