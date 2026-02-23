@@ -158,8 +158,8 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
   }
 
   if (!response.ok) {
-    console.error("Relay error:", response.status);
-    throw new Error("Email service error");
+    console.error("Relay error:", response.status, "body:", responseText);
+    throw new Error(`Email service error: ${response.status} - ${responseText.substring(0, 200)}`);
   }
 
   let result;
