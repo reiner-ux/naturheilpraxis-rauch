@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -15,35 +16,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let isMounted = true;
+
+    const checkAdminRole = async (userId: string) => {
+      try {
+        const { data, error } = await supabase.rpc('has_role', {
+          _user_id: userId,
+          _role: 'admin'
+        });
+        if (isMounted) setIsAdmin(!error && data === true);
+      } catch {
+        if (isMounted) setIsAdmin(false);
+      }
+    };
+
+    // Listener for ONGOING auth changes (does NOT control loading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!isMounted) return;
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
+
+        if (session?.user) {
+          setTimeout(() => checkAdminRole(session.user.id), 0);
+        } else {
+          setIsAdmin(false);
+        }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // INITIAL load (controls loading state)
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
 
-    return () => subscription.unsubscribe();
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await checkAdminRole(session.user.id);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
+    setIsAdmin(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { translations } from "@/lib/translations";
 import { useToast } from "@/hooks/use-toast";
 import { InfothekDropdown } from "./InfothekDropdown";
@@ -16,8 +15,7 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user, signOut } = useAuth();
-  const { isAdmin } = useAdminCheck();
+  const { user, signOut, isAdmin } = useAuth();
   const { toast } = useToast();
   const nav = translations.nav;
   const header = translations.header;
