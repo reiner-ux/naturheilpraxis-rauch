@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { sendEmail } from "../_shared/smtp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,7 +50,6 @@ function checkRateLimit(identifier: string): boolean {
   return true;
 }
 
-// Clean up old entries periodically
 function cleanupRateLimitMap() {
   const now = Date.now();
   for (const [key, value] of rateLimitMap.entries()) {
@@ -64,11 +64,6 @@ function generateCode(): string {
 }
 
 async function sendVerificationEmail(email: string, code: string, type: "login" | "registration" | "password_reset"): Promise<void> {
-  const relaySecret = Deno.env.get("RELAY_SECRET");
-  if (!relaySecret) {
-    throw new Error("Email service not configured");
-  }
-
   let subject: string;
   let bodyText: string;
 
@@ -128,57 +123,11 @@ async function sendVerificationEmail(email: string, code: string, type: "login" 
     </html>
   `;
 
-  const relayUrl = "https://rauch-heilpraktiker.de/mail-relay.php";
-
-  console.log(`[relay] sending ${type} code`);
-  
-  const response = await fetch(relayUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Relay-Token": relaySecret,
-    },
-    body: JSON.stringify({
-      to: email,
-      subject: subject,
-      html: htmlContent,
-      from: "info@rauch-heilpraktiker.de",
-      meta: {
-        type,
-        source: "lovable-cloud-request-verification-code",
-      },
-    }),
-  });
-
-  const responseText = await response.text();
-  
-  if (responseText.trim().startsWith("<!DOCTYPE") || responseText.trim().startsWith("<html")) {
-    console.error("Relay returned HTML instead of JSON");
-    throw new Error("Email service temporarily unavailable");
-  }
-
-  if (!response.ok) {
-    console.error("Relay error:", response.status, "body:", responseText);
-    throw new Error(`Email service error: ${response.status} - ${responseText.substring(0, 200)}`);
-  }
-
-  let result;
-  try {
-    result = JSON.parse(responseText);
-  } catch {
-    console.error("Failed to parse relay response");
-    throw new Error("Email service response error");
-  }
-
-  if (!result.success) {
-    throw new Error("Email delivery failed");
-  }
-
-  console.log("Email sent successfully");
+  console.log(`[SMTP] sending ${type} verification code to ${email}`);
+  await sendEmail({ to: email, subject, html: htmlContent });
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Periodic cleanup
   cleanupRateLimitMap();
   
   if (req.method === "OPTIONS") {
@@ -186,7 +135,6 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Parse and validate request body
     let rawBody: unknown;
     try {
       rawBody = await req.json();
@@ -209,7 +157,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { email, type, password, userId: providedUserId } = parseResult.data;
 
-    // Rate limiting check
     const rateLimitKey = `${email}:${type}`;
     if (!checkRateLimit(rateLimitKey)) {
       console.warn(`Rate limit exceeded for ${rateLimitKey}`);
@@ -223,7 +170,6 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Resolve userId by email using the profiles table
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("user_id")
@@ -236,7 +182,6 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const existingUserId = profile?.user_id || null;
-
     let userId: string;
 
     if (type === "login") {
@@ -262,7 +207,6 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Create user now (unconfirmed), then verify via code.
       const { data: created, error: createError } = await supabase.auth.admin.createUser({
         email,
         password,
@@ -284,7 +228,6 @@ const handler = async (req: Request): Promise<Response> => {
       userId = created.user.id;
     } else if (type === "password_reset") {
       if (!existingUserId) {
-        // Don't reveal if email exists or not for security
         return new Response(
           JSON.stringify({ success: true, message: "Falls ein Konto existiert, wurde ein Code gesendet." }),
           { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -295,11 +238,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Invalid request type");
     }
 
-    // Generate 6-digit code
     const code = generateCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // Delete old unused codes for this user + type
     await supabase
       .from("verification_codes")
       .delete()
@@ -321,7 +262,6 @@ const handler = async (req: Request): Promise<Response> => {
       throw insertError;
     }
 
-    // Send verification email
     await sendVerificationEmail(email, code, type);
 
     console.log(`Verification code sent for ${type}`);
@@ -336,7 +276,6 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: unknown) {
     console.error("Error requesting verification code:", error);
-    // Return generic error message to prevent information leakage
     return new Response(
       JSON.stringify({ error: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut." }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }

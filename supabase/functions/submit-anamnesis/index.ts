@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { sendEmail } from "../_shared/smtp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,93 +51,6 @@ function checkRateLimit(
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// RFC 2047 encode subject for UTF-8 (fixes umlaut display in email clients)
-function encodeSubjectRfc2047(subject: string): string {
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(subject);
-  // Convert to base64
-  let binary = "";
-  for (const b of bytes) binary += String.fromCharCode(b);
-  const b64 = btoa(binary);
-  return `=?UTF-8?B?${b64}?=`;
-}
-
-async function sendViaRelay(
-  to: string,
-  subject: string,
-  html: string,
-  attachment?: { filename: string; base64: string; contentType: string }
-): Promise<{ attachmentSent: boolean }> {
-  const relaySecret = Deno.env.get("RELAY_SECRET");
-  if (!relaySecret) throw new Error("Email service not configured");
-
-  const payload: Record<string, unknown> = {
-    to,
-    subject: encodeSubjectRfc2047(subject),
-    html,
-    from: "noreply@rauch-heilpraktiker.de",
-  };
-
-  if (attachment) {
-    payload.attachment = attachment;
-  }
-
-  const resp = await fetch("https://rauch-heilpraktiker.de/mail-relay.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Relay-Token": relaySecret,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const text = await resp.text();
-  if (!resp.ok || text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
-    // If sending WITH attachment failed, retry WITHOUT attachment
-    if (attachment) {
-      console.warn("Relay failed with attachment, retrying without. Status:", resp.status, text.substring(0, 200));
-      const fallbackPayload: Record<string, unknown> = {
-        to,
-        subject: encodeSubjectRfc2047(subject),
-        html: html + '\n<p style="color:#999;font-size:11px;">⚠️ Hinweis: Der PDF-Anhang konnte aus technischen Gründen nicht beigefügt werden. Bitte wenden Sie sich an die Praxis, falls Sie eine Kopie benötigen.</p>',
-        from: "noreply@rauch-heilpraktiker.de",
-      };
-      const fallbackResp = await fetch("https://rauch-heilpraktiker.de/mail-relay.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Relay-Token": relaySecret,
-        },
-        body: JSON.stringify(fallbackPayload),
-      });
-      const fallbackText = await fallbackResp.text();
-      if (!fallbackResp.ok) {
-        console.error("Relay fallback also failed:", fallbackResp.status, fallbackText.substring(0, 200));
-        throw new Error("Email delivery failed");
-      }
-      let fallbackResult;
-      try { fallbackResult = JSON.parse(fallbackText); } catch { throw new Error("Email service response error"); }
-      if (!fallbackResult.success) throw new Error("Email delivery failed");
-      console.log("Email sent successfully to", to, "(without attachment - fallback)");
-      return { attachmentSent: false };
-    }
-    console.error("Relay error:", resp.status, text.substring(0, 200));
-    throw new Error("Email delivery failed");
-  }
-
-  let result;
-  try {
-    result = JSON.parse(text);
-  } catch {
-    console.error("Failed to parse relay response");
-    throw new Error("Email service response error");
-  }
-
-  if (!result.success) throw new Error("Email delivery failed");
-  console.log("Email sent successfully to", to, attachment ? "(with attachment)" : "");
-  return { attachmentSent: !!attachment };
 }
 
 function escapeHtml(str: string): string {
@@ -224,14 +138,11 @@ serve(async (req) => {
         );
       }
 
-      // Use existing tempUserId if resending, or create new
       const effectiveUserId =
         userId || tempUserId || crypto.randomUUID();
       let submId: string | null = null;
 
-      // Save to database if authenticated
       if (userId) {
-        // Check if a draft already exists for this user
         const { data: existing } = await supabase
           .from("anamnesis_submissions")
           .select("id")
@@ -242,7 +153,6 @@ serve(async (req) => {
           .maybeSingle();
 
         if (existing) {
-          // Update existing draft
           const { error: updateError } = await supabase
             .from("anamnesis_submissions")
             .update({
@@ -275,11 +185,9 @@ serve(async (req) => {
         }
       }
 
-      // Generate 6-digit verification code
       const verCode = generateCode();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-      // Clean old unused codes
       await supabase
         .from("verification_codes")
         .delete()
@@ -301,15 +209,16 @@ serve(async (req) => {
         throw new Error("Failed to create verification code");
       }
 
-      // Send verification code email
       const patientName =
         `${formData.vorname || ""} ${formData.nachname || ""}`.trim() ||
         "Patient";
 
-      await sendViaRelay(
-        email,
-        "Ihr Bestätigungscode – Anamnesebogen – Naturheilpraxis Rauch",
-        `<!DOCTYPE html>
+      console.log(`[SMTP] sending anamnesis verification code to ${email}`);
+
+      await sendEmail({
+        to: email,
+        subject: "Ihr Bestätigungscode – Anamnesebogen – Naturheilpraxis Rauch",
+        html: `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
   body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
@@ -328,8 +237,8 @@ serve(async (req) => {
   <p>Dieser Code ist <strong>10 Minuten</strong> gültig.</p>
   <p>Falls Sie diesen Anamnesebogen nicht ausgefüllt haben, können Sie diese E-Mail ignorieren.</p>
   <div class="footer"><p>Mit freundlichen Grüßen,<br>Ihre Naturheilpraxis Rauch</p></div>
-</div></body></html>`
-      );
+</div></body></html>`,
+      });
 
       console.log("Anamnesis verification code sent for", email);
 
@@ -426,11 +335,9 @@ serve(async (req) => {
           .eq("id", submissionId);
       }
 
-      // Debug: Log PDF attachment status
       console.log("PDF attachment status:", {
         hasPdfBase64: !!pdfBase64,
         pdfBase64Length: pdfBase64?.length || 0,
-        pdfBase64Preview: pdfBase64 ? pdfBase64.substring(0, 50) + "..." : "NONE",
       });
 
       // Extract patient info
@@ -445,7 +352,6 @@ serve(async (req) => {
         timeZone: "Europe/Berlin",
       });
 
-      // Build PDF attachment info
       const pdfFilename = `Anamnesebogen_${escapeHtml(patientName).replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       const pdfAttachment = pdfBase64 ? {
         filename: pdfFilename,
@@ -457,10 +363,10 @@ serve(async (req) => {
       const practiceEmails = ["info@rauch-heilpraktiker.de", "praxis_rauch@icloud.com"];
       
       for (const practiceEmail of practiceEmails) {
-        await sendViaRelay(
-          practiceEmail,
-        `Neuer Anamnesebogen eingegangen: ${escapeHtml(patientName)}`,
-        `<!DOCTYPE html>
+        await sendEmail({
+          to: practiceEmail,
+          subject: `Neuer Anamnesebogen eingegangen: ${escapeHtml(patientName)}`,
+          html: `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
   body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
@@ -485,15 +391,15 @@ serve(async (req) => {
   <p>📎 Der vollständige Anamnesebogen ist als <strong>PDF im Anhang</strong> beigefügt.</p>
   <div class="footer"><p>Automatische Benachrichtigung – Naturheilpraxis Rauch</p></div>
 </div></body></html>`,
-        pdfAttachment
-        );
+          attachment: pdfAttachment,
+        });
       }
 
       // ── Send confirmation to patient ──
-      await sendViaRelay(
-        patientEmail,
-        "Bestätigung: Ihr Anamnesebogen wurde erfolgreich übermittelt – Naturheilpraxis Rauch",
-        `<!DOCTYPE html>
+      await sendEmail({
+        to: patientEmail,
+        subject: "Bestätigung: Ihr Anamnesebogen wurde erfolgreich übermittelt – Naturheilpraxis Rauch",
+        html: `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
   body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
@@ -522,8 +428,8 @@ serve(async (req) => {
     <p style="font-size: 11px; color: #999;">Diese E-Mail wurde automatisch generiert. Ihre Gesundheitsdaten werden gemäß DSGVO geschützt und mit einer Aufbewahrungsfrist von 10 Jahren gespeichert.</p>
   </div>
 </div></body></html>`,
-        pdfAttachment
-      );
+        attachment: pdfAttachment,
+      });
 
       console.log("Anamnesis confirmed and emails sent for", email);
 
