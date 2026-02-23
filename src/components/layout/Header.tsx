@@ -25,8 +25,8 @@ export function Header() {
   
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
-    // Test link only for admins in non-production environments
-    ...(isNonProduction && isAdmin ? [{ label: "🧪 Test", href: "/anamnesebogen?dev=true" }] : []),
+    // Test link visible in non-production environments (no login required, but hidden on published site)
+    ...(isNonProduction ? [{ label: "🧪 Test", href: "/anamnesebogen?dev=true" }] : []),
     { label: t("Erstanmeldung", "First Registration"), href: "/erstanmeldung" },
   ];
 
