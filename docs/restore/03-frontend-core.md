@@ -1,5 +1,7 @@
 # Restore Part 3: Frontend Core Files
 
+**Date:** 2026-02-25
+
 ## src/App.tsx
 ```typescript
 import { Toaster } from "@/components/ui/toaster";
@@ -71,7 +73,10 @@ const App = () => (
 export default App;
 ```
 
-## src/contexts/AuthContext.tsx
+## src/contexts/AuthContext.tsx (AKTUALISIERT 2026-02-25)
+
+**Änderung:** `isAdmin` Feld hinzugefügt, robusterer Init-Flow mit `isMounted` Guard.
+
 ```typescript
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
@@ -81,53 +86,90 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  session: null,
+  loading: true,
+  isAdmin: false,
+  signOut: async () => {},
+});
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const checkAdminRole = async (userId: string) => {
+      try {
+        const { data, error } = await supabase.rpc('has_role', {
+          _user_id: userId,
+          _role: 'admin'
+        });
+        if (isMounted) setIsAdmin(!error && data === true);
+      } catch (e) {
+        if (isMounted) setIsAdmin(false);
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!isMounted) return;
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
+        if (session?.user) {
+          setTimeout(() => checkAdminRole(session.user.id), 0);
+        } else {
+          setIsAdmin(false);
+        }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await checkAdminRole(session.user.id);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
+    setIsAdmin(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, signOut }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 };
 ```
 
@@ -234,9 +276,9 @@ export const useAdminCheck = () => {
         const { data, error } = await supabase.rpc('has_role', {
           _user_id: user.id, _role: 'admin'
         });
-        if (error) { console.error('Error checking admin role:', error); setIsAdmin(false); }
+        if (error) { setIsAdmin(false); }
         else { setIsAdmin(data === true); }
-      } catch (error) { console.error('Error checking admin role:', error); setIsAdmin(false); }
+      } catch (error) { setIsAdmin(false); }
       finally { setIsLoading(false); }
     };
     checkAdminRole();
@@ -246,7 +288,7 @@ export const useAdminCheck = () => {
 };
 ```
 
-## Complete File Structure
+## Complete File Structure (2026-02-25)
 ```
 src/
 ├── App.tsx
@@ -273,7 +315,7 @@ src/
 ├── contexts/ (AuthContext, LanguageContext)
 ├── hooks/ (use-mobile, use-toast, useAdminCheck)
 ├── integrations/supabase/ (client.ts, types.ts – auto-generated)
-├── lib/ (anamneseFormData, iaaQuestions, pdfExport*, translations, utils, medicalOptions, datenschutzPdfExport)
+├── lib/ (anamneseFormData, iaaQuestions, pdfExport, pdfExportEnhanced, datenschutzPdfExport, translations, utils, medicalOptions)
 ├── pages/ (Index, Auth, Anamnesebogen, AnamneseDemo, Erstanmeldung, PatientDashboard, AdminDashboard, Datenschutz, FAQ, Gebueh, Heilpraktiker, Ernaehrung, Frequenztherapie, PraxisInfo, Impressum, Patientenaufklaerung, NotFound)
 └── test/ (example.test.ts, setup.ts)
 ```
