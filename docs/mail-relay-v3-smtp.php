@@ -91,7 +91,12 @@ if (!$to || !$subject || !$html) {
 }
 
 $attachment = $data['attachment'] ?? null;
-relay_log("Accepted: to=$to from=$from subject=$subject attachment=" . ($attachment ? 'yes' : 'no'));
+$attachInfo = 'no';
+if ($attachment) {
+    $b64len = strlen($attachment['base64'] ?? '');
+    $attachInfo = "yes (filename={$attachment['filename']}, base64_len=$b64len, decoded_bytes=" . intval($b64len * 0.75) . ")";
+}
+relay_log("Accepted: to=$to from=$from subject=$subject attachment=$attachInfo");
 
 // Subject UTF-8 encoding
 $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
@@ -176,7 +181,23 @@ function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $b
     $message = $headers . "\r\n\r\n" . $body;
     // Dot-stuffing (RFC 5321)
     $message = str_replace("\r\n.", "\r\n..", $message);
-    fwrite($sock, $message . "\r\n.\r\n");
+    $fullMessage = $message . "\r\n.\r\n";
+    
+    // Chunked fwrite to ensure all data is sent (critical for attachments)
+    $totalLen = strlen($fullMessage);
+    $written = 0;
+    $chunkSize = 8192;
+    while ($written < $totalLen) {
+        $chunk = substr($fullMessage, $written, $chunkSize);
+        $bytes = fwrite($sock, $chunk);
+        if ($bytes === false || $bytes === 0) {
+            $errors[] = "fwrite failed at offset $written/$totalLen";
+            fclose($sock);
+            return implode('; ', $errors);
+        }
+        $written += $bytes;
+    }
+    relay_log("SMTP DATA sent: $written bytes total");
     
     $dataResp = $readResponse();
     $dataCode = (int)substr($dataResp, 0, 3);
