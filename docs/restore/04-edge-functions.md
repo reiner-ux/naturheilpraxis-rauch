@@ -1,238 +1,196 @@
 # Restore Part 4: Edge Functions (Complete Source)
 
-## supabase/functions/request-verification-code/index.ts
+**Date:** 2026-02-25
+
+## Übersicht
+
+| Function | Status | Mail-Methode |
+|----------|--------|-------------|
+| `request-verification-code` | ✅ Aktiv | `_shared/smtp.ts` → PHP Relay |
+| `verify-code` | ✅ Aktiv | Kein E-Mail-Versand |
+| `submit-anamnesis` | ✅ Aktiv | `_shared/smtp.ts` → PHP Relay (mit PDF) |
+| `send-verification-email` | ⚠️ Legacy | Direkter SMTP via denomailer (nicht aktiv genutzt) |
+
+---
+
+## supabase/functions/_shared/smtp.ts (NEU 2026-02-25)
+
+Shared E-Mail-Utility, das alle Edge Functions verwenden.
+
 ```typescript
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+/**
+ * Shared email sending utility for Supabase Edge Functions.
+ * Sends via PHP mail relay on the user's webserver.
+ */
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const verificationRequestSchema = z.object({
-  email: z.string().email("Ungültige E-Mail-Adresse").max(255).transform(val => val.trim().toLowerCase()),
-  type: z.enum(["login", "registration", "password_reset"], {
-    errorMap: () => ({ message: "Ungültiger Anfrage-Typ" })
-  }),
-  password: z.string().min(8).max(128).optional(),
-  userId: z.string().uuid().optional(),
-});
-
-type VerificationRequest = z.infer<typeof verificationRequestSchema>;
-
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
-const MAX_REQUESTS_PER_WINDOW = 5;
-
-function checkRateLimit(identifier: string): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(identifier);
-  if (!record || now > record.resetTime) {
-    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) return false;
-  record.count++;
-  return true;
+interface SendEmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+  from?: string;
+  attachment?: {
+    filename: string;
+    base64: string;
+    contentType: string;
+  };
 }
 
-function cleanupRateLimitMap() {
-  const now = Date.now();
-  for (const [key, value] of rateLimitMap.entries()) {
-    if (now > value.resetTime) rateLimitMap.delete(key);
-  }
+/**
+ * RFC 2047 encode subject for UTF-8 (fixes umlaut display)
+ */
+function encodeSubjectRfc2047(subject: string): string {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(subject);
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  const b64 = btoa(binary);
+  return `=?UTF-8?B?${b64}?=`;
 }
 
-function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+/**
+ * Send an email via PHP relay. Supports optional PDF attachment.
+ * Falls back to sending without attachment if first attempt fails.
+ */
+export async function sendEmail(
+  options: SendEmailOptions
+): Promise<{ attachmentSent: boolean }> {
+  const { to, subject, html, from = "info@rauch-heilpraktiker.de", attachment } = options;
 
-async function sendVerificationEmail(email: string, code: string, type: "login" | "registration" | "password_reset"): Promise<void> {
   const relaySecret = Deno.env.get("RELAY_SECRET");
-  if (!relaySecret) throw new Error("Email service not configured");
-
-  let subject: string;
-  let bodyText: string;
-
-  switch (type) {
-    case "registration":
-      subject = "Ihr Bestätigungscode für die Registrierung - Naturheilpraxis Rauch";
-      bodyText = "vielen Dank für Ihre Registrierung. Bitte verwenden Sie den folgenden Code, um Ihre E-Mail-Adresse zu bestätigen:";
-      break;
-    case "login":
-      subject = "Ihr Anmeldecode (2FA) - Naturheilpraxis Rauch";
-      bodyText = "um Ihre Anmeldung abzuschließen, verwenden Sie bitte den folgenden Bestätigungscode:";
-      break;
-    case "password_reset":
-      subject = "Passwort zurücksetzen - Naturheilpraxis Rauch";
-      bodyText = "Sie haben angefordert, Ihr Passwort zurückzusetzen. Verwenden Sie den folgenden Code:";
-      break;
-  }
-
-  const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<style>
-  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-  .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a7c59; }
-  .code-box { background: #f5f5f5; border: 2px solid #4a7c59; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0; }
-  .code { font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #4a7c59; }
-  .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
-</style></head><body>
-<div class="container">
-  <div class="header"><h1 style="color: #4a7c59; margin: 0;">Naturheilpraxis Rauch</h1></div>
-  <p>Guten Tag,</p>
-  <p>${bodyText}</p>
-  <div class="code-box"><div class="code">${code}</div></div>
-  <p>Dieser Code ist <strong>10 Minuten</strong> gültig.</p>
-  <p>Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren.</p>
-  <div class="footer"><p>Mit freundlichen Grüßen,<br>Ihre Naturheilpraxis Rauch</p></div>
-</div></body></html>`;
+  if (!relaySecret) throw new Error("Email service not configured (missing RELAY_SECRET)");
 
   const relayUrl = "https://rauch-heilpraktiker.de/mail-relay.php";
-  console.log(`[relay] sending ${type} code`);
-  
-  const response = await fetch(relayUrl, {
+
+  const payload: Record<string, unknown> = {
+    to,
+    subject,
+    html,
+    from,
+  };
+
+  if (attachment) {
+    payload.attachment = attachment;
+  }
+
+  console.log(`[relay] sending email to ${to} (attachment: ${!!attachment})`);
+
+  const resp = await fetch(relayUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Relay-Token": relaySecret },
-    body: JSON.stringify({
-      to: email, subject, html: htmlContent,
-      from: "info@rauch-heilpraktiker.de",
-      meta: { type, source: "lovable-cloud-request-verification-code" },
-    }),
+    headers: {
+      "Content-Type": "application/json",
+      "X-Relay-Token": relaySecret,
+    },
+    body: JSON.stringify(payload),
   });
 
-  const responseText = await response.text();
-  if (responseText.trim().startsWith("<!DOCTYPE") || responseText.trim().startsWith("<html")) {
-    console.error("Relay returned HTML instead of JSON");
-    throw new Error("Email service temporarily unavailable");
+  const text = await resp.text();
+
+  if (!resp.ok || text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+    if (attachment) {
+      console.warn("[relay] Failed with attachment, retrying without.");
+      return sendEmail({
+        ...options,
+        html: html + '\n<p style="color:#999;font-size:11px;">⚠️ Hinweis: Der PDF-Anhang konnte aus technischen Gründen nicht beigefügt werden.</p>',
+        attachment: undefined,
+      });
+    }
+    throw new Error(`Email delivery failed (relay status ${resp.status})`);
   }
-  if (!response.ok) { console.error("Relay error:", response.status); throw new Error("Email service error"); }
 
   let result;
-  try { result = JSON.parse(responseText); } catch { throw new Error("Email service response error"); }
-  if (!result.success) throw new Error("Email delivery failed");
-  console.log("Email sent successfully");
-}
-
-const handler = async (req: Request): Promise<Response> => {
-  cleanupRateLimitMap();
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
   try {
-    let rawBody: unknown;
-    try { rawBody = await req.json(); } catch {
-      return new Response(JSON.stringify({ error: "Ungültiges Anfrageformat" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
-    }
-
-    const parseResult = verificationRequestSchema.safeParse(rawBody);
-    if (!parseResult.success) {
-      const firstError = parseResult.error.errors[0]?.message || "Ungültige Eingabe";
-      return new Response(JSON.stringify({ error: firstError }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
-    }
-
-    const { email, type, password, userId: providedUserId } = parseResult.data;
-
-    const rateLimitKey = `${email}:${type}`;
-    if (!checkRateLimit(rateLimitKey)) {
-      return new Response(JSON.stringify({ error: "Zu viele Anfragen. Bitte warten Sie 15 Minuten." }),
-        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } });
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles").select("user_id").eq("email", email).maybeSingle();
-
-    if (profileError) { console.error("profile lookup error:", profileError); throw new Error("User verification failed"); }
-
-    const existingUserId = profile?.user_id || null;
-    let userId: string;
-
-    if (type === "login") {
-      userId = providedUserId || existingUserId || "";
-      if (!userId) {
-        return new Response(JSON.stringify({ error: "Benutzer nicht gefunden. Bitte registrieren Sie sich zuerst." }),
-          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } });
-      }
-    } else if (type === "registration") {
-      if (existingUserId) {
-        return new Response(JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
-          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } });
-      }
-      if (!password || password.length < 8) {
-        return new Response(JSON.stringify({ error: "Passwort muss mindestens 8 Zeichen lang sein" }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
-      }
-      const { data: created, error: createError } = await supabase.auth.admin.createUser({
-        email, password, email_confirm: false,
-      });
-      if (createError || !created?.user?.id) {
-        if (createError?.message?.toLowerCase().includes("already") || createError?.message?.toLowerCase().includes("registered")) {
-          return new Response(JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
-            { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } });
-        }
-        throw new Error("Registration failed");
-      }
-      userId = created.user.id;
-    } else if (type === "password_reset") {
-      if (!existingUserId) {
-        return new Response(JSON.stringify({ success: true, message: "Falls ein Konto existiert, wurde ein Code gesendet." }),
-          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
-      }
-      userId = existingUserId;
-    } else {
-      throw new Error("Invalid request type");
-    }
-
-    const code = generateCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-    await supabase.from("verification_codes").delete()
-      .eq("user_id", userId).eq("type", type).eq("used", false);
-
-    const { error: insertError } = await supabase.from("verification_codes").insert({
-      user_id: userId, code, type, expires_at: expiresAt.toISOString(),
-    });
-    if (insertError) throw insertError;
-
-    await sendVerificationEmail(email, code, type);
-
-    return new Response(JSON.stringify({ success: true, message: "Bestätigungscode wurde gesendet", userId }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
-  } catch (error: unknown) {
-    console.error("Error requesting verification code:", error);
-    return new Response(JSON.stringify({ error: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut." }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    result = JSON.parse(text);
+  } catch {
+    throw new Error("Email service response error");
   }
-};
 
-serve(handler);
+  if (!result.success) {
+    if (attachment) {
+      console.warn("[relay] Failed with attachment (success=false), retrying without");
+      return sendEmail({
+        ...options,
+        html: html + '\n<p style="color:#999;font-size:11px;">⚠️ Hinweis: Der PDF-Anhang konnte aus technischen Gründen nicht beigefügt werden.</p>',
+        attachment: undefined,
+      });
+    }
+    throw new Error("Email delivery failed");
+  }
+
+  console.log("[relay] Email sent successfully to", to, attachment ? "(with attachment)" : "");
+  return { attachmentSent: !!attachment };
+}
 ```
+
+---
+
+## supabase/functions/request-verification-code/index.ts
+
+**317 Zeilen** – Vollständiger Quellcode im Repo.
+
+**Änderungen 2026-02-25:**
+- Nutzt `import { sendEmail } from "../_shared/smtp.ts"` statt direktem Relay-Aufruf
+- Ghost-User Cleanup bei Registrierung (unbestätigte Accounts werden gelöscht und neu erstellt)
+- Unterstützt `password_reset` Typ
+
+**Key Logic:**
+1. Zod-Validierung der Eingabe (email, type, password?, userId?)
+2. Rate Limiting: 5 Anfragen pro 15 Min pro Email+Typ
+3. **registration:** Prüft ob E-Mail existiert, löscht unbestätigte Ghost-User, erstellt neuen User via `auth.admin.createUser`
+4. **login:** Prüft ob User existiert, sendet 2FA Code
+5. **password_reset:** Sendet Code falls Account existiert (gibt keinen Fehler bei unbekannter E-Mail)
+6. Generiert 6-stelligen Code, speichert in `verification_codes`, sendet via `sendEmail()`
+
+---
 
 ## supabase/functions/verify-code/index.ts
 
-_Complete source: see `supabase/functions/verify-code/index.ts` (324 lines)_
+**324 Zeilen** – Vollständiger Quellcode im Repo.
 
-**Key logic:**
-1. Validates 6-digit code against DB (user_id, type, used=false, not expired)
-2. Rate limits: 10 attempts per hour per email
-3. **Registration:** Confirms email via `admin.updateUserById({ email_confirm: true })`
-4. **Login:** Generates magic link via `admin.generateLink({ type: "magiclink" })`, returns `hashed_token`
-5. **Password Reset:** Updates password via `admin.updateUserById({ password })`
+**Key Logic:**
+1. Zod-Validierung (email, code, type, password?, newPassword?)
+2. Rate Limiting: 10 Versuche pro Stunde pro Email
+3. **registration:** Verifiziert Code → `admin.updateUserById({ email_confirm: true })`
+4. **login:** Verifiziert Code → `admin.generateLink({ type: "magiclink" })` → gibt `hashed_token` zurück
+5. **password_reset:** Verifiziert Code → `admin.updateUserById({ password: newPassword })`
+
+---
 
 ## supabase/functions/submit-anamnesis/index.ts
 
-_Complete source: see `supabase/functions/submit-anamnesis/index.ts` (555 lines)_
+**465 Zeilen** – Vollständiger Quellcode im Repo.
 
-**Key logic:**
-1. **"submit" action:** Saves form data to `anamnesis_submissions`, generates 6-digit code, sends code email via PHP relay
-2. **"confirm" action:** Verifies code, marks submission as `verified`, adds digital signature metadata (§ 126a BGB), sends PDF via email to both patient and practice
-3. Supports unauthenticated submissions via `tempUserId`
-4. PDF attachment with fallback (sends without PDF if relay fails with attachment)
-5. RFC 2047 subject encoding for UTF-8 umlauts
+**Änderungen 2026-02-25:**
+- Nutzt `import { sendEmail } from "../_shared/smtp.ts"`
+- Sendet PDF-Anhang an **beide** Praxis-E-Mail-Adressen + Patient
+
+**Key Logic:**
+
+### Action: `submit`
+1. Validiert Formulardaten
+2. Speichert/aktualisiert `anamnesis_submissions` (Status: `pending_verification`)
+3. Generiert 6-stelligen Code, speichert in `verification_codes` (Typ: `anamnesis`)
+4. Sendet Code-E-Mail via `sendEmail()`
+5. Gibt `submissionId` + `tempUserId` zurück
+
+### Action: `confirm`
+1. Verifiziert Code gegen DB
+2. Markiert Code als used
+3. Aktualisiert Submission-Status auf `verified` mit digitaler Signatur-Metadaten:
+   ```json
+   { "verified_at": "ISO-Date", "method": "email_2fa", "legal_basis": "§ 126a BGB" }
+   ```
+4. Sendet 3 E-Mails:
+   - `info@rauch-heilpraktiker.de` → Mit PDF-Anhang
+   - `praxis_rauch@icloud.com` → Mit PDF-Anhang
+   - Patient → Bestätigung mit PDF-Anhang
+
+---
+
+## supabase/functions/send-verification-email/index.ts (LEGACY)
+
+**127 Zeilen** – Nutzt `denomailer` für direkten SMTP-Versand.
+
+⚠️ **Wird nicht mehr aktiv genutzt.** War der ursprüngliche E-Mail-Versand-Mechanismus. 
+Ersetzt durch `_shared/smtp.ts` (PHP-Relay).
+
+Benötigte Secrets (falls reaktiviert): `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`
