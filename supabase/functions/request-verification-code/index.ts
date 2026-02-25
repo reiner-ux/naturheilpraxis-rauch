@@ -193,13 +193,6 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
     } else if (type === "registration") {
-      if (existingUserId) {
-        return new Response(
-          JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
-          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-
       if (!password || password.length < 8) {
         return new Response(
           JSON.stringify({ error: "Passwort muss mindestens 8 Zeichen lang sein" }),
@@ -207,25 +200,63 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      const { data: created, error: createError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: false,
-      });
-
-      if (createError || !created?.user?.id) {
-        console.error("createUser error:", createError);
-        if (createError?.message?.toLowerCase().includes("already") || 
-            createError?.message?.toLowerCase().includes("registered")) {
+      // Check if a confirmed user already exists (has profile = fully registered)
+      if (existingUserId) {
+        // Check if the auth user's email is confirmed
+        const { data: authUser } = await supabase.auth.admin.getUserById(existingUserId);
+        if (authUser?.user?.email_confirmed_at) {
           return new Response(
             JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
             { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
           );
         }
+        // Unconfirmed user with profile – clean up and re-create
+        console.log(`Cleaning up unconfirmed user ${existingUserId} for re-registration`);
+        await supabase.from("verification_codes").delete().eq("user_id", existingUserId);
+        await supabase.from("profiles").delete().eq("user_id", existingUserId);
+        await supabase.from("user_roles").delete().eq("user_id", existingUserId);
+        await supabase.auth.admin.deleteUser(existingUserId);
+      }
+
+      // Try to create user
+      let createResult = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: false,
+      });
+
+      // If user exists in auth but not in profiles (ghost account), clean up and retry
+      if (createResult.error && (createResult.error.message?.toLowerCase().includes("already") || 
+          createResult.error.message?.toLowerCase().includes("registered"))) {
+        console.log("Ghost auth user detected, attempting cleanup...");
+        // List users by email to find the ghost
+        const { data: listData } = await supabase.auth.admin.listUsers();
+        const ghostUser = listData?.users?.find(u => u.email === email);
+        if (ghostUser && !ghostUser.email_confirmed_at) {
+          await supabase.from("verification_codes").delete().eq("user_id", ghostUser.id);
+          await supabase.from("profiles").delete().eq("user_id", ghostUser.id);
+          await supabase.from("user_roles").delete().eq("user_id", ghostUser.id);
+          await supabase.auth.admin.deleteUser(ghostUser.id);
+          // Retry creation
+          createResult = await supabase.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: false,
+          });
+        } else if (ghostUser?.email_confirmed_at) {
+          return new Response(
+            JSON.stringify({ error: "Diese E-Mail-Adresse ist bereits registriert." }),
+            { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      }
+
+      if (createResult.error || !createResult.data?.user?.id) {
+        console.error("createUser error:", createResult.error);
         throw new Error("Registration failed");
       }
 
-      userId = created.user.id;
+      userId = createResult.data.user.id;
     } else if (type === "password_reset") {
       if (!existingUserId) {
         return new Response(
