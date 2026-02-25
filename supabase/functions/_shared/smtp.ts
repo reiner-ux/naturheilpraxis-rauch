@@ -34,7 +34,7 @@ function encodeSubjectRfc2047(subject: string): string {
 export async function sendEmail(
   options: SendEmailOptions
 ): Promise<{ attachmentSent: boolean }> {
-  const { to, subject, html, from = "noreply@rauch-heilpraktiker.de", attachment } = options;
+  const { to, subject, html, from = "info@rauch-heilpraktiker.de", attachment } = options;
 
   const relaySecret = Deno.env.get("RELAY_SECRET");
   if (!relaySecret) throw new Error("Email service not configured (missing RELAY_SECRET)");
@@ -43,7 +43,7 @@ export async function sendEmail(
 
   const payload: Record<string, unknown> = {
     to,
-    subject: encodeSubjectRfc2047(subject),
+    subject, // Send subject as plain text (RFC 2047 encoding is done by PHP relay if needed)
     html,
     from,
   };
