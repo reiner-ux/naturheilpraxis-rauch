@@ -1,9 +1,9 @@
 <?php
 /**
- * E-Mail Relay Endpoint für Naturheilpraxis Rauch - VERSION 3 (SMTP Auth)
+ * E-Mail Relay Endpoint für Naturheilpraxis Rauch - VERSION 3.1 (QMail SMTP Auth)
  * 
- * ÄNDERUNG: Verwendet authentifiziertes SMTP statt mail(), da Plesk/QMail
- * den Systembenutzer vom Sendmail-Zugriff ausschließt.
+ * Optimiert für Plesk + QMail mit aktiviertem SMTP-Service auf Port 587.
+ * Verwendet authentifiziertes SMTP via fsockopen mit STARTTLS.
  * 
  * INSTALLATION:
  * 1. Diese Datei auf den Server kopieren nach:
@@ -12,7 +12,7 @@
  * 3. Alte mail-relay.php vorher sichern (umbenennen in mail-relay.php.bak)
  */
 
-$RELAY_VERSION = '2026-02-25-v3-smtp';
+$RELAY_VERSION = '2026-02-26-v3.1-qmail';
 
 // CORS Headers
 header('Content-Type: application/json');
@@ -44,12 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // ============================================
 $RELAY_SECRET = '998a476a-cf1c-7443-ea47-3e329d70e934';
 
-// SMTP-Zugangsdaten (dieselben wie im Plesk-Postfach)
-$SMTP_HOST  = 'localhost';    // oder 'mail.rauch-heilpraktiker.de'
-$SMTP_PORT  = 587;            // oder 25 oder 465 (SSL)
+// SMTP-Zugangsdaten (Plesk-Postfach, QMail SMTP auf Port 587)
+$SMTP_HOST  = 'localhost';                 // QMail lauscht auf allen IPs, localhost ist korrekt
+$SMTP_PORT  = 587;                         // Submission-Port (Plesk QMail SMTP-Service)
 $SMTP_USER  = 'info@rauch-heilpraktiker.de';
-$SMTP_PASS  = '';             // <-- HIER DAS PASSWORT DES POSTFACHS EINTRAGEN
-$SMTP_SECURE = false;         // true für SSL/TLS auf Port 465
+$SMTP_PASS  = '';                          // <-- HIER DAS POSTFACH-PASSWORT EINTRAGEN
+$SMTP_SECURE = false;                      // false = STARTTLS wird automatisch verhandelt auf 587
 
 // Token validieren
 $token = $_SERVER['HTTP_X_RELAY_TOKEN'] ?? '';
@@ -102,7 +102,7 @@ relay_log("Accepted: to=$to from=$from subject=$subject attachment=$attachInfo")
 $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
 
 // ============================================
-// SMTP-Versand via fsockopen (kein mail() nötig)
+// SMTP-Versand via fsockopen (QMail-kompatibel)
 // ============================================
 function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $body) {
     $errors = [];
@@ -110,19 +110,25 @@ function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $b
     $prefix = $secure ? 'ssl://' : '';
     $timeout = 30;
     
-    relay_log("SMTP connecting to {$prefix}{$host}:{$port}");
+    relay_log("SMTP connecting to {$prefix}{$host}:{$port} (QMail)");
     
     $sock = @fsockopen($prefix . $host, $port, $errno, $errstr, $timeout);
     if (!$sock) {
         return "Connection failed: $errstr ($errno)";
     }
     
-    // Helper: read response
+    // Timeouts für Socket-Reads setzen (wichtig für QMail)
+    stream_set_timeout($sock, 30);
+    
+    // Helper: read response (QMail-kompatibel, mit Timeout-Schutz)
     $readResponse = function() use ($sock) {
         $response = '';
         while ($line = fgets($sock, 512)) {
             $response .= $line;
+            // Multiline response endet wenn 4. Zeichen ein Leerzeichen ist
             if (isset($line[3]) && $line[3] === ' ') break;
+            // Einzeilige Antwort ohne Continuation
+            if (strlen($line) < 4) break;
         }
         return $response;
     };
@@ -132,8 +138,9 @@ function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $b
         fwrite($sock, $cmd . "\r\n");
         $resp = $readResponse();
         $code = (int)substr($resp, 0, 3);
+        relay_log("SMTP >> " . trim($cmd) . " → $code");
         if ($code !== $expectedCode) {
-            $errors[] = "CMD '$cmd' expected $expectedCode got $code: " . trim($resp);
+            $errors[] = "CMD '" . (strpos($cmd, 'AUTH') === 0 ? 'AUTH...' : $cmd) . "' expected $expectedCode got $code: " . trim($resp);
             return false;
         }
         return $resp;
@@ -143,29 +150,102 @@ function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $b
     $greeting = $readResponse();
     relay_log("SMTP greeting: " . trim($greeting));
     
-    // EHLO
-    $ehloResp = $sendCmd("EHLO " . gethostname(), 250);
-    if (!$ehloResp) { fclose($sock); return implode('; ', $errors); }
-    
-    // STARTTLS if port 587 and not already SSL
-    if (!$secure && $port == 587 && stripos($ehloResp, 'STARTTLS') !== false) {
-        $sendCmd("STARTTLS", 220);
-        if (!stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT)) {
-            fclose($sock);
-            return "STARTTLS crypto handshake failed";
-        }
-        // Re-EHLO after STARTTLS
-        $sendCmd("EHLO " . gethostname(), 250);
-    }
-    
-    // AUTH LOGIN
-    $sendCmd("AUTH LOGIN", 334);
-    $sendCmd(base64_encode($user), 334);
-    $authResp = $sendCmd(base64_encode($pass), 235);
-    if (!$authResp) {
+    // Prüfe ob Greeting gültig (2xx)
+    $greetCode = (int)substr($greeting, 0, 3);
+    if ($greetCode < 200 || $greetCode >= 300) {
         fclose($sock);
-        return "AUTH failed: " . implode('; ', $errors);
+        return "Bad greeting ($greetCode): " . trim($greeting);
     }
+    
+    // EHLO mit dem eigenen Domain-Namen (QMail bevorzugt FQDN)
+    $ehloHost = 'rauch-heilpraktiker.de';
+    $ehloResp = $sendCmd("EHLO $ehloHost", 250);
+    if (!$ehloResp) {
+        // Fallback: HELO statt EHLO (ältere QMail-Versionen)
+        relay_log("EHLO failed, trying HELO");
+        $errors = [];
+        $heloResp = $sendCmd("HELO $ehloHost", 250);
+        if (!$heloResp) { fclose($sock); return "HELO failed: " . implode('; ', $errors); }
+        $ehloResp = $heloResp;
+    }
+    
+    // STARTTLS wenn verfügbar (Port 587 Standard bei QMail Submission)
+    if (!$secure && $port == 587 && stripos($ehloResp, 'STARTTLS') !== false) {
+        relay_log("STARTTLS initiating...");
+        $starttlsResp = $sendCmd("STARTTLS", 220);
+        if (!$starttlsResp) {
+            // Manche QMail-Konfigurationen unterstützen kein STARTTLS – weitermachen ohne
+            relay_log("STARTTLS not available, continuing without encryption");
+            $errors = [];
+        } else {
+            // TLS-Handshake – breites Spektrum für maximale Kompatibilität
+            $cryptoMethod = STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+            if (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT')) {
+                $cryptoMethod |= STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT;
+            }
+            $cryptoOk = @stream_socket_enable_crypto($sock, true, $cryptoMethod);
+            if (!$cryptoOk) {
+                // Fallback: auch TLSv1.1 versuchen (ältere Plesk-Installationen)
+                relay_log("TLS 1.2/1.3 failed, trying broader crypto methods");
+                $cryptoOk = @stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+                if (!$cryptoOk) {
+                    fclose($sock);
+                    return "STARTTLS crypto handshake failed";
+                }
+            }
+            relay_log("STARTTLS OK");
+            // Re-EHLO nach STARTTLS (Pflicht laut RFC)
+            $ehloResp = $sendCmd("EHLO $ehloHost", 250);
+            if (!$ehloResp) {
+                $errors = [];
+                $sendCmd("HELO $ehloHost", 250);
+            }
+        }
+    } elseif (!$secure && $port == 587) {
+        relay_log("STARTTLS not advertised by server, continuing unencrypted");
+    }
+    
+    // ============================================
+    // AUTH – QMail unterstützt typischerweise PLAIN und LOGIN
+    // Wir versuchen zuerst AUTH PLAIN, dann AUTH LOGIN als Fallback
+    // ============================================
+    $authenticated = false;
+    
+    // Methode 1: AUTH PLAIN (von QMail bevorzugt)
+    if (stripos($ehloResp, 'AUTH') !== false && stripos($ehloResp, 'PLAIN') !== false) {
+        relay_log("Trying AUTH PLAIN");
+        // AUTH PLAIN: base64("\0user\0pass")
+        $authString = base64_encode("\0" . $user . "\0" . $pass);
+        $authResp = $sendCmd("AUTH PLAIN $authString", 235);
+        if ($authResp) {
+            $authenticated = true;
+            relay_log("AUTH PLAIN OK");
+        } else {
+            relay_log("AUTH PLAIN failed, trying LOGIN");
+            $errors = [];
+        }
+    }
+    
+    // Methode 2: AUTH LOGIN (Fallback)
+    if (!$authenticated) {
+        relay_log("Trying AUTH LOGIN");
+        $loginResp = $sendCmd("AUTH LOGIN", 334);
+        if ($loginResp) {
+            $userResp = $sendCmd(base64_encode($user), 334);
+            if ($userResp) {
+                $passResp = $sendCmd(base64_encode($pass), 235);
+                if ($passResp) {
+                    $authenticated = true;
+                    relay_log("AUTH LOGIN OK");
+                }
+            }
+        }
+        if (!$authenticated) {
+            fclose($sock);
+            return "AUTH failed (PLAIN+LOGIN): " . implode('; ', $errors);
+        }
+    }
+    
     relay_log("SMTP authenticated as $user");
     
     // MAIL FROM
@@ -183,7 +263,7 @@ function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $b
     $message = str_replace("\r\n.", "\r\n..", $message);
     $fullMessage = $message . "\r\n.\r\n";
     
-    // Chunked fwrite to ensure all data is sent (critical for attachments)
+    // Chunked fwrite in 8KB Blöcken (kritisch für große PDF-Anhänge)
     $totalLen = strlen($fullMessage);
     $written = 0;
     $chunkSize = 8192;
@@ -224,7 +304,7 @@ if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename
     $hdrs .= "MIME-Version: 1.0\r\n";
     $hdrs .= "Content-Type: multipart/mixed; boundary=\"$boundary\"\r\n";
     $hdrs .= "Reply-To: $from\r\n";
-    $hdrs .= "X-Mailer: NHP-Relay/3.0";
+    $hdrs .= "X-Mailer: NHP-Relay/3.1-QMail";
     
     $body  = "--$boundary\r\n";
     $body .= "Content-Type: text/html; charset=UTF-8\r\n";
@@ -249,7 +329,7 @@ if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename
     $hdrs .= "Content-Type: text/html; charset=UTF-8\r\n";
     $hdrs .= "Content-Transfer-Encoding: 8bit\r\n";
     $hdrs .= "Reply-To: $from\r\n";
-    $hdrs .= "X-Mailer: NHP-Relay/3.0";
+    $hdrs .= "X-Mailer: NHP-Relay/3.1-QMail";
     
     $body = $html;
 }
@@ -261,7 +341,7 @@ if ($result === true) {
     relay_log("SMTP OK: to=$to");
     echo json_encode([
         'success' => true,
-        'message' => 'Email sent via SMTP',
+        'message' => 'Email sent via SMTP (QMail)',
         'version' => $RELAY_VERSION,
         'has_attachment' => !empty($attachment),
     ]);
