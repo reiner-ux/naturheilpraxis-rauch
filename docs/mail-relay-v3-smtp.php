@@ -1,9 +1,13 @@
 <?php
 /**
- * E-Mail Relay Endpoint für Naturheilpraxis Rauch - VERSION 3.1 (QMail SMTP Auth)
+ * E-Mail Relay Endpoint für Naturheilpraxis Rauch - VERSION 3.2 (QMail SMTP + TLS Fix)
  * 
  * Optimiert für Plesk + QMail mit aktiviertem SMTP-Service auf Port 587.
- * Verwendet authentifiziertes SMTP via fsockopen mit STARTTLS.
+ * Verwendet authentifiziertes SMTP via stream_socket_client mit STARTTLS.
+ * 
+ * FIX v3.2: stream_socket_client statt fsockopen für TLS-Kontext (verify_peer=false),
+ *           damit STARTTLS bei IP-basierter Verbindung funktioniert.
+ *           mail()-Fallback sendet jetzt auch Multipart-MIME mit Anhang.
  * 
  * INSTALLATION:
  * 1. Diese Datei auf den Server kopieren nach:
@@ -12,7 +16,7 @@
  * 3. Alte mail-relay.php vorher sichern (umbenennen in mail-relay.php.bak)
  */
 
-$RELAY_VERSION = '2026-02-26-v3.1-qmail';
+$RELAY_VERSION = '2026-02-26-v3.2-qmail-tlsfix';
 
 // CORS Headers
 header('Content-Type: application/json');
@@ -102,7 +106,7 @@ relay_log("Accepted: to=$to from=$from subject=$subject attachment=$attachInfo")
 $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
 
 // ============================================
-// SMTP-Versand via fsockopen (QMail-kompatibel)
+// SMTP-Versand via stream_socket_client (QMail-kompatibel, TLS-Fix)
 // ============================================
 function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $body) {
     $errors = [];
@@ -110,9 +114,26 @@ function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $b
     $prefix = $secure ? 'ssl://' : '';
     $timeout = 30;
     
-    relay_log("SMTP connecting to {$prefix}{$host}:{$port} (QMail)");
+    relay_log("SMTP connecting to {$prefix}{$host}:{$port} (QMail v3.2)");
     
-    $sock = @fsockopen($prefix . $host, $port, $errno, $errstr, $timeout);
+    // stream_socket_client statt fsockopen für TLS-Kontext-Unterstützung
+    $context = stream_context_create([
+        'ssl' => [
+            'verify_peer'       => false,
+            'verify_peer_name'  => false,
+            'allow_self_signed' => true,
+        ],
+    ]);
+    
+    $sock = @stream_socket_client(
+        "{$prefix}tcp://{$host}:{$port}",
+        $errno,
+        $errstr,
+        $timeout,
+        STREAM_CLIENT_CONNECT,
+        $context
+    );
+    
     if (!$sock) {
         return "Connection failed: $errstr ($errno)";
     }
@@ -178,27 +199,81 @@ function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $b
             relay_log("STARTTLS not available, continuing without encryption");
             $errors = [];
         } else {
-            // TLS-Handshake – breites Spektrum für maximale Kompatibilität
+            // TLS-Handshake MIT stream_context (verify_peer=false für IP-basierte Verbindung)
+            // Das ist der entscheidende Fix: stream_socket_enable_crypto nutzt jetzt den Kontext
             $cryptoMethod = STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
             if (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT')) {
                 $cryptoMethod |= STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT;
             }
             $cryptoOk = @stream_socket_enable_crypto($sock, true, $cryptoMethod);
             if (!$cryptoOk) {
-                // Fallback: auch TLSv1.1 versuchen (ältere Plesk-Installationen)
+                // Fallback: breitere Methoden versuchen
                 relay_log("TLS 1.2/1.3 failed, trying broader crypto methods");
                 $cryptoOk = @stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
                 if (!$cryptoOk) {
+                    // Letzter Versuch: TLS komplett überspringen, unverschlüsselt weiter
+                    relay_log("STARTTLS crypto failed – continuing WITHOUT encryption (local connection)");
+                    // Socket schließen und neu verbinden OHNE STARTTLS
                     fclose($sock);
-                    return "STARTTLS crypto handshake failed";
+                    
+                    $sock = @stream_socket_client(
+                        "tcp://{$host}:{$port}",
+                        $errno,
+                        $errstr,
+                        $timeout,
+                        STREAM_CLIENT_CONNECT,
+                        $context
+                    );
+                    if (!$sock) {
+                        return "Reconnect without TLS failed: $errstr ($errno)";
+                    }
+                    stream_set_timeout($sock, 30);
+                    
+                    // Reassign closures with new $sock
+                    $readResponse = function() use ($sock) {
+                        $response = '';
+                        while ($line = fgets($sock, 512)) {
+                            $response .= $line;
+                            if (isset($line[3]) && $line[3] === ' ') break;
+                            if (strlen($line) < 4) break;
+                        }
+                        return $response;
+                    };
+                    $sendCmd = function($cmd, $expectedCode) use ($sock, $readResponse, &$errors) {
+                        fwrite($sock, $cmd . "\r\n");
+                        $resp = $readResponse();
+                        $code = (int)substr($resp, 0, 3);
+                        relay_log("SMTP >> " . trim($cmd) . " → $code");
+                        if ($code !== $expectedCode) {
+                            $errors[] = "CMD '" . (strpos($cmd, 'AUTH') === 0 ? 'AUTH...' : $cmd) . "' expected $expectedCode got $code: " . trim($resp);
+                            return false;
+                        }
+                        return $resp;
+                    };
+                    
+                    // Read greeting again
+                    $greeting = $readResponse();
+                    relay_log("SMTP reconnect greeting: " . trim($greeting));
+                    
+                    $errors = [];
+                    $ehloResp = $sendCmd("EHLO $ehloHost", 250);
+                    if (!$ehloResp) {
+                        $errors = [];
+                        $ehloResp = $sendCmd("HELO $ehloHost", 250);
+                        if (!$ehloResp) { fclose($sock); return "HELO failed on reconnect"; }
+                    }
+                    // Nicht nochmal STARTTLS versuchen!
+                    relay_log("Continuing without TLS after reconnect");
                 }
             }
-            relay_log("STARTTLS OK");
-            // Re-EHLO nach STARTTLS (Pflicht laut RFC)
-            $ehloResp = $sendCmd("EHLO $ehloHost", 250);
-            if (!$ehloResp) {
-                $errors = [];
-                $sendCmd("HELO $ehloHost", 250);
+            if ($cryptoOk) {
+                relay_log("STARTTLS OK");
+                // Re-EHLO nach STARTTLS (Pflicht laut RFC)
+                $ehloResp = $sendCmd("EHLO $ehloHost", 250);
+                if (!$ehloResp) {
+                    $errors = [];
+                    $sendCmd("HELO $ehloHost", 250);
+                }
             }
         }
     } elseif (!$secure && $port == 587) {
@@ -207,14 +282,12 @@ function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $b
     
     // ============================================
     // AUTH – QMail unterstützt typischerweise PLAIN und LOGIN
-    // Wir versuchen zuerst AUTH PLAIN, dann AUTH LOGIN als Fallback
     // ============================================
     $authenticated = false;
     
-    // Methode 1: AUTH PLAIN (von QMail bevorzugt)
+    // Methode 1: AUTH PLAIN
     if (stripos($ehloResp, 'AUTH') !== false && stripos($ehloResp, 'PLAIN') !== false) {
         relay_log("Trying AUTH PLAIN");
-        // AUTH PLAIN: base64("\0user\0pass")
         $authString = base64_encode("\0" . $user . "\0" . $pass);
         $authResp = $sendCmd("AUTH PLAIN $authString", 235);
         if ($authResp) {
@@ -304,7 +377,7 @@ if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename
     $hdrs .= "MIME-Version: 1.0\r\n";
     $hdrs .= "Content-Type: multipart/mixed; boundary=\"$boundary\"\r\n";
     $hdrs .= "Reply-To: $from\r\n";
-    $hdrs .= "X-Mailer: NHP-Relay/3.1-QMail";
+    $hdrs .= "X-Mailer: NHP-Relay/3.2-QMail-TLSfix";
     
     $body  = "--$boundary\r\n";
     $body .= "Content-Type: text/html; charset=UTF-8\r\n";
@@ -329,7 +402,7 @@ if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename
     $hdrs .= "Content-Type: text/html; charset=UTF-8\r\n";
     $hdrs .= "Content-Transfer-Encoding: 8bit\r\n";
     $hdrs .= "Reply-To: $from\r\n";
-    $hdrs .= "X-Mailer: NHP-Relay/3.1-QMail";
+    $hdrs .= "X-Mailer: NHP-Relay/3.2-QMail-TLSfix";
     
     $body = $html;
 }
@@ -338,7 +411,7 @@ if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename
 $result = smtp_send($SMTP_HOST, $SMTP_PORT, $SMTP_USER, $SMTP_PASS, $SMTP_SECURE, $from, $to, $hdrs, $body);
 
 if ($result === true) {
-    relay_log("SMTP OK: to=$to");
+    relay_log("SMTP OK: to=$to attachment=$attachInfo");
     echo json_encode([
         'success' => true,
         'message' => 'Email sent via SMTP (QMail)',
@@ -346,33 +419,105 @@ if ($result === true) {
         'has_attachment' => !empty($attachment),
     ]);
 } else {
-    // Fallback: Falls SMTP fehlschlägt, versuche mail() als letzten Ausweg
-    relay_log("SMTP FAIL: $result – trying mail() fallback");
+    // ============================================
+    // Fallback: mail() MIT Anhang-Unterstützung (v3.2 Fix!)
+    // ============================================
+    relay_log("SMTP FAIL: $result – trying mail() fallback WITH attachment support");
     
-    $mailHeaders = [
-        'MIME-Version: 1.0',
-        'Content-type: text/html; charset=UTF-8',
-        "From: Naturheilpraxis Rauch <$from>",
-        "Reply-To: $from",
-    ];
-    $mailSuccess = @mail($to, $encodedSubject, $html, implode("\r\n", $mailHeaders));
-    
-    if ($mailSuccess) {
-        relay_log("mail() fallback OK: to=$to");
-        echo json_encode([
-            'success' => true,
-            'message' => 'Email sent via mail() fallback',
-            'version' => $RELAY_VERSION,
-            'smtp_error' => $result,
-        ]);
+    if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename'])) {
+        // mail() Fallback MIT Multipart-MIME und Anhang
+        $fallbackBoundary = '----=_MailFB_' . md5(uniqid(microtime(true)));
+        
+        $mailHeaders = [
+            'MIME-Version: 1.0',
+            "Content-Type: multipart/mixed; boundary=\"$fallbackBoundary\"",
+            "From: Naturheilpraxis Rauch <$from>",
+            "Reply-To: $from",
+            "X-Mailer: NHP-Relay/3.2-QMail-Fallback",
+        ];
+        
+        $mailBody  = "--$fallbackBoundary\r\n";
+        $mailBody .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $mailBody .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+        $mailBody .= $html . "\r\n\r\n";
+        
+        $aContentType = $attachment['contentType'] ?? 'application/octet-stream';
+        $aFilename    = $attachment['filename'];
+        $mailBody .= "--$fallbackBoundary\r\n";
+        $mailBody .= "Content-Type: $aContentType; name=\"$aFilename\"\r\n";
+        $mailBody .= "Content-Disposition: attachment; filename=\"$aFilename\"\r\n";
+        $mailBody .= "Content-Transfer-Encoding: base64\r\n\r\n";
+        $mailBody .= chunk_split($attachment['base64']) . "\r\n";
+        $mailBody .= "--$fallbackBoundary--";
+        
+        $mailSuccess = @mail($to, $encodedSubject, $mailBody, implode("\r\n", $mailHeaders));
+        
+        if ($mailSuccess) {
+            relay_log("mail() fallback OK WITH attachment: to=$to filename=$aFilename");
+            echo json_encode([
+                'success' => true,
+                'message' => 'Email sent via mail() fallback with attachment',
+                'version' => $RELAY_VERSION,
+                'has_attachment' => true,
+                'smtp_error' => $result,
+            ]);
+        } else {
+            // Letzter Versuch: mail() ohne Anhang
+            relay_log("mail() with attachment failed, trying without");
+            $simpleHeaders = [
+                'MIME-Version: 1.0',
+                'Content-type: text/html; charset=UTF-8',
+                "From: Naturheilpraxis Rauch <$from>",
+                "Reply-To: $from",
+            ];
+            $mailSuccess = @mail($to, $encodedSubject, $html, implode("\r\n", $simpleHeaders));
+            if ($mailSuccess) {
+                relay_log("mail() fallback OK WITHOUT attachment: to=$to");
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Email sent via mail() fallback (no attachment)',
+                    'version' => $RELAY_VERSION,
+                    'has_attachment' => false,
+                    'smtp_error' => $result,
+                ]);
+            } else {
+                http_response_code(500);
+                relay_log("BOTH SMTP and mail() FAILED: to=$to smtp_error=$result");
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Failed to send email',
+                    'version' => $RELAY_VERSION,
+                    'smtp_error' => $result,
+                ]);
+            }
+        }
     } else {
-        http_response_code(500);
-        relay_log("BOTH SMTP and mail() FAILED: to=$to smtp_error=$result");
-        echo json_encode([
-            'success' => false,
-            'error' => 'Failed to send email',
-            'version' => $RELAY_VERSION,
-            'smtp_error' => $result,
-        ]);
+        // Einfache Mail ohne Anhang
+        $mailHeaders = [
+            'MIME-Version: 1.0',
+            'Content-type: text/html; charset=UTF-8',
+            "From: Naturheilpraxis Rauch <$from>",
+            "Reply-To: $from",
+        ];
+        $mailSuccess = @mail($to, $encodedSubject, $html, implode("\r\n", $mailHeaders));
+        
+        if ($mailSuccess) {
+            relay_log("mail() fallback OK: to=$to");
+            echo json_encode([
+                'success' => true,
+                'message' => 'Email sent via mail() fallback',
+                'version' => $RELAY_VERSION,
+                'smtp_error' => $result,
+            ]);
+        } else {
+            http_response_code(500);
+            relay_log("BOTH SMTP and mail() FAILED: to=$to smtp_error=$result");
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to send email',
+                'version' => $RELAY_VERSION,
+                'smtp_error' => $result,
+            ]);
+        }
     }
 }
