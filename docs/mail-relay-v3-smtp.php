@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $RELAY_SECRET = '998a476a-cf1c-7443-ea47-3e329d70e934';
 
 // SMTP-Zugangsdaten (Plesk-Postfach, QMail SMTP auf Port 587)
-$SMTP_HOST  = 'localhost';                 // QMail lauscht auf allen IPs, localhost ist korrekt
+$SMTP_HOST  = '185.248.141.144';           // QMail SMTP auf Server-IP (Port 587, alle IPs aktiviert)
 $SMTP_PORT  = 587;                         // Submission-Port (Plesk QMail SMTP-Service)
 $SMTP_USER  = 'info@rauch-heilpraktiker.de';
 $SMTP_PASS  = '';                          // <-- HIER DAS POSTFACH-PASSWORT EINTRAGEN
