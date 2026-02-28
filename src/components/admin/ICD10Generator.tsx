@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, Brain, FileText, Loader2, Shield, Sparkles, Copy, Check, Download } from "lucide-react";
+import { AlertTriangle, Brain, FileText, Loader2, Shield, Sparkles, Copy, Check, Download, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generateICD10Pdf } from "@/lib/icd10PdfExport";
 
@@ -39,6 +39,7 @@ const ICD10Generator = () => {
   const [icdResult, setIcdResult] = useState<ICD10Response | null>(null);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Fetch all anamnesis submissions (admin view)
   const { data: submissions, isLoading } = useQuery({
@@ -97,16 +98,63 @@ const ICD10Generator = () => {
     if (!icdResult || !selectedSubmission) return;
     const sub = submissions?.find((s) => s.id === selectedSubmission);
     const patientName = getPatientLabel(sub).split(" (")[0];
-    const submissionDate = sub ? new Date(sub.submitted_at).toLocaleDateString("de-DE") : "";
     generateICD10Pdf({
       patientName,
-      submissionDate,
+      submissionDate: sub ? new Date(sub.submitted_at).toLocaleDateString("de-DE") : "",
       codes: icdResult.icd10Codes,
       fixedCount: icdResult.fixedCount,
       aiCount: icdResult.aiCount,
       aiSummary: icdResult.aiSummary,
       language,
     });
+  };
+
+  const handleEmailReport = async () => {
+    if (!icdResult || !selectedSubmission) return;
+    setSendingEmail(true);
+    try {
+      const sub = submissions?.find((s) => s.id === selectedSubmission);
+      const patientName = getPatientLabel(sub).split(" (")[0];
+      const submissionDate = sub ? new Date(sub.submitted_at).toLocaleDateString("de-DE") : "";
+
+      const pdfBase64 = generateICD10Pdf({
+        patientName,
+        submissionDate,
+        codes: icdResult.icd10Codes,
+        fixedCount: icdResult.fixedCount,
+        aiCount: icdResult.aiCount,
+        aiSummary: icdResult.aiSummary,
+        language,
+      }, { returnBase64: true }) as string;
+
+      const { error } = await supabase.functions.invoke("send-icd10-report", {
+        body: {
+          patientName,
+          submissionDate,
+          pdfBase64,
+          aiSummary: icdResult.aiSummary,
+          codeCount: icdResult.icd10Codes.length,
+          language,
+        },
+      });
+
+      if (error) throw error;
+      toast({
+        title: t("ICD-10 Bericht versendet", "ICD-10 report sent"),
+        description: t(
+          "Der Bericht wurde an beide Praxis-Adressen gesendet.",
+          "The report was sent to both practice addresses."
+        ),
+      });
+    } catch (err: any) {
+      toast({
+        title: t("Fehler", "Error"),
+        description: err.message || t("E-Mail-Versand fehlgeschlagen", "Email sending failed"),
+        variant: "destructive",
+      });
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   const getPatientLabel = (sub: any) => {
@@ -202,6 +250,10 @@ const ICD10Generator = () => {
                   <Button variant="outline" size="sm" onClick={handlePdfExport} className="gap-1">
                     <Download className="w-3 h-3" />
                     {t("PDF", "PDF")}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleEmailReport} disabled={sendingEmail} className="gap-1">
+                    {sendingEmail ? <Loader2 className="w-3 h-3 animate-spin" /> : <Mail className="w-3 h-3" />}
+                    {t("E-Mail", "Email")}
                   </Button>
                 </div>
               </div>
