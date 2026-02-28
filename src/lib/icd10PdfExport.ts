@@ -19,7 +19,7 @@ interface ICD10PdfData {
   language: "de" | "en";
 }
 
-export function generateICD10Pdf(data: ICD10PdfData) {
+export function generateICD10Pdf(data: ICD10PdfData, options?: { returnBase64?: boolean }): string | void {
   const { language: lang, codes, patientName, submissionDate, fixedCount, aiCount, aiSummary } = data;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -223,8 +223,13 @@ export function generateICD10Pdf(data: ICD10PdfData) {
     );
   }
 
-  // Save
+  // Save or return base64
   const safePatientName = patientName.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, "").replace(/\s+/g, "_");
   const dateStr = new Date().toISOString().split("T")[0];
+
+  if (options?.returnBase64) {
+    return doc.output("datauristring").split(",")[1];
+  }
+
   doc.save(`ICD10_${safePatientName}_${dateStr}.pdf`);
 }
