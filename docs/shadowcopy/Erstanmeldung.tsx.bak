@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Shield,
   FileText,
+  Activity,
   Check,
   ChevronRight,
   ChevronLeft,
@@ -23,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import IAAForm from "@/components/iaa/IAAForm";
+import { useToast } from "@/hooks/use-toast";
 
 interface StepConfig {
   id: string;
@@ -38,17 +41,25 @@ const steps: StepConfig[] = [
     id: "overview",
     titleDe: "Übersicht",
     titleEn: "Overview",
-    descDe: "3 Dokumente für Ihre Erstanmeldung",
-    descEn: "3 documents for your first registration",
+    descDe: "4 Dokumente für Ihre Erstanmeldung",
+    descEn: "4 documents for your first registration",
     icon: Info,
   },
   {
     id: "anamnesebogen",
     titleDe: "Anamnesebogen",
     titleEn: "Medical History",
-    descDe: "Umfassende medizinische Vorgeschichte inkl. IAA",
-    descEn: "Comprehensive medical history incl. IAA",
+    descDe: "Umfassende medizinische Vorgeschichte",
+    descEn: "Comprehensive medical history",
     icon: ClipboardList,
+  },
+  {
+    id: "iaa",
+    titleDe: "IAA-Fragebogen",
+    titleEn: "IAA Questionnaire",
+    descDe: "Individuelle Austestung (Trikombin)",
+    descEn: "Individual testing (Trikombin)",
+    icon: Activity,
   },
   {
     id: "patientenaufklaerung",
@@ -72,9 +83,12 @@ export default function Erstanmeldung() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [datenschutzAccepted, setDatenschutzAccepted] = useState(false);
   const [aufklaerungAccepted, setAufklaerungAccepted] = useState(false);
+  const [iaaData, setIaaData] = useState<Record<string, number>>({});
+  const [iaaSubmitting, setIaaSubmitting] = useState(false);
   const [terminConfirmed, setTerminConfirmed] = useState(false);
 
   // Check existing anamnesis submission
@@ -88,6 +102,25 @@ export default function Erstanmeldung() {
         .eq("user_id", user.id)
         .order("submitted_at", { ascending: false })
         .limit(1);
+      return data?.[0] ?? null;
+    },
+    enabled: !!user,
+  });
+
+  // Check existing IAA submission
+  const { data: iaaStatus } = useQuery({
+    queryKey: ["iaa-status", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("iaa_submissions")
+        .select("id, status, form_data")
+        .eq("user_id", user.id)
+        .order("submitted_at", { ascending: false })
+        .limit(1);
+      if (data?.[0]?.form_data) {
+        setIaaData(data[0].form_data as Record<string, number>);
+      }
       return data?.[0] ?? null;
     },
     enabled: !!user,
@@ -108,16 +141,46 @@ export default function Erstanmeldung() {
   });
 
   const anamnesisComplete = anamnesisStatus?.status === "verified";
+  const iaaComplete = iaaStatus?.status === "submitted";
 
   const stepCompletion = [
     true, // overview always accessible
     anamnesisComplete,
+    iaaComplete,
     aufklaerungAccepted,
     datenschutzAccepted,
   ];
 
-  const completedCount = [anamnesisComplete, aufklaerungAccepted, datenschutzAccepted].filter(Boolean).length;
-  const progressPercent = (completedCount / 3) * 100;
+  const completedCount = [anamnesisComplete, iaaComplete, aufklaerungAccepted, datenschutzAccepted].filter(Boolean).length;
+  const progressPercent = (completedCount / 4) * 100;
+
+  const handleIAASubmit = async () => {
+    if (!user) return;
+    setIaaSubmitting(true);
+    try {
+      const existing = iaaStatus?.id;
+      if (existing) {
+        await supabase
+          .from("iaa_submissions")
+          .update({ form_data: iaaData as any, status: "submitted", updated_at: new Date().toISOString() })
+          .eq("id", existing);
+      } else {
+        await supabase.from("iaa_submissions").insert([{
+          user_id: user.id,
+          form_data: iaaData as any,
+          status: "submitted",
+        }]);
+      }
+      toast({
+        title: t("IAA-Fragebogen gespeichert", "IAA questionnaire saved"),
+        description: t("Vielen Dank für das Ausfüllen!", "Thank you for completing!"),
+      });
+    } catch {
+      toast({ title: t("Fehler", "Error"), variant: "destructive" });
+    } finally {
+      setIaaSubmitting(false);
+    }
+  };
 
   const step = steps[currentStep];
 
@@ -132,15 +195,15 @@ export default function Erstanmeldung() {
             </h1>
             <p className="text-muted-foreground">
               {t(
-                "Bitte füllen Sie die folgenden 3 Dokumente für Ihre Erstanmeldung aus.",
-                "Please complete the following 3 documents for your first registration."
+                "Bitte füllen Sie die folgenden 4 Dokumente für Ihre Erstanmeldung aus.",
+                "Please complete the following 4 documents for your first registration."
               )}
             </p>
             {terminConfirmed && (
               <div className="mt-6 mx-auto max-w-md">
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                   <span>{t("Fortschritt", "Progress")}</span>
-                  <span>{completedCount}/3</span>
+                  <span>{completedCount}/4</span>
                 </div>
                 <Progress value={progressPercent} className="h-2" />
               </div>
@@ -261,8 +324,8 @@ export default function Erstanmeldung() {
                       </h2>
                       <p className="text-muted-foreground leading-relaxed">
                         {t(
-                          "Für Ihre Erstanmeldung in der Naturheilpraxis Peter Rauch sind 3 Dokumente erforderlich. Der Anamnesebogen enthält bereits den IAA-Fragebogen (Individuelle Austestung und Analyse). Bitte nehmen Sie sich ausreichend Zeit für das sorgfältige Ausfüllen.",
-                          "For your first registration at the Naturopathic Practice Peter Rauch, 3 documents are required. The medical history form already includes the IAA questionnaire (Individual Testing and Analysis). Please take sufficient time to fill them out carefully."
+                          "Für Ihre Erstanmeldung in der Naturheilpraxis Peter Rauch sind 4 Dokumente erforderlich. Bitte nehmen Sie sich ausreichend Zeit für das sorgfältige Ausfüllen – Ihre Angaben bilden die Grundlage für eine optimale Behandlung.",
+                          "For your first registration at the Naturopathic Practice Peter Rauch, 4 documents are required. Please take sufficient time to fill them out carefully – your information forms the basis for optimal treatment."
                         )}
                       </p>
                     </div>
@@ -325,7 +388,7 @@ export default function Erstanmeldung() {
             </div>
           )}
 
-          {/* Step 1: Anamnesebogen (includes IAA as section XXIV) */}
+          {/* Step 1: Anamnesebogen */}
           {currentStep === 1 && (
             <div className="space-y-6">
               <Card className="shadow-card">
@@ -336,8 +399,8 @@ export default function Erstanmeldung() {
                   </h2>
                   <p className="text-muted-foreground leading-relaxed max-w-lg mx-auto">
                     {t(
-                      "Der Anamnesebogen ist ein umfassendes medizinisches Formular mit 25 Sektionen, inklusive dem IAA-Fragebogen (Individuelle Austestung und Analyse für das Trikombin-Gerät). Bitte nehmen Sie sich ca. 30-45 Minuten Zeit.",
-                      "The medical history form is a comprehensive medical form with 25 sections, including the IAA questionnaire (Individual Testing and Analysis for the Trikombin device). Please allow approx. 30-45 minutes."
+                      "Der Anamnesebogen ist ein umfassendes medizinisches Formular mit 25 Sektionen. Bitte nehmen Sie sich ca. 30-45 Minuten Zeit für das sorgfältige Ausfüllen.",
+                      "The medical history form is a comprehensive medical form with 25 sections. Please allow approx. 30-45 minutes for careful completion."
                     )}
                   </p>
                   {anamnesisComplete ? (
@@ -362,8 +425,37 @@ export default function Erstanmeldung() {
             </div>
           )}
 
-          {/* Step 2: Patientenaufklärung */}
+          {/* Step 2: IAA */}
           {currentStep === 2 && (
+            <div className="space-y-6">
+              <IAAForm data={iaaData} onChange={setIaaData} readOnly={iaaComplete} />
+              {!iaaComplete && (
+                <div className="text-center">
+                  <Button
+                    size="lg"
+                    onClick={handleIAASubmit}
+                    disabled={iaaSubmitting || Object.keys(iaaData).length === 0}
+                    className="gap-2"
+                  >
+                    {iaaSubmitting
+                      ? t("Wird gespeichert...", "Saving...")
+                      : t("IAA-Fragebogen absenden", "Submit IAA questionnaire")}
+                  </Button>
+                </div>
+              )}
+              {iaaComplete && (
+                <div className="text-center bg-sage-50 border border-primary/20 rounded-lg p-4 inline-flex items-center gap-3 mx-auto">
+                  <Check className="h-6 w-6 text-primary" />
+                  <span className="font-medium text-primary">
+                    {t("IAA-Fragebogen bereits eingereicht ✓", "IAA questionnaire already submitted ✓")}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Patientenaufklärung */}
+          {currentStep === 3 && (
             <div className="space-y-6">
               <Card className="shadow-card">
                 <CardContent className="p-4 sm:p-8 space-y-6">
@@ -435,8 +527,8 @@ export default function Erstanmeldung() {
             </div>
           )}
 
-          {/* Step 3: Datenschutz */}
-          {currentStep === 3 && (
+          {/* Step 4: Datenschutz */}
+          {currentStep === 4 && (
             <div className="space-y-6">
               <Card className="shadow-card">
                 <CardContent className="p-4 sm:p-8 space-y-6">
