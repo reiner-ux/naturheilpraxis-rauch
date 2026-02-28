@@ -217,7 +217,7 @@ export default function Erstanmeldung() {
         <div className="container py-8">
           <div className="mx-auto max-w-2xl">
             <Card className="border-primary/30 shadow-card">
-              <CardContent className="p-8 space-y-6">
+              <CardContent className="p-4 sm:p-8 space-y-6">
                 <div className="flex items-center gap-4">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
                     <Phone className="h-7 w-7 text-primary" />
@@ -280,7 +280,7 @@ export default function Erstanmeldung() {
                   key={s.id}
                   onClick={() => setCurrentStep(i)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                    "flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : isDone
@@ -293,10 +293,12 @@ export default function Erstanmeldung() {
                   ) : (
                     <Icon className="h-4 w-4" />
                   )}
-                  <span className="hidden sm:inline">
+                  <span className="hidden md:inline">
                     {language === "de" ? s.titleDe : s.titleEn}
                   </span>
-                  <span className="sm:hidden">{i}</span>
+                  <span className="md:hidden">
+                    {language === "de" ? s.titleDe.split(/[\s-]/)[0] : s.titleEn.split(/[\s-]/)[0]}
+                  </span>
                 </button>
               );
             })}
@@ -313,7 +315,7 @@ export default function Erstanmeldung() {
           {currentStep === 0 && (
             <div className="space-y-6">
               <Card className="border-primary/20 bg-sage-50">
-                <CardContent className="p-8">
+                <CardContent className="p-4 sm:p-8">
                   <div className="flex gap-4">
                     <Info className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
                     <div>
@@ -390,7 +392,7 @@ export default function Erstanmeldung() {
           {currentStep === 1 && (
             <div className="space-y-6">
               <Card className="shadow-card">
-                <CardContent className="p-8 text-center space-y-6">
+                <CardContent className="p-4 sm:p-8 text-center space-y-6">
                   <ClipboardList className="h-16 w-16 text-primary mx-auto" />
                   <h2 className="font-serif text-2xl font-semibold text-foreground">
                     {t("Anamnesebogen", "Medical History Form")}
@@ -456,7 +458,7 @@ export default function Erstanmeldung() {
           {currentStep === 3 && (
             <div className="space-y-6">
               <Card className="shadow-card">
-                <CardContent className="p-8 space-y-6">
+                <CardContent className="p-4 sm:p-8 space-y-6">
                   <div className="flex items-center gap-3">
                     <FileText className="h-8 w-8 text-primary" />
                     <h2 className="font-serif text-2xl font-semibold text-foreground">
@@ -529,7 +531,7 @@ export default function Erstanmeldung() {
           {currentStep === 4 && (
             <div className="space-y-6">
               <Card className="shadow-card">
-                <CardContent className="p-8 space-y-6">
+                <CardContent className="p-4 sm:p-8 space-y-6">
                   <div className="flex items-center gap-3">
                     <Shield className="h-8 w-8 text-primary" />
                     <h2 className="font-serif text-2xl font-semibold text-foreground">
