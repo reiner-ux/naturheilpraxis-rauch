@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { AnamneseFormData } from "./anamneseFormData";
+import { iaaCategories } from "./iaaQuestions";
 
 const BRAND_PRIMARY = { r: 76, g: 140, b: 74 };
 const BRAND_SECONDARY = { r: 91, g: 173, b: 88 };
@@ -10,6 +11,7 @@ interface PdfExportOptions {
   formData: AnamneseFormData;
   language: "de" | "en";
   logoBase64?: string;
+  iaaData?: Record<string, number>;
 }
 
 const PRACTICE_INFO = {
@@ -368,7 +370,7 @@ class AnamnesePdfBuilder {
 
   // ============ Build all sections ============
 
-  buildDocument(formData: AnamneseFormData) {
+  buildDocument(formData: AnamneseFormData, iaaData?: Record<string, number>) {
     this.addHeader();
 
     // Title
@@ -420,6 +422,10 @@ class AnamnesePdfBuilder {
     this.buildComplaints(formData);
     this.buildPreferences(formData);
     this.buildSocial(formData);
+    // IAA section before signature
+    if (iaaData && Object.keys(iaaData).length > 0) {
+      this.buildIAA(iaaData);
+    }
     this.buildSignature(formData);
 
     // Footers
@@ -1226,9 +1232,69 @@ class AnamnesePdfBuilder {
     this.addSpacing(10);
   }
 
-  // === XXIV. Signature ===
+  // === XXIV. IAA – Individuelle Austestung und Analyse ===
+  buildIAA(iaaData: Record<string, number>) {
+    if (!iaaData || Object.keys(iaaData).length === 0) {
+      return;
+    }
+
+    const severityLabels = this.language === "de"
+      ? ["", "1 – sehr leicht", "2 – leicht", "3 – mäßig", "4 – stark", "5 – sehr stark", "6 – extrem"]
+      : ["", "1 – very mild", "2 – mild", "3 – moderate", "4 – strong", "5 – very strong", "6 – extreme"];
+
+    this.addSectionHeader(this.t(
+      "XXIV. IAA – Individuelle Austestung und Analyse",
+      "XXIV. IAA – Individual Testing and Analysis"
+    ), "🔬");
+
+    this.doc.setFontSize(8);
+    this.doc.setFont("helvetica", "italic");
+    this.doc.setTextColor(BRAND_MUTED.r, BRAND_MUTED.g, BRAND_MUTED.b);
+    this.doc.text(this.t(
+      "Optimiert für Trikombin-Geräte – Skala 1 (sehr leicht) bis 6 (extrem)",
+      "Optimized for Trikombin devices – Scale 1 (very mild) to 6 (extreme)"
+    ), this.margin, this.yPos);
+    this.yPos += this.lineHeight + 2;
+    this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+
+    let totalAnswered = 0;
+
+    for (const category of iaaCategories) {
+      const answeredInCat = category.questions.filter(q => iaaData[q.id] && iaaData[q.id] > 0);
+      if (answeredInCat.length === 0) continue;
+
+      this.addSubHeader(this.t(category.titleDe, category.titleEn));
+      
+      for (const q of answeredInCat) {
+        const val = iaaData[q.id];
+        const label = this.t(q.textDe, q.textEn).replace(/\?$/, "");
+        const severity = severityLabels[val] || String(val);
+        this.addField(label, severity, 5);
+        totalAnswered++;
+      }
+      this.addSpacing(3);
+    }
+
+    if (totalAnswered === 0) {
+      this.addNoData(this.t("Kein IAA-Fragebogen ausgefüllt", "No IAA questionnaire completed"));
+    } else {
+      this.addSpacing(3);
+      this.doc.setFontSize(8);
+      this.doc.setFont("helvetica", "italic");
+      this.doc.setTextColor(BRAND_MUTED.r, BRAND_MUTED.g, BRAND_MUTED.b);
+      this.doc.text(this.t(
+        `${totalAnswered} Symptome bewertet`,
+        `${totalAnswered} symptoms rated`
+      ), this.margin, this.yPos);
+      this.yPos += this.lineHeight;
+      this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+    }
+    this.addSpacing(10);
+  }
+
+  // === XXV. Signature ===
   buildSignature(fd: AnamneseFormData) {
-    this.addSectionHeader(this.t("XXIV. Unterschrift", "XXIV. Signature"), "✍️");
+    this.addSectionHeader(this.t("XXV. Unterschrift", "XXV. Signature"), "✍️");
     const u = fd.unterschrift;
     if (!u) return;
     this.addField(this.t("Ort", "Place"), u.ort, 5);
@@ -1258,14 +1324,14 @@ class AnamnesePdfBuilder {
 
 // ============ Public API ============
 
-export const generateEnhancedAnamnesePdf = async ({ formData, language }: PdfExportOptions) => {
+export const generateEnhancedAnamnesePdf = async ({ formData, language, iaaData }: PdfExportOptions) => {
   const builder = new AnamnesePdfBuilder(language);
-  builder.buildDocument(formData);
+  builder.buildDocument(formData, iaaData);
   builder.save(formData);
 };
 
-export const generateAnamnesePdfBase64 = async ({ formData, language }: PdfExportOptions): Promise<string> => {
+export const generateAnamnesePdfBase64 = async ({ formData, language, iaaData }: PdfExportOptions): Promise<string> => {
   const builder = new AnamnesePdfBuilder(language);
-  builder.buildDocument(formData);
+  builder.buildDocument(formData, iaaData);
   return builder.toBase64();
 };
