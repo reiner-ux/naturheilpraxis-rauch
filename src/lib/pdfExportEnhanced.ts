@@ -1,11 +1,10 @@
 import jsPDF from "jspdf";
 import { AnamneseFormData } from "./anamneseFormData";
 
-// Practice branding colors (HSL converted to RGB)
-const BRAND_PRIMARY = { r: 76, g: 140, b: 74 }; // Primary green
-const BRAND_SECONDARY = { r: 91, g: 173, b: 88 }; // Lighter green
-const BRAND_TEXT = { r: 51, g: 51, b: 51 }; // Dark text
-const BRAND_MUTED = { r: 120, g: 120, b: 120 }; // Muted text
+const BRAND_PRIMARY = { r: 76, g: 140, b: 74 };
+const BRAND_SECONDARY = { r: 91, g: 173, b: 88 };
+const BRAND_TEXT = { r: 51, g: 51, b: 51 };
+const BRAND_MUTED = { r: 120, g: 120, b: 120 };
 
 interface PdfExportOptions {
   formData: AnamneseFormData;
@@ -23,609 +22,1096 @@ const PRACTICE_INFO = {
   web: "www.rauch-heilpraktiker.de"
 };
 
-export const generateEnhancedAnamnesePdf = async ({ formData, language, logoBase64 }: PdfExportOptions) => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
-  const contentWidth = pageWidth - margin * 2;
-  const headerHeight = 35;
-  const footerHeight = 25;
-  let yPos = headerHeight + 10;
-  const lineHeight = 6;
+// ============ Shared PDF builder ============
 
-  const t = (de: string, en: string) => (language === "de" ? de : en);
+class AnamnesePdfBuilder {
+  private doc: jsPDF;
+  private yPos: number;
+  private language: "de" | "en";
+  private pageWidth: number;
+  private pageHeight: number;
+  private margin = 20;
+  private contentWidth: number;
+  private headerHeight = 35;
+  private footerHeight = 25;
+  private lineHeight = 6;
 
-  // ============ HELPER FUNCTIONS ============
+  constructor(language: "de" | "en") {
+    this.doc = new jsPDF();
+    this.language = language;
+    this.pageWidth = this.doc.internal.pageSize.getWidth();
+    this.pageHeight = this.doc.internal.pageSize.getHeight();
+    this.contentWidth = this.pageWidth - this.margin * 2;
+    this.yPos = this.headerHeight + 10;
+  }
 
-  const addHeader = () => {
-    // Header background with gradient effect
-    doc.setFillColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.rect(0, 0, pageWidth, headerHeight, "F");
-    
-    // Practice name
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text(PRACTICE_INFO.name, margin, 15);
-    
-    // Owner name
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(PRACTICE_INFO.owner, margin, 22);
-    
-    // Contact info on the right
-    doc.setFontSize(8);
-    doc.text(PRACTICE_INFO.street, pageWidth - margin, 12, { align: "right" });
-    doc.text(PRACTICE_INFO.city, pageWidth - margin, 17, { align: "right" });
-    doc.text(`Tel: ${PRACTICE_INFO.phone}`, pageWidth - margin, 22, { align: "right" });
-    doc.text(PRACTICE_INFO.email, pageWidth - margin, 27, { align: "right" });
-    
-    // Decorative line
-    doc.setDrawColor(BRAND_SECONDARY.r, BRAND_SECONDARY.g, BRAND_SECONDARY.b);
-    doc.setLineWidth(1);
-    doc.line(0, headerHeight, pageWidth, headerHeight);
-  };
+  t(de: string, en: string) { return this.language === "de" ? de : en; }
 
-  const addFooter = (pageNum: number, totalPages: number) => {
-    const footerY = pageHeight - footerHeight;
-    
-    // Footer line
-    doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.setLineWidth(0.5);
-    doc.line(margin, footerY, pageWidth - margin, footerY);
-    
-    // Footer text
-    doc.setTextColor(BRAND_MUTED.r, BRAND_MUTED.g, BRAND_MUTED.b);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    
-    // Left: Practice info
-    doc.text(PRACTICE_INFO.web, margin, footerY + 8);
-    
-    // Center: Page number
-    doc.text(
-      t(`Seite ${pageNum} von ${totalPages}`, `Page ${pageNum} of ${totalPages}`),
-      pageWidth / 2,
-      footerY + 8,
-      { align: "center" }
-    );
-    
-    // Right: Date
-    const dateStr = new Date().toLocaleDateString(language === "de" ? "de-DE" : "en-US");
-    doc.text(
-      t(`Erstellt: ${dateStr}`, `Created: ${dateStr}`),
-      pageWidth - margin,
-      footerY + 8,
-      { align: "right" }
-    );
-    
-    // Disclaimer
-    doc.setFontSize(7);
-    doc.text(
-      t(
-        "Dieses Dokument wurde elektronisch erstellt und ist ohne Unterschrift gültig.",
-        "This document was created electronically and is valid without signature."
-      ),
-      pageWidth / 2,
-      footerY + 14,
-      { align: "center" }
-    );
-  };
+  addHeader() {
+    this.doc.setFillColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
+    this.doc.rect(0, 0, this.pageWidth, this.headerHeight, "F");
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.setFontSize(16);
+    this.doc.setFont("helvetica", "bold");
+    this.doc.text(PRACTICE_INFO.name, this.margin, 15);
+    this.doc.setFontSize(10);
+    this.doc.setFont("helvetica", "normal");
+    this.doc.text(PRACTICE_INFO.owner, this.margin, 22);
+    this.doc.setFontSize(8);
+    this.doc.text(PRACTICE_INFO.street, this.pageWidth - this.margin, 12, { align: "right" });
+    this.doc.text(PRACTICE_INFO.city, this.pageWidth - this.margin, 17, { align: "right" });
+    this.doc.text(`Tel: ${PRACTICE_INFO.phone}`, this.pageWidth - this.margin, 22, { align: "right" });
+    this.doc.text(PRACTICE_INFO.email, this.pageWidth - this.margin, 27, { align: "right" });
+    this.doc.setDrawColor(BRAND_SECONDARY.r, BRAND_SECONDARY.g, BRAND_SECONDARY.b);
+    this.doc.setLineWidth(1);
+    this.doc.line(0, this.headerHeight, this.pageWidth, this.headerHeight);
+  }
 
-  const checkPageBreak = (requiredSpace: number) => {
-    const maxY = pageHeight - footerHeight - 10;
-    if (yPos + requiredSpace > maxY) {
-      doc.addPage();
-      addHeader();
-      yPos = headerHeight + 10;
+  addFooter(pageNum: number, totalPages: number) {
+    const footerY = this.pageHeight - this.footerHeight;
+    this.doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
+    this.doc.setLineWidth(0.5);
+    this.doc.line(this.margin, footerY, this.pageWidth - this.margin, footerY);
+    this.doc.setTextColor(BRAND_MUTED.r, BRAND_MUTED.g, BRAND_MUTED.b);
+    this.doc.setFontSize(8);
+    this.doc.setFont("helvetica", "normal");
+    this.doc.text(PRACTICE_INFO.web, this.margin, footerY + 8);
+    this.doc.text(this.t(`Seite ${pageNum} von ${totalPages}`, `Page ${pageNum} of ${totalPages}`), this.pageWidth / 2, footerY + 8, { align: "center" });
+    const dateStr = new Date().toLocaleDateString(this.language === "de" ? "de-DE" : "en-US");
+    this.doc.text(this.t(`Erstellt: ${dateStr}`, `Created: ${dateStr}`), this.pageWidth - this.margin, footerY + 8, { align: "right" });
+    this.doc.setFontSize(7);
+    this.doc.text(this.t("Dieses Dokument wurde elektronisch erstellt und ist ohne Unterschrift gültig.", "This document was created electronically and is valid without signature."), this.pageWidth / 2, footerY + 14, { align: "center" });
+  }
+
+  checkPageBreak(requiredSpace: number) {
+    if (this.yPos + requiredSpace > this.pageHeight - this.footerHeight - 10) {
+      this.doc.addPage();
+      this.addHeader();
+      this.yPos = this.headerHeight + 10;
     }
-  };
+  }
 
-  const addSectionHeader = (text: string, emoji?: string) => {
-    checkPageBreak(25);
-    
-    // Section background
-    doc.setFillColor(245, 250, 245);
-    doc.rect(margin - 2, yPos - 5, contentWidth + 4, 12, "F");
-    
-    // Section border
-    doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.setLineWidth(0.3);
-    doc.line(margin, yPos + 5, pageWidth - margin, yPos + 5);
-    
-    // Section title
-    doc.setTextColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    const displayText = emoji ? `${emoji}  ${text}` : text;
-    doc.text(displayText, margin, yPos + 2);
-    
-    yPos += 15;
-    doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-  };
+  addSectionHeader(text: string, emoji?: string) {
+    this.checkPageBreak(25);
+    this.doc.setFillColor(245, 250, 245);
+    this.doc.rect(this.margin - 2, this.yPos - 5, this.contentWidth + 4, 12, "F");
+    this.doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
+    this.doc.setLineWidth(0.3);
+    this.doc.line(this.margin, this.yPos + 5, this.pageWidth - this.margin, this.yPos + 5);
+    this.doc.setTextColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
+    this.doc.setFontSize(12);
+    this.doc.setFont("helvetica", "bold");
+    this.doc.text(emoji ? `${emoji}  ${text}` : text, this.margin, this.yPos + 2);
+    this.yPos += 15;
+    this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+  }
 
-  const addSubHeader = (text: string) => {
-    checkPageBreak(15);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(BRAND_SECONDARY.r, BRAND_SECONDARY.g, BRAND_SECONDARY.b);
-    doc.text(text, margin, yPos);
-    yPos += lineHeight + 2;
-    doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-  };
+  addSubHeader(text: string) {
+    this.checkPageBreak(15);
+    this.doc.setFontSize(10);
+    this.doc.setFont("helvetica", "bold");
+    this.doc.setTextColor(BRAND_SECONDARY.r, BRAND_SECONDARY.g, BRAND_SECONDARY.b);
+    this.doc.text(text, this.margin, this.yPos);
+    this.yPos += this.lineHeight + 2;
+    this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+  }
 
-  const addField = (label: string, value: string | boolean | undefined | null, indent = 0) => {
-    checkPageBreak(10);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-    
-    const displayValue = value === true ? t("Ja", "Yes") : value === false ? t("Nein", "No") : value || "-";
-    
-    // Label
-    doc.text(`${label}:`, margin + indent, yPos);
-    
-    // Value
-    doc.setFont("helvetica", "normal");
-    const labelWidth = doc.getTextWidth(`${label}: `);
-    const valueX = margin + indent + labelWidth;
-    const maxValueWidth = contentWidth - labelWidth - indent;
-    
-    const lines = doc.splitTextToSize(String(displayValue), maxValueWidth);
-    doc.text(lines, valueX, yPos);
-    yPos += lines.length * lineHeight;
-  };
+  addField(label: string, value: string | boolean | number | undefined | null, indent = 0) {
+    if (value === undefined || value === null || value === "" || value === false) return;
+    this.checkPageBreak(10);
+    this.doc.setFontSize(9);
+    this.doc.setFont("helvetica", "bold");
+    this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+    const displayValue = value === true ? this.t("Ja", "Yes") : String(value);
+    this.doc.text(`${label}:`, this.margin + indent, this.yPos);
+    this.doc.setFont("helvetica", "normal");
+    const labelWidth = this.doc.getTextWidth(`${label}: `);
+    const valueX = this.margin + indent + labelWidth;
+    const maxValueWidth = this.contentWidth - labelWidth - indent;
+    const lines = this.doc.splitTextToSize(displayValue, Math.max(maxValueWidth, 30));
+    this.doc.text(lines, valueX, this.yPos);
+    this.yPos += lines.length * this.lineHeight;
+  }
 
-  const addCheckboxField = (label: string, checked: boolean | undefined, indent = 5) => {
-    checkPageBreak(8);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-    
-    // Draw checkbox
-    const checkboxSize = 3;
-    doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.rect(margin + indent, yPos - 3, checkboxSize, checkboxSize);
-    
-    if (checked) {
-      doc.setFillColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-      doc.rect(margin + indent + 0.5, yPos - 2.5, checkboxSize - 1, checkboxSize - 1, "F");
+  addFieldAlways(label: string, value: string | boolean | number | undefined | null, indent = 0) {
+    this.checkPageBreak(10);
+    this.doc.setFontSize(9);
+    this.doc.setFont("helvetica", "bold");
+    this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+    const displayValue = value === true ? this.t("Ja", "Yes") : value === false ? this.t("Nein", "No") : value || "-";
+    this.doc.text(`${label}:`, this.margin + indent, this.yPos);
+    this.doc.setFont("helvetica", "normal");
+    const labelWidth = this.doc.getTextWidth(`${label}: `);
+    const valueX = this.margin + indent + labelWidth;
+    const maxValueWidth = this.contentWidth - labelWidth - indent;
+    const lines = this.doc.splitTextToSize(String(displayValue), Math.max(maxValueWidth, 30));
+    this.doc.text(lines, valueX, this.yPos);
+    this.yPos += lines.length * this.lineHeight;
+  }
+
+  addCheckboxField(label: string, checked: boolean | undefined, indent = 5) {
+    if (!checked) return;
+    this.checkPageBreak(8);
+    this.doc.setFontSize(9);
+    this.doc.setFont("helvetica", "normal");
+    this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+    const s = 3;
+    this.doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
+    this.doc.rect(this.margin + indent, this.yPos - 3, s, s);
+    this.doc.setFillColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
+    this.doc.rect(this.margin + indent + 0.5, this.yPos - 2.5, s - 1, s - 1, "F");
+    this.doc.text(label, this.margin + indent + s + 3, this.yPos);
+    this.yPos += this.lineHeight;
+  }
+
+  addSpacing(space: number = this.lineHeight) { this.yPos += space; }
+
+  addNoData(text?: string) {
+    this.doc.setFontSize(9);
+    this.doc.setFont("helvetica", "italic");
+    this.doc.setTextColor(BRAND_MUTED.r, BRAND_MUTED.g, BRAND_MUTED.b);
+    this.doc.text(text || this.t("Keine Angaben", "No information provided"), this.margin, this.yPos);
+    this.yPos += this.lineHeight;
+    this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+    this.doc.setFont("helvetica", "normal");
+  }
+
+  /** Render a medical condition object: { ja, seit/jahr, ...booleanSubItems, sonstige/details } */
+  renderCondition(label: string, cond: any, indent = 5) {
+    if (!cond || (typeof cond === 'object' && !cond.ja)) return false;
+    if (typeof cond === 'boolean') {
+      if (cond) this.addCheckboxField(label, true, indent);
+      return cond;
     }
-    
-    doc.text(label, margin + indent + checkboxSize + 3, yPos);
-    yPos += lineHeight;
-  };
-
-  const addSpacing = (space: number = lineHeight) => {
-    yPos += space;
-  };
-
-  // ============ BUILD DOCUMENT ============
-
-  // First page header
-  addHeader();
-
-  // Document Title
-  doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text(t("Anamnesebogen", "Medical History Form"), pageWidth / 2, yPos + 5, { align: "center" });
-  yPos += 15;
-
-  // Patient info box
-  if (formData.vorname || formData.nachname) {
-    doc.setFillColor(240, 248, 240);
-    doc.roundedRect(margin, yPos - 2, contentWidth, 18, 3, 3, "F");
-    doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(margin, yPos - 2, contentWidth, 18, 3, 3, "S");
-    
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(
-      `${t("Patient/in", "Patient")}: ${formData.vorname} ${formData.nachname}`,
-      margin + 5,
-      yPos + 5
-    );
-    
-    if (formData.geburtsdatum) {
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        `${t("Geburtsdatum", "Date of Birth")}: ${formData.geburtsdatum}`,
-        margin + 5,
-        yPos + 12
-      );
+    // Build detail string from sub-fields
+    const details: string[] = [];
+    const skipKeys = new Set(["ja", "seit", "jahr", "status", "bisJahr", "seitYear", "seitMonth", "bisYear", "bisMonth"]);
+    for (const [k, v] of Object.entries(cond)) {
+      if (skipKeys.has(k)) continue;
+      if (typeof v === 'boolean' && v) {
+        details.push(k);
+      } else if (typeof v === 'string' && v && k !== 'sonstige' && k !== 'details' && k !== 'welche' && k !== 'grund') {
+        details.push(`${k}: ${v}`);
+      }
     }
-    yPos += 25;
+    // Time info
+    const zeit = cond.seit || cond.jahr || "";
+    const zeitStr = zeit ? ` (${this.t("seit", "since")} ${zeit})` : "";
+    const statusStr = cond.status ? ` [${cond.status}]` : "";
+    
+    const detailStr = details.length > 0 ? ` – ${details.join(", ")}` : "";
+    const sonstigeStr = (cond.sonstige || cond.details || cond.welche || cond.grund || "");
+    const extra = sonstigeStr ? ` – ${sonstigeStr}` : "";
+    
+    this.addCheckboxField(`${label}${zeitStr}${statusStr}${detailStr}${extra}`, true, indent);
+    return true;
   }
 
-  // I. Patient Data
-  addSectionHeader(t("I. Patientendaten", "I. Patient Data"), "👤");
-  addField(t("Name", "Name"), `${formData.vorname} ${formData.nachname}`);
-  addField(t("Geburtsdatum", "Date of Birth"), formData.geburtsdatum);
-  addField(t("Geschlecht", "Gender"), formData.geschlecht);
-  addField(t("Nationalität", "Nationality"), formData.nationalitaet);
-  addField(t("Zivilstand", "Marital Status"), formData.zivilstand);
-  addSpacing();
-  
-  addSubHeader(t("Kontaktdaten", "Contact Information"));
-  addField(t("Adresse", "Address"), `${formData.strasse}, ${formData.plz} ${formData.wohnort}`, 5);
-  addField(t("E-Mail", "Email"), formData.email, 5);
-  addField(t("Telefon", "Phone"), formData.telefonPrivat || formData.mobil, 5);
-  addSpacing();
-
-  addSubHeader(t("Versicherung", "Insurance"));
-  addField(t("Typ", "Type"), formData.versicherungstyp, 5);
-  addField(t("Name", "Name"), formData.versicherungsname, 5);
-  addSpacing();
-
-  addSubHeader(t("Berufliche Situation", "Professional Situation"));
-  addField(t("Beruf", "Occupation"), formData.beruf, 5);
-  addField(t("Körpergröße / Gewicht", "Height / Weight"), `${formData.koerpergroesse} cm / ${formData.gewicht} kg`, 5);
-  addSpacing(10);
-
-  // II. Family History
-  addSectionHeader(t("II. Familiengeschichte", "II. Family History"), "👨‍👩‍👧‍👦");
-  const familyConditions = [
-    { key: "hoherBlutdruck", de: "Hoher Blutdruck", en: "High Blood Pressure" },
-    { key: "herzinfarkt", de: "Herzinfarkt", en: "Heart Attack" },
-    { key: "schlaganfall", de: "Schlaganfall", en: "Stroke" },
-    { key: "diabetes", de: "Diabetes", en: "Diabetes" },
-    { key: "krebs", de: "Krebs", en: "Cancer" },
-    { key: "allergien", de: "Allergien", en: "Allergies" },
-  ];
-  
-  let hasFamilyHistory = false;
-  familyConditions.forEach(({ key, de, en }) => {
-    const condition = formData.familyHistory?.[key as keyof typeof formData.familyHistory];
-    if (condition && typeof condition === 'object' && 'ja' in condition && condition.ja) {
-      hasFamilyHistory = true;
-      const relatives: string[] = [];
-      if ('vater' in condition && condition.vater) relatives.push(t("Vater", "Father"));
-      if ('mutter' in condition && condition.mutter) relatives.push(t("Mutter", "Mother"));
-      if ('grosseltern' in condition && condition.grosseltern) relatives.push(t("Großeltern", "Grandparents"));
-      if ('geschwister' in condition && condition.geschwister) relatives.push(t("Geschwister", "Siblings"));
-      addCheckboxField(`${t(de, en)}: ${relatives.join(", ") || t("Ja", "Yes")}`, true);
+  /** Render a group of conditions under a sub-header */
+  renderConditionGroup(title: string, data: Record<string, any> | undefined, labelMap: Record<string, [string, string]>) {
+    if (!data) return;
+    let hasAny = false;
+    for (const [key, [de, en]] of Object.entries(labelMap)) {
+      const val = data[key];
+      if (val !== undefined) {
+        if (this.renderCondition(this.t(de, en), val)) hasAny = true;
+      }
     }
-  });
-  if (!hasFamilyHistory) {
-    doc.setFontSize(9);
-    doc.text(t("Keine relevanten Familienerkrankungen angegeben", "No relevant family conditions specified"), margin, yPos);
-    yPos += lineHeight;
-  }
-  addSpacing(10);
-
-  // III. Medical History
-  addSectionHeader(t("III. Eigene Erkrankungen", "III. Medical History"), "🏥");
-  
-  if (formData.herzKreislauf) {
-    addSubHeader(t("Herz & Kreislauf", "Heart & Circulation"));
-    if (formData.herzKreislauf.blutdruckHoch?.ja) addCheckboxField(t("Hoher Blutdruck", "High Blood Pressure"), true);
-    if (formData.herzKreislauf.herzrhythmusstörung?.ja) addCheckboxField(t("Herzrhythmusstörung", "Heart Arrhythmia"), true);
-    if (formData.herzKreislauf.herzinfarkt?.ja) addCheckboxField(t("Herzinfarkt", "Heart Attack"), true);
-    if (formData.herzKreislauf.thrombose?.ja) addCheckboxField(t("Thrombose", "Thrombosis"), true);
+    // Check for sonstige text field at group level
+    if (data.sonstige && typeof data.sonstige === 'string' && data.sonstige.trim()) {
+      this.addField(this.t("Sonstiges", "Other"), data.sonstige, 5);
+      hasAny = true;
+    }
+    if (!hasAny) this.addNoData();
   }
 
-  if (formData.magenDarm) {
-    addSubHeader(t("Magen & Darm", "Stomach & Intestines"));
-    if (formData.magenDarm.sodbrennen?.ja) addCheckboxField(t("Sodbrennen", "Heartburn"), true);
-    if (formData.magenDarm.reizdarm?.ja) addCheckboxField(t("Reizdarm", "Irritable Bowel"), true);
-    if (formData.magenDarm.morbusCrohn?.ja) addCheckboxField(t("Morbus Crohn", "Crohn's Disease"), true);
-  }
-  addSpacing(10);
+  // ============ Build all sections ============
 
-  // V. Surgeries
-  addSectionHeader(t("V. Unfälle & Operationen", "V. Accidents & Surgeries"), "🔧");
-  
-  if (formData.unfaelleOperationen?.unfall?.ja) {
-    addField(t("Unfall", "Accident"), `${formData.unfaelleOperationen.unfall.jahr || ""} - ${formData.unfaelleOperationen.unfall.lokalisation || ""}`);
+  buildDocument(formData: AnamneseFormData) {
+    this.addHeader();
+
+    // Title
+    this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+    this.doc.setFontSize(20);
+    this.doc.setFont("helvetica", "bold");
+    this.doc.text(this.t("Anamnesebogen", "Medical History Form"), this.pageWidth / 2, this.yPos + 5, { align: "center" });
+    this.yPos += 15;
+
+    // Patient box
+    if (formData.vorname || formData.nachname) {
+      this.doc.setFillColor(240, 248, 240);
+      this.doc.roundedRect(this.margin, this.yPos - 2, this.contentWidth, 18, 3, 3, "F");
+      this.doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
+      this.doc.setLineWidth(0.3);
+      this.doc.roundedRect(this.margin, this.yPos - 2, this.contentWidth, 18, 3, 3, "S");
+      this.doc.setFontSize(12);
+      this.doc.setFont("helvetica", "bold");
+      this.doc.text(`${this.t("Patient/in", "Patient")}: ${formData.vorname} ${formData.nachname}`, this.margin + 5, this.yPos + 5);
+      if (formData.geburtsdatum) {
+        this.doc.setFontSize(10);
+        this.doc.setFont("helvetica", "normal");
+        this.doc.text(`${this.t("Geburtsdatum", "Date of Birth")}: ${formData.geburtsdatum}`, this.margin + 5, this.yPos + 12);
+      }
+      this.yPos += 25;
+    }
+
+    this.buildPatientData(formData);
+    this.buildFamilyHistory(formData);
+    this.buildNeurology(formData);
+    this.buildHeart(formData);
+    this.buildLung(formData);
+    this.buildDigestive(formData);
+    this.buildLiver(formData);
+    this.buildKidney(formData);
+    this.buildHormone(formData);
+    this.buildMusculoskeletal(formData);
+    this.buildWomenHealth(formData);
+    this.buildMensHealth(formData);
+    this.buildSurgeries(formData);
+    this.buildCancer(formData);
+    this.buildAllergies(formData);
+    this.buildMedications(formData);
+    this.buildLifestyle(formData);
+    this.buildDental(formData);
+    this.buildEnvironment(formData);
+    this.buildInfections(formData);
+    this.buildVaccinations(formData);
+    this.buildComplaints(formData);
+    this.buildPreferences(formData);
+    this.buildSocial(formData);
+    this.buildSignature(formData);
+
+    // Footers
+    const pageCount = (this.doc.internal as any).pages.length - 1;
+    for (let i = 1; i <= pageCount; i++) {
+      this.doc.setPage(i);
+      this.addFooter(i, pageCount);
+    }
   }
-  if (formData.unfaelleOperationen?.knochenbruch?.ja) {
-    addField(t("Knochenbruch", "Bone Fracture"), formData.unfaelleOperationen.knochenbruch.welcher);
+
+  // === I. Patient Data ===
+  buildPatientData(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("I. Patientendaten", "I. Patient Data"), "👤");
+    this.addFieldAlways(this.t("Name", "Name"), `${fd.vorname} ${fd.nachname}`);
+    this.addFieldAlways(this.t("Geburtsdatum", "Date of Birth"), fd.geburtsdatum);
+    this.addFieldAlways(this.t("Geschlecht", "Gender"), fd.geschlecht);
+    this.addField(this.t("Nationalität", "Nationality"), fd.nationalitaet);
+    this.addField(this.t("Zivilstand", "Marital Status"), fd.zivilstand);
+    this.addSpacing();
+    this.addSubHeader(this.t("Kontaktdaten", "Contact Information"));
+    this.addField(this.t("Straße", "Street"), fd.strasse, 5);
+    this.addField(this.t("PLZ / Wohnort", "ZIP / City"), `${fd.plz} ${fd.wohnort}`.trim(), 5);
+    this.addField(this.t("E-Mail", "Email"), fd.email, 5);
+    this.addField(this.t("Telefon privat", "Phone (private)"), fd.telefonPrivat, 5);
+    this.addField(this.t("Telefon beruflich", "Phone (work)"), fd.telefonBeruflich, 5);
+    this.addField(this.t("Mobil", "Mobile"), fd.mobil, 5);
+    this.addSpacing();
+    this.addSubHeader(this.t("Versicherung", "Insurance"));
+    this.addField(this.t("Typ", "Type"), fd.versicherungstyp, 5);
+    this.addField(this.t("Name", "Name"), fd.versicherungsname, 5);
+    this.addField(this.t("Nummer", "Number"), fd.versicherungsnummer, 5);
+    this.addField(this.t("Tarif", "Plan"), fd.tarif, 5);
+    this.addCheckboxField(this.t("Kostenübernahme Naturheilkunde", "Coverage for naturopathy"), fd.kostenuebernahmeNaturheilkunde, 5);
+    this.addSpacing();
+    this.addSubHeader(this.t("Berufliche Situation", "Professional Situation"));
+    this.addField(this.t("Beruf", "Occupation"), fd.beruf, 5);
+    this.addField(this.t("Arbeitgeber", "Employer"), fd.arbeitgeber, 5);
+    this.addField(this.t("Branche", "Industry"), fd.branche, 5);
+    this.addField(this.t("Arbeitsunfähig seit", "Unable to work since"), fd.arbeitsunfaehigSeit, 5);
+    this.addField(this.t("Berentet seit", "Retired since"), fd.berentnerSeit, 5);
+    this.addField(this.t("Unfallrente %", "Accident pension %"), fd.unfallrenteProzent, 5);
+    this.addField(this.t("Schwerbehinderung %", "Disability %"), fd.schwerbehinderungProzent, 5);
+    this.addField(this.t("Körpergröße", "Height"), fd.koerpergroesse ? `${fd.koerpergroesse} cm` : "", 5);
+    this.addField(this.t("Gewicht", "Weight"), fd.gewicht ? `${fd.gewicht} kg` : "", 5);
+    this.addSpacing();
+    if (fd.informationsquelle?.length > 0) {
+      this.addField(this.t("Wie von uns erfahren", "How did you find us"), fd.informationsquelle.join(", "), 5);
+    }
+    this.addField(this.t("Empfohlen von", "Recommended by"), fd.empfehlungVon, 5);
+    this.addSpacing();
+    this.addSubHeader(this.t("Vorbehandler", "Previous Practitioners"));
+    this.addField(this.t("Hausarzt", "Family Doctor"), fd.hausarzt, 5);
+    this.addField(this.t("Fachärzte", "Specialists"), fd.fachaerzte, 5);
+    this.addField(this.t("Heilpraktiker", "Naturopath"), fd.heilpraktiker, 5);
+    this.addField(this.t("Physiotherapeut", "Physiotherapist"), fd.physiotherapeut, 5);
+    this.addField(this.t("Psychotherapeut", "Psychotherapist"), fd.psychotherapeut, 5);
+    this.addField(this.t("Sonstige", "Other"), fd.sonstigeTherapeutenn, 5);
+    if (fd.facharztListe?.length > 0) {
+      fd.facharztListe.forEach((fa, i) => {
+        this.addField(`${this.t("Facharzt", "Specialist")} ${i + 1}`, `${fa.fachrichtung} – ${fa.name}`, 5);
+      });
+    }
+    this.addSpacing(10);
   }
-  
-  if (formData.unfaelleOperationen?.operationen?.length > 0) {
-    addSubHeader(t("Operationen", "Surgeries"));
-    formData.unfaelleOperationen.operationen.forEach((op, i) => {
-      addField(`${i + 1}.`, `${op.jahr} - ${op.grund}`, 5);
+
+  // === II. Family History ===
+  buildFamilyHistory(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("II. Familiengeschichte", "II. Family History"), "👨‍👩‍👧‍👦");
+    const conditions: [string, string, string][] = [
+      ["hoherBlutdruck", "Hoher Blutdruck", "High Blood Pressure"],
+      ["herzinfarkt", "Herzinfarkt", "Heart Attack"],
+      ["schlaganfall", "Schlaganfall", "Stroke"],
+      ["diabetes", "Diabetes", "Diabetes"],
+      ["gicht", "Gicht", "Gout"],
+      ["lungenasthma", "Lungenasthma", "Lung Asthma"],
+      ["lungentuberkulose", "Lungentuberkulose", "Lung Tuberculosis"],
+      ["nervenleiden", "Nervenleiden", "Neurological Disorders"],
+      ["krebs", "Krebs", "Cancer"],
+      ["allergien", "Allergien", "Allergies"],
+      ["sucht", "Suchterkrankung", "Addiction"],
+      ["autoimmun", "Autoimmunerkrankung", "Autoimmune Disease"],
+    ];
+    let hasAny = false;
+    conditions.forEach(([key, de, en]) => {
+      const c = fd.familyHistory?.[key as keyof typeof fd.familyHistory];
+      if (c && typeof c === 'object' && 'ja' in c && c.ja) {
+        hasAny = true;
+        const rel: string[] = [];
+        if ('vater' in c && c.vater) rel.push(this.t("Vater", "Father"));
+        if ('mutter' in c && c.mutter) rel.push(this.t("Mutter", "Mother"));
+        if ('grosseltern' in c && c.grosseltern) rel.push(this.t("Großeltern", "Grandparents"));
+        if ('geschwister' in c && c.geschwister) rel.push(this.t("Geschwister", "Siblings"));
+        let extra = "";
+        if ('welches' in c && (c as any).welches) extra = ` (${(c as any).welches})`;
+        this.addCheckboxField(`${this.t(de, en)}: ${rel.join(", ") || this.t("Ja", "Yes")}${extra}`, true);
+      }
     });
+    if (!hasAny) this.addNoData(this.t("Keine relevanten Familienerkrankungen angegeben", "No relevant family conditions specified"));
+    this.addSpacing(10);
   }
-  addSpacing(10);
 
-  // VII. Allergies
-  addSectionHeader(t("VII. Allergien & Unverträglichkeiten", "VII. Allergies & Intolerances"), "⚠️");
-  let hasAllergies = false;
-  
-  if (formData.allergien?.inhalation?.ja) {
-    hasAllergies = true;
-    const types: string[] = [];
-    if (formData.allergien.inhalation.pollen) types.push(t("Pollen", "Pollen"));
-    if (formData.allergien.inhalation.staub) types.push(t("Staub", "Dust"));
-    if (formData.allergien.inhalation.tierhaare) types.push(t("Tierhaare", "Animal Hair"));
-    addField(t("Inhalationsallergien", "Inhalation Allergies"), types.join(", "));
-  }
-  if (formData.allergien?.nahrungsmittel?.ja) {
-    hasAllergies = true;
-    addField(t("Nahrungsmittelallergien", "Food Allergies"), formData.allergien.nahrungsmittel.details);
-  }
-  if (formData.allergien?.medikamente?.ja) {
-    hasAllergies = true;
-    addField(t("Medikamentenallergien", "Drug Allergies"), formData.allergien.medikamente.details);
-  }
-  if (formData.allergien?.laktose?.ja) { hasAllergies = true; addCheckboxField(t("Laktoseintoleranz", "Lactose Intolerance"), true); }
-  if (formData.allergien?.gluten?.ja) { hasAllergies = true; addCheckboxField(t("Glutenunverträglichkeit", "Gluten Intolerance"), true); }
-  if (formData.allergien?.histamin?.ja) { hasAllergies = true; addCheckboxField(t("Histaminintoleranz", "Histamine Intolerance"), true); }
-  
-  if (!hasAllergies) {
-    doc.setFontSize(9);
-    doc.text(t("Keine Allergien angegeben", "No allergies specified"), margin, yPos);
-    yPos += lineHeight;
-  }
-  addSpacing(10);
-
-  // VIII. Medications
-  addSectionHeader(t("VIII. Medikamente", "VIII. Medications"), "💊");
-  if (formData.medikamente?.aktuelle?.length > 0) {
-    formData.medikamente.aktuelle.forEach((med, i) => {
-      addField(`${i + 1}. ${med.name}`, `${med.dosierung} - ${med.grund}`);
+  // === III. Neurology ===
+  buildNeurology(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("III. Kopf & Sinne", "III. Head & Senses"), "🧠");
+    this.addSubHeader(this.t("Kopf & Sinnesorgane", "Head & Sensory Organs"));
+    this.renderConditionGroup("", fd.kopfErkrankungen, {
+      augenerkrankung: ["Augenerkrankung", "Eye Disease"],
+      schwerhoerig: ["Schwerhörigkeit", "Hearing Loss"],
+      ohrenerkrankung: ["Ohrenerkrankung", "Ear Disease"],
+      sinusitis: ["Sinusitis", "Sinusitis"],
+      mandelentzuendung: ["Mandelentzündung", "Tonsillitis"],
+      kopfschmerzen: ["Kopfschmerzen", "Headaches"],
+      schwindel: ["Schwindel", "Dizziness"],
+      geruchsminderung: ["Geruchsminderung", "Reduced Smell"],
+      geschmacksminderung: ["Geschmacksminderung", "Reduced Taste"],
+      neuralgien: ["Neuralgien", "Neuralgia"],
     });
-  } else {
-    doc.setFontSize(9);
-    doc.text(t("Keine aktuellen Medikamente", "No current medications"), margin, yPos);
-    yPos += lineHeight;
-  }
-  addSpacing(10);
-
-  // IX. Lifestyle
-  addSectionHeader(t("IX. Lebensweise", "IX. Lifestyle"), "🏃");
-  addField(t("Raucher", "Smoker"), formData.lebensweise?.raucher || t("Nein", "No"));
-  if (formData.lebensweise?.alkohol?.ja) {
-    addField(t("Alkohol", "Alcohol"), formData.lebensweise.alkohol.mengeProTag);
-  }
-  if (formData.lebensweise?.sport?.ja) {
-    addField(t("Sport", "Sports"), `${formData.lebensweise.sport.art} (${formData.lebensweise.sport.proWoche}x ${t("pro Woche", "per week")})`);
-  }
-  addField(t("Schlafqualität", "Sleep Quality"), formData.lebensweise?.schlafQualitaet);
-  addField(t("Schlafdauer", "Sleep Duration"), formData.lebensweise?.schlafDauer);
-  addSpacing(10);
-
-  // XVI. Signature
-  addSectionHeader(t("XVI. Unterschrift", "XVI. Signature"), "✍️");
-  addField(t("Datum", "Date"), formData.unterschrift?.datum);
-  addField(t("Name in Druckbuchstaben", "Name in Block Letters"), formData.unterschrift?.nameInDruckbuchstaben);
-  addCheckboxField(t("Datenschutzerklärung bestätigt", "Privacy Policy Confirmed"), formData.unterschrift?.bestaetigung);
-
-  // Add footers to all pages
-  const pageCount = doc.internal.pages.length - 1;
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    addFooter(i, pageCount);
+    this.addSpacing();
+    this.addSubHeader(this.t("Schlaf & Psychische Symptome", "Sleep & Psychological Symptoms"));
+    this.renderConditionGroup("", fd.schlafSymptome, {
+      schlafstörung: ["Schlafstörung", "Sleep Disorder"],
+      einschlafstörung: ["Einschlafstörung", "Difficulty Falling Asleep"],
+      durchschlafstörung: ["Durchschlafstörung", "Difficulty Staying Asleep"],
+      fruehAufwachen: ["Frühes Aufwachen", "Early Awakening"],
+      konzentrationsstörung: ["Konzentrationsstörung", "Concentration Issues"],
+      muedigkeit: ["Müdigkeit", "Fatigue"],
+      leistungsabfall: ["Leistungsabfall", "Performance Decline"],
+      vergesslichkeit: ["Vergesslichkeit", "Forgetfulness"],
+      angstzustaende: ["Angstzustände", "Anxiety"],
+      stress: ["Stress", "Stress"],
+      partnerschaftsprobleme: ["Partnerschaftsprobleme", "Relationship Issues"],
+      sexualprobleme: ["Sexualprobleme", "Sexual Issues"],
+    });
+    this.addSpacing();
+    this.addSubHeader(this.t("Psychische Erkrankungen", "Mental Health"));
+    this.renderConditionGroup("", fd.psychischeErkrankungen, {
+      depression: ["Depression", "Depression"],
+      schizophrenie: ["Schizophrenie", "Schizophrenia"],
+      psychose: ["Psychose", "Psychosis"],
+      zwangsgedanken: ["Zwangsgedanken", "Obsessive Thoughts"],
+      phobien: ["Phobien", "Phobias"],
+      epilepsie: ["Epilepsie", "Epilepsy"],
+      trauma: ["Trauma/PTBS", "Trauma/PTSD"],
+      mobbing: ["Mobbing", "Bullying"],
+    });
+    this.addSpacing(10);
   }
 
-  // Generate filename
-  const patientName = `${formData.nachname}_${formData.vorname}`.replace(/[^a-zA-Z0-9]/g, "_") || "Patient";
-  const date = new Date().toISOString().split("T")[0];
-  const filename = `Anamnesebogen_${patientName}_${date}.pdf`;
+  // === IV. Heart ===
+  buildHeart(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("IV. Herz & Kreislauf", "IV. Heart & Circulation"), "❤️");
+    this.renderConditionGroup("", fd.herzKreislauf, {
+      blutdruckWechselhaft: ["Blutdruck wechselhaft", "Fluctuating Blood Pressure"],
+      blutdruckNiedrig: ["Niedriger Blutdruck", "Low Blood Pressure"],
+      blutdruckHoch: ["Hoher Blutdruck", "High Blood Pressure"],
+      herzrhythmusstörung: ["Herzrhythmusstörung", "Heart Arrhythmia"],
+      herzschrittmacher: ["Herzschrittmacher", "Pacemaker"],
+      herzschmerzen: ["Herzschmerzen", "Heart Pain"],
+      herzinfarkt: ["Herzinfarkt", "Heart Attack"],
+      stent: ["Stent", "Stent"],
+      herzklappenfehler: ["Herzklappenfehler", "Heart Valve Defect"],
+      herzklappenersatz: ["Herzklappenersatz", "Heart Valve Replacement"],
+      krampfadern: ["Krampfadern", "Varicose Veins"],
+      thrombose: ["Thrombose", "Thrombosis"],
+      oedeme: ["Ödeme", "Edema"],
+    });
+    this.addSpacing(10);
+  }
 
-  // Save the PDF
-  doc.save(filename);
+  // === V. Lung ===
+  buildLung(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("V. Lunge & Atmung", "V. Lungs & Breathing"), "🫁");
+    this.renderConditionGroup("", fd.lungeAtmung, {
+      asthma: ["Asthma", "Asthma"],
+      lungenentzuendung: ["Lungenentzündung", "Pneumonia"],
+      rippenfellentzuendung: ["Rippenfellentzündung", "Pleurisy"],
+      bronchitis: ["Bronchitis", "Bronchitis"],
+      tuberkulose: ["Tuberkulose", "Tuberculosis"],
+      sarkoidose: ["Sarkoidose", "Sarcoidosis"],
+      husten: ["Husten", "Cough"],
+      auswurf: ["Auswurf", "Sputum"],
+      atemnot: ["Atemnot", "Shortness of Breath"],
+      copd: ["COPD", "COPD"],
+      lungenembolie: ["Lungenembolie", "Pulmonary Embolism"],
+    });
+    this.addSpacing(10);
+  }
+
+  // === VI. Digestive ===
+  buildDigestive(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("VI. Magen & Darm", "VI. Digestive System"), "🍽️");
+    this.renderConditionGroup("", fd.magenDarm, {
+      magengeschwuer: ["Magengeschwür", "Stomach Ulcer"],
+      duennDarmgeschwuer: ["Dünndarmgeschwür", "Duodenal Ulcer"],
+      sodbrennen: ["Sodbrennen", "Heartburn"],
+      magensaeurehemmer: ["Magensäurehemmer", "Acid Blockers"],
+      uebelkeit: ["Übelkeit", "Nausea"],
+      erbrechen: ["Erbrechen", "Vomiting"],
+      verstopfung: ["Verstopfung", "Constipation"],
+      durchfall: ["Durchfall", "Diarrhea"],
+      blaehungen: ["Blähungen", "Bloating"],
+      bauchschmerzen: ["Bauchschmerzen", "Abdominal Pain"],
+      zoeliakie: ["Zöliakie", "Celiac Disease"],
+      morbusCrohn: ["Morbus Crohn", "Crohn's Disease"],
+      colitis: ["Colitis ulcerosa", "Ulcerative Colitis"],
+      reizdarm: ["Reizdarm", "Irritable Bowel"],
+    });
+    this.addField(this.t("Durst", "Thirst"), fd.durst, 5);
+    this.addField(this.t("Appetit", "Appetite"), fd.appetit, 5);
+    this.addField(this.t("Ernährungstyp", "Diet Type"), fd.ernaehrungstyp, 5);
+    this.addSpacing(10);
+  }
+
+  // === VII. Liver ===
+  buildLiver(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("VII. Leber & Galle", "VII. Liver & Gallbladder"), "🫀");
+    this.renderConditionGroup("", fd.leberGalle, {
+      lebererkrankung: ["Lebererkrankung", "Liver Disease"],
+      leberzirrhose: ["Leberzirrhose", "Liver Cirrhosis"],
+      leberkrebs: ["Leberkrebs", "Liver Cancer"],
+      gelbsucht: ["Gelbsucht", "Jaundice"],
+      gallensteine: ["Gallensteine", "Gallstones"],
+      gallenleiden: ["Gallenleiden", "Gallbladder Disease"],
+      gallenblasenentfernung: ["Gallenblasenentfernung", "Gallbladder Removal"],
+      gallengangentzuendung: ["Gallengangentzündung", "Bile Duct Inflammation"],
+    });
+    this.addSpacing(10);
+  }
+
+  // === VIII. Kidney ===
+  buildKidney(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("VIII. Niere & Blase", "VIII. Kidney & Bladder"), "💧");
+    this.renderConditionGroup("", fd.niereBlase, {
+      nierenerkrankung: ["Nierenerkrankung", "Kidney Disease"],
+      blasenleiden: ["Blasenleiden", "Bladder Disease"],
+      nykturie: ["Nykturie", "Nocturia"],
+      miktionsbeschwerden: ["Miktionsbeschwerden", "Urination Problems"],
+      inkontinenz: ["Inkontinenz", "Incontinence"],
+      haematurie: ["Hämaturie", "Hematuria"],
+      nierensteine: ["Nierensteine", "Kidney Stones"],
+    });
+    this.addField(this.t("Miktionsfrequenz", "Urination Frequency"), fd.niereBlase?.miktionsfrequenz, 5);
+    this.addSpacing(10);
+  }
+
+  // === IX. Hormones ===
+  buildHormone(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("IX. Hormone", "IX. Hormones"), "⚡");
+    this.renderConditionGroup("", fd.hormongesundheit, {
+      schilddruese: ["Schilddrüse", "Thyroid"],
+      hypophyse: ["Hypophyse", "Pituitary"],
+      nebenniere: ["Nebenniere", "Adrenal Gland"],
+    });
+    this.addSpacing(10);
+  }
+
+  // === X. Musculoskeletal ===
+  buildMusculoskeletal(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("X. Bewegungsapparat", "X. Musculoskeletal System"), "🦴");
+    this.renderConditionGroup("", fd.wirbelsaeuleGelenke, {
+      hws: ["HWS (Halswirbelsäule)", "Cervical Spine"],
+      bws: ["BWS (Brustwirbelsäule)", "Thoracic Spine"],
+      lws: ["LWS (Lendenwirbelsäule)", "Lumbar Spine"],
+      iliosakral: ["ISG (Iliosakralgelenk)", "Sacroiliac Joint"],
+      schulter: ["Schulter", "Shoulder"],
+      ellbogen: ["Ellbogen", "Elbow"],
+      handgelenk: ["Handgelenk", "Wrist"],
+      finger: ["Finger", "Fingers"],
+      huefte: ["Hüfte", "Hip"],
+      knie: ["Knie", "Knee"],
+      fuss: ["Fuß", "Foot"],
+      zehen: ["Zehen", "Toes"],
+      rheuma: ["Rheuma", "Rheumatism"],
+    });
+    this.addSpacing();
+    this.addSubHeader(this.t("Haut & Infektionen", "Skin & Infections"));
+    this.renderConditionGroup("", fd.hautInfektionen, {
+      hauterkrankung: ["Hauterkrankung", "Skin Disease"],
+      ekzem: ["Ekzem", "Eczema"],
+      psoriasis: ["Psoriasis", "Psoriasis"],
+      urticaria: ["Urtikaria", "Urticaria"],
+      juckreiz: ["Juckreiz", "Itching"],
+      akne: ["Akne", "Acne"],
+      rosazea: ["Rosazea", "Rosacea"],
+      geschlechtskrankheit: ["Geschlechtskrankheit", "STD"],
+      hyperhidrose: ["Hyperhidrose", "Hyperhidrosis"],
+    });
+    this.addCheckboxField(this.t("Nachtschweiß", "Night Sweats"), fd.hautInfektionen?.nachtschweiss);
+    this.addCheckboxField(this.t("Stressschweiß", "Stress Sweating"), fd.hautInfektionen?.stressSchweiss);
+    this.addCheckboxField(this.t("Ständiges Schwitzen", "Constant Sweating"), fd.hautInfektionen?.staendigSchweiss);
+    this.addSpacing(10);
+  }
+
+  // === XI. Women's Health ===
+  buildWomenHealth(fd: AnamneseFormData) {
+    if (fd.geschlecht && fd.geschlecht !== "weiblich" && fd.geschlecht !== "female") return;
+    this.addSectionHeader(this.t("XI. Frauengesundheit", "XI. Women's Health"), "👩");
+    const fg = fd.frauengesundheit;
+    if (!fg) { this.addNoData(); this.addSpacing(10); return; }
+    this.addField(this.t("Geburtsgewicht", "Birth Weight"), fg.geburtsgewicht, 5);
+    this.renderCondition(this.t("Frühgeburt", "Premature Birth"), fg.fruehgeburt);
+    this.renderCondition(this.t("Gebärmuttererkrankung", "Uterine Disease"), fg.gebaermuttererkrankung);
+    this.renderCondition(this.t("Gebärmutterentfernung", "Hysterectomy"), fg.gebaermutterentfernung);
+    this.renderCondition(this.t("Eierstockentfernung", "Oophorectomy"), fg.eierstockentfernung);
+    this.renderCondition(this.t("Gebärmutterausschabung", "Curettage"), fg.gebaermutterausschabung);
+    this.renderCondition(this.t("Eierstockzyste", "Ovarian Cyst"), fg.eierstockzyste);
+    this.renderCondition(this.t("Endometriose", "Endometriosis"), fg.endometriose);
+    this.renderCondition(this.t("Myome", "Fibroids"), fg.myome);
+    this.renderCondition(this.t("Pille", "Birth Control Pill"), fg.pille);
+    this.renderCondition(this.t("Hormonbehandlung", "Hormone Treatment"), fg.hormonbehandlung);
+    this.renderCondition(this.t("Menopause", "Menopause"), fg.menopause);
+    this.renderCondition(this.t("Periodenbeschwerden", "Period Complaints"), fg.periodenbeschwerden);
+    if (fg.schwangerschaften?.anzahl) this.addField(this.t("Schwangerschaften", "Pregnancies"), fg.schwangerschaften.anzahl, 5);
+    if (fg.fehlgeburten?.anzahl) this.addField(this.t("Fehlgeburten", "Miscarriages"), fg.fehlgeburten.anzahl, 5);
+    if (fg.geburten?.anzahl) this.addField(this.t("Geburten", "Births"), fg.geburten.anzahl, 5);
+    this.renderCondition(this.t("Wochenbettdepression", "Postpartum Depression"), fg.wochenbettdepression);
+    this.addField(this.t("Sonstiges", "Other"), fg.sonstige, 5);
+    this.addSpacing(10);
+  }
+
+  // === XI. Men's Health ===
+  buildMensHealth(fd: AnamneseFormData) {
+    if (fd.geschlecht && fd.geschlecht !== "männlich" && fd.geschlecht !== "male") return;
+    this.addSectionHeader(this.t("XI. Männergesundheit", "XI. Men's Health"), "👨");
+    this.renderConditionGroup("", fd.maennergesundheit, {
+      prostata: ["Prostata", "Prostate"],
+      hoden: ["Hodenerkrankung", "Testicular Disease"],
+      nebenhoden: ["Nebenhodenerkrankung", "Epididymal Disease"],
+      erektionsstoerung: ["Erektionsstörung", "Erectile Dysfunction"],
+    });
+    this.addSpacing(10);
+  }
+
+  // === XII. Surgeries ===
+  buildSurgeries(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XII. Unfälle & Operationen", "XII. Accidents & Surgeries"), "🏥");
+    const uo = fd.unfaelleOperationen;
+    if (!uo) { this.addNoData(); this.addSpacing(10); return; }
+    this.renderCondition(this.t("Unfall", "Accident"), uo.unfall);
+    this.renderCondition(this.t("Knochenbruch", "Bone Fracture"), uo.knochenbruch);
+    this.renderCondition(this.t("Kopfverletzung", "Head Injury"), uo.kopfverletzung);
+    if (uo.operationen?.length > 0) {
+      this.addSubHeader(this.t("Operationen", "Surgeries"));
+      uo.operationen.forEach((op, i) => {
+        this.addField(`${i + 1}.`, `${op.jahr} – ${op.grund}`, 5);
+      });
+    }
+    this.renderCondition(this.t("Krankenhausaufenthalt", "Hospitalization"), uo.krankenhausaufenthalt);
+    this.renderCondition(this.t("Kur/Reha", "Rehabilitation"), uo.kuraufenthalt);
+    this.renderCondition(this.t("Bluttransfusion", "Blood Transfusion"), uo.bluttransfusion);
+    this.renderCondition(this.t("Chemotherapie", "Chemotherapy"), uo.chemotherapie);
+    this.renderCondition(this.t("Strahlentherapie", "Radiation Therapy"), uo.strahlentherapie);
+    this.addSpacing();
+    this.addSubHeader(this.t("Nuklearmedizinische Untersuchungen", "Nuclear Medicine"));
+    this.renderCondition(this.t("Szintigraphie", "Scintigraphy"), uo.szintigraphie);
+    this.renderCondition("PET-CT", uo.petCt);
+    this.renderCondition(this.t("Radioiodtherapie", "Radioiodine Therapy"), uo.radioiodtherapie);
+    this.addSpacing(10);
+  }
+
+  // === XIII. Cancer ===
+  buildCancer(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XIII. Krebs", "XIII. Cancer"), "⚠️");
+    const kr = fd.krebserkrankung;
+    if (!kr || !kr.hatKrebs) { this.addNoData(this.t("Keine Krebserkrankung angegeben", "No cancer reported")); this.addSpacing(10); return; }
+    this.addCheckboxField(this.t("Krebserkrankung", "Cancer"), true);
+    this.addField(this.t("Art", "Type"), kr.welche || kr.welcheTyp, 5);
+    this.addField(this.t("Diagnosejahr", "Year of Diagnosis"), kr.diagnoseJahr, 5);
+    this.addField(this.t("Betroffene Organe", "Affected Organs"), kr.betroffeneOrgane || kr.betroffeneOrganeList?.join(", "), 5);
+    if (kr.tnmStadium?.t || kr.tnmStadium?.n || kr.tnmStadium?.m) {
+      this.addField("TNM", `T${kr.tnmStadium.t} N${kr.tnmStadium.n} M${kr.tnmStadium.m}`, 5);
+    }
+    this.renderCondition(this.t("Operation durchgeführt", "Surgery Performed"), kr.operationDurchgefuehrt);
+    if (kr.operationenList?.length > 0) {
+      kr.operationenList.forEach((op, i) => this.addField(`OP ${i + 1}`, `${op.jahr} – ${op.art}`, 10));
+    }
+    if (kr.chemotherapieErhalten?.ja) {
+      this.addCheckboxField(this.t("Chemotherapie erhalten", "Chemotherapy Received"), true);
+      this.addField(this.t("Zeitraum", "Period"), `${kr.chemotherapieErhalten.von} – ${kr.chemotherapieErhalten.bis}`, 10);
+      this.addField(this.t("Art", "Type"), kr.chemotherapieErhalten.welche || kr.chemotherapieErhalten.typen?.join(", "), 10);
+    }
+    if (kr.strahlentherapieErhalten?.ja) {
+      this.addCheckboxField(this.t("Strahlentherapie erhalten", "Radiation Received"), true);
+      this.addField(this.t("Bereich", "Area"), kr.strahlentherapieErhalten.bereich, 10);
+      this.addField(this.t("Dauer (Wochen)", "Duration (weeks)"), kr.strahlentherapieErhalten.dauerWochen, 10);
+      this.addField(this.t("Typen", "Types"), kr.strahlentherapieErhalten.typen?.join(", "), 10);
+    }
+    if (kr.metastasen?.ja) {
+      this.addCheckboxField(this.t("Metastasen", "Metastases"), true);
+      this.addField(this.t("Organe", "Organs"), kr.metastasen.organe || kr.metastasen.organeList?.join(", "), 10);
+    }
+    if (kr.aktuelleTumortherapie?.ja) {
+      this.addCheckboxField(this.t("Aktuelle Tumortherapie", "Current Tumor Therapy"), true);
+      this.addField(this.t("Art", "Type"), kr.aktuelleTumortherapie.welche || kr.aktuelleTumortherapie.typen?.join(", "), 10);
+    }
+    this.addSpacing(10);
+  }
+
+  // === XIV. Allergies ===
+  buildAllergies(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XIV. Allergien & Unverträglichkeiten", "XIV. Allergies & Intolerances"), "🤧");
+    const a = fd.allergien;
+    if (!a) { this.addNoData(); this.addSpacing(10); return; }
+    let hasAny = false;
+    if (a.inhalation?.ja) {
+      hasAny = true;
+      const types: string[] = [];
+      if (a.inhalation.pollen) types.push(this.t("Pollen", "Pollen"));
+      if (a.inhalation.staub) types.push(this.t("Staub", "Dust"));
+      if (a.inhalation.tierhaare) types.push(this.t("Tierhaare", "Animal Hair"));
+      if (a.inhalation.schimmel) types.push(this.t("Schimmel", "Mold"));
+      this.addField(this.t("Inhalationsallergien", "Inhalation Allergies"), types.join(", "), 5);
+    }
+    if (a.tierepithelien?.ja) {
+      hasAny = true;
+      const types: string[] = [];
+      if (a.tierepithelien.hund) types.push(this.t("Hund", "Dog"));
+      if (a.tierepithelien.katze) types.push(this.t("Katze", "Cat"));
+      if (a.tierepithelien.pferd) types.push(this.t("Pferd", "Horse"));
+      if (a.tierepithelien.sonstige) types.push(a.tierepithelien.sonstige);
+      this.addField(this.t("Tierepithelien", "Animal Epithelial"), types.join(", "), 5);
+    }
+    if (a.nahrungsmittel?.ja) {
+      hasAny = true;
+      this.addField(this.t("Nahrungsmittelallergien", "Food Allergies"), a.nahrungsmittel.details || a.nahrungsmittel.allergene?.join(", "), 5);
+    }
+    if (a.medikamente?.ja) {
+      hasAny = true;
+      this.addField(this.t("Medikamentenallergien", "Drug Allergies"), a.medikamente.details || a.medikamente.allergene?.join(", "), 5);
+    }
+    if (a.kontakt?.ja) {
+      hasAny = true;
+      const types: string[] = [];
+      if (a.kontakt.nickel) types.push("Nickel");
+      if (a.kontakt.latex) types.push("Latex");
+      if (a.kontakt.sonstige) types.push(a.kontakt.sonstige);
+      this.addField(this.t("Kontaktallergien", "Contact Allergies"), types.join(", "), 5);
+    }
+    if (a.laktose?.ja) { hasAny = true; this.addCheckboxField(this.t("Laktoseintoleranz", "Lactose Intolerance"), true); }
+    if (a.gluten?.ja) { hasAny = true; this.addCheckboxField(this.t("Glutenunverträglichkeit", "Gluten Intolerance"), true); }
+    if (a.fruktose?.ja) { hasAny = true; this.addCheckboxField(this.t("Fruktoseintoleranz", "Fructose Intolerance"), true); }
+    if (a.histamin?.ja) { hasAny = true; this.addCheckboxField(this.t("Histaminintoleranz", "Histamine Intolerance"), true); }
+    this.addField(this.t("Sonstige Unverträglichkeiten", "Other Intolerances"), a.sonstigeUnvertraeglichkeit, 5);
+    if (!hasAny && !a.sonstigeUnvertraeglichkeit) this.addNoData(this.t("Keine Allergien angegeben", "No allergies specified"));
+    this.addSpacing(10);
+  }
+
+  // === XV. Medications ===
+  buildMedications(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XV. Medikamente", "XV. Medications"), "💊");
+    const m = fd.medikamente;
+    if (m?.inAerztlicherBehandlung?.ja) {
+      this.addField(this.t("In ärztlicher Behandlung bei", "Under medical treatment with"), m.inAerztlicherBehandlung.beiWem, 5);
+    }
+    this.addField(this.t("Fachärzte", "Specialists"), m?.fachaerzte, 5);
+    if (m?.aktuelle?.length > 0) {
+      this.addSubHeader(this.t("Aktuelle Medikamente", "Current Medications"));
+      m.aktuelle.forEach((med, i) => {
+        const parts = [med.name, med.dosierung, med.grund, med.seit ? `${this.t("seit", "since")} ${med.seit}` : ""].filter(Boolean);
+        this.addField(`${i + 1}.`, parts.join(" – "), 5);
+      });
+    } else {
+      this.addNoData(this.t("Keine aktuellen Medikamente", "No current medications"));
+    }
+    if (m?.unvertraeglichkeiten?.length > 0) {
+      this.addSubHeader(this.t("Medikamentenunverträglichkeiten", "Drug Intolerances"));
+      m.unvertraeglichkeiten.forEach((u, i) => {
+        this.addField(`${i + 1}. ${u.name}`, u.reaktion, 5);
+      });
+    }
+    this.addSpacing(10);
+  }
+
+  // === XVI. Lifestyle ===
+  buildLifestyle(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XVI. Lebensweise", "XVI. Lifestyle"), "🌿");
+    const l = fd.lebensweise;
+    if (!l) { this.addNoData(); this.addSpacing(10); return; }
+    this.addFieldAlways(this.t("Raucher", "Smoker"), l.raucher || this.t("Nein", "No"));
+    if (l.raucher === "aktiv" || l.raucher === "ehemals") {
+      this.addField(this.t("Seit wann", "Since when"), l.raucherSeitWann, 5);
+      this.addField(this.t("Zigaretten/Tag", "Cigarettes/day"), l.zigarettenProTag, 5);
+      this.addField(this.t("Ex-Raucher bis", "Ex-smoker until"), l.exRaucherBisWann, 5);
+    }
+    this.addField(this.t("Passivrauchen", "Passive Smoking"), l.passivRauchen, 5);
+    if (l.alkohol?.ja) {
+      this.addCheckboxField(this.t("Alkoholkonsum", "Alcohol Consumption"), true);
+      this.addField(this.t("Seit wann", "Since when"), l.alkohol.seitWann, 10);
+      this.addField(this.t("Menge/Tag", "Amount/day"), l.alkohol.mengeProTag, 10);
+      if (l.alkohol.typen?.length > 0) {
+        l.alkohol.typen.forEach(t => this.addField(t.typ, t.menge, 10));
+      }
+    }
+    if (l.sport?.ja) {
+      this.addCheckboxField(this.t("Sport", "Sports"), true);
+      this.addField(this.t("Art", "Type"), l.sport.art || l.sport.arten?.join(", "), 10);
+      this.addField(this.t("Pro Woche", "Per week"), l.sport.proWoche ? `${l.sport.proWoche}x` : "", 10);
+    }
+    if (l.taeglicheBewegung?.ja) {
+      this.addField(this.t("Tägliche Bewegung", "Daily Activity"), l.taeglicheBewegung.details, 5);
+    }
+    if (l.spaziergang?.ja) {
+      this.addField(this.t("Spaziergang", "Walk"), `${l.spaziergang.proWoche}x, ${l.spaziergang.dauerMinuten} min`, 5);
+    }
+    this.addField(this.t("Meter zu Fuß/Tag", "Meters walked/day"), l.meterZuFuss, 5);
+    this.addFieldAlways(this.t("Schlafqualität", "Sleep Quality"), l.schlafQualitaet);
+    this.addFieldAlways(this.t("Schlafdauer", "Sleep Duration"), l.schlafDauer);
+    this.addField(this.t("Stresslevel", "Stress Level"), l.stressLevel, 5);
+    this.addField(this.t("Ernährung", "Diet"), l.ernaehrungsgewohnheiten || l.ernaehrungsTypen?.join(", "), 5);
+    this.addField(this.t("Ernährung Sonstiges", "Diet Other"), l.ernaehrungSonstiges, 5);
+    this.addSpacing(10);
+  }
+
+  // === XVII. Dental ===
+  buildDental(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XVII. Zahngesundheit", "XVII. Dental Health"), "🦷");
+    const z = fd.zahngesundheit;
+    if (!z) { this.addNoData(); this.addSpacing(10); return; }
+    this.addField(this.t("Gebisstyp", "Denture Type"), z.gebissTyp, 5);
+    if (z.gebissTyp === "teilprothese" || z.gebissTyp === "vollprothese") {
+      const kiefer: string[] = [];
+      if (z.protheseKiefer?.oberkiefer) kiefer.push(this.t("Oberkiefer", "Upper Jaw"));
+      if (z.protheseKiefer?.unterkiefer) kiefer.push(this.t("Unterkiefer", "Lower Jaw"));
+      if (z.protheseKiefer?.beideKiefer) kiefer.push(this.t("Beide Kiefer", "Both Jaws"));
+      this.addField(this.t("Prothese Kiefer", "Denture Jaw"), kiefer.join(", "), 5);
+      this.addField(this.t("Prothese seit", "Denture since"), z.protheseSeit, 5);
+    }
+    // Tooth-level findings
+    if (z.zahnbefunde && Object.keys(z.zahnbefunde).length > 0) {
+      this.addSubHeader(this.t("Zahnbefunde (FDI-Schema)", "Tooth Findings (FDI System)"));
+      for (const [tooth, finding] of Object.entries(z.zahnbefunde)) {
+        if (finding.diagnoses?.length > 0) {
+          this.addField(`${this.t("Zahn", "Tooth")} ${tooth}`, finding.diagnoses.join(", "), 5);
+        }
+      }
+    }
+    this.renderCondition(this.t("Parodontitis", "Periodontitis"), z.parodontitis);
+    this.renderCondition(this.t("Zahnfleischbluten", "Bleeding Gums"), z.zahnfleischbluten);
+    if (z.kiefergelenk?.ja) {
+      const details: string[] = [];
+      if (z.kiefergelenk.knacken) details.push(this.t("Knacken", "Clicking"));
+      if (z.kiefergelenk.schmerzen) details.push(this.t("Schmerzen", "Pain"));
+      if (z.kiefergelenk.eingeschraenkt) details.push(this.t("Eingeschränkt", "Limited"));
+      this.addCheckboxField(`${this.t("Kiefergelenk", "TMJ")}: ${details.join(", ")}`, true);
+    }
+    if (z.bruxismus?.ja) {
+      const details: string[] = [];
+      if (z.bruxismus.nachts) details.push(this.t("Nachts", "Night"));
+      if (z.bruxismus.tagsueber) details.push(this.t("Tagsüber", "Daytime"));
+      if (z.bruxismus.schiene) details.push(this.t("Schiene", "Splint"));
+      this.addCheckboxField(`${this.t("Bruxismus", "Bruxism")}: ${details.join(", ")}`, true);
+    }
+    this.addField(this.t("Letzter Zahnarztbesuch", "Last Dentist Visit"), z.letzterZahnarztbesuch, 5);
+    this.addField(this.t("Zahnarzt", "Dentist"), z.zahnarztName, 5);
+    this.addField(this.t("Bemerkungen", "Notes"), z.bemerkungen, 5);
+    this.addSpacing(10);
+  }
+
+  // === XVIII. Environment ===
+  buildEnvironment(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XVIII. Umweltbelastungen", "XVIII. Environmental Exposures"), "🌍");
+    const u = fd.umweltbelastungen;
+    if (!u) { this.addNoData(); this.addSpacing(10); return; }
+    
+    // Chemosensitivities
+    if (u.chemosensibilitaet) {
+      this.addSubHeader(this.t("Chemische Sensitivitäten", "Chemical Sensitivities"));
+      const chemoLabels: Record<string, [string, string]> = {
+        dieselAbgase: ["Dieselabgase", "Diesel Fumes"],
+        tabakrauch: ["Tabakrauch", "Tobacco Smoke"],
+        pestizide: ["Pestizide", "Pesticides"],
+        benzin: ["Benzin", "Gasoline"],
+        farben: ["Farben/Lacke", "Paints/Varnishes"],
+        desinfektionsmittel: ["Desinfektionsmittel", "Disinfectants"],
+        reiniger: ["Reiniger", "Cleaners"],
+        parfuems: ["Parfüms", "Perfumes"],
+        teer: ["Teer", "Tar"],
+        nagellack: ["Nagellack", "Nail Polish"],
+        haarspray: ["Haarspray", "Hairspray"],
+        neueRaumausstattung: ["Neue Raumausstattung", "New Furnishings"],
+        kunststoff: ["Kunststoff", "Plastics"],
+        neuesAuto: ["Neues Auto", "New Car"],
+      };
+      let hasChemo = false;
+      for (const [key, [de, en]] of Object.entries(chemoLabels)) {
+        const val = (u.chemosensibilitaet as any)?.[key];
+        if (val?.ja) {
+          hasChemo = true;
+          this.addCheckboxField(`${this.t(de, en)}${val.staerke ? ` (${val.staerke})` : ""}`, true);
+        }
+      }
+      if (!hasChemo) this.addNoData();
+    }
+
+    // Body exposures
+    if (u.koerperbelastungen) {
+      this.addSubHeader(this.t("Körperbelastungen", "Body Exposures"));
+      const kb = u.koerperbelastungen;
+      if (kb.strahlung?.ja) {
+        const types: string[] = [];
+        if (kb.strahlung.geopathie) types.push(this.t("Geopathie", "Geopathy"));
+        if (kb.strahlung.elektrosmog) types.push("Elektrosmog");
+        if (kb.strahlung.hochspannung) types.push(this.t("Hochspannung", "High Voltage"));
+        if (kb.strahlung.funkmasten) types.push(this.t("Funkmasten", "Cell Towers"));
+        if (kb.strahlung.wlan) types.push("WLAN");
+        this.addCheckboxField(`${this.t("Strahlenbelastung", "Radiation Exposure")}: ${types.join(", ")}`, true);
+      }
+      this.renderCondition(this.t("Zahnherde", "Dental Foci"), kb.zahnherde);
+      this.renderCondition(this.t("Quecksilber/Amalgam", "Mercury/Amalgam"), kb.quecksilber);
+      this.renderCondition(this.t("Zahnbeschwerden", "Dental Complaints"), kb.zahnbeschwerden);
+      this.renderCondition(this.t("Metalle im Mund", "Metals in Mouth"), kb.metalleImMund);
+      this.renderCondition(this.t("Implantate", "Implants"), kb.implantate);
+      if (kb.nebenhoehlen?.ja) {
+        const types: string[] = [];
+        if (kb.nebenhoehlen.stirn) types.push(this.t("Stirn", "Frontal"));
+        if (kb.nebenhoehlen.kiefer) types.push(this.t("Kiefer", "Maxillary"));
+        if (kb.nebenhoehlen.beide) types.push(this.t("Beide", "Both"));
+        this.addCheckboxField(`${this.t("Nebenhöhlen", "Sinuses")}: ${types.join(", ")}`, true);
+      }
+      this.renderCondition(this.t("Tonsillen", "Tonsils"), kb.tonsillen);
+      this.renderCondition(this.t("Narben", "Scars"), kb.narben);
+      if (kb.mangelzustaende?.ja) {
+        const types: string[] = [];
+        if (kb.mangelzustaende.vitamine) types.push(this.t("Vitamine", "Vitamins"));
+        if (kb.mangelzustaende.mineralien) types.push(this.t("Mineralien", "Minerals"));
+        if (kb.mangelzustaende.spurenelemente) types.push(this.t("Spurenelemente", "Trace Elements"));
+        if (kb.mangelzustaende.enzyme) types.push(this.t("Enzyme", "Enzymes"));
+        if (kb.mangelzustaende.fluessigkeit) types.push(this.t("Flüssigkeit", "Fluids"));
+        this.addCheckboxField(`${this.t("Mangelzustände", "Deficiencies")}: ${types.join(", ")}`, true);
+      }
+      if (kb.mikroorganismen?.ja) {
+        const types: string[] = [];
+        if (kb.mikroorganismen.viren) types.push(this.t("Viren", "Viruses"));
+        if (kb.mikroorganismen.bakterien) types.push(this.t("Bakterien", "Bacteria"));
+        if (kb.mikroorganismen.pilze) types.push(this.t("Pilze", "Fungi"));
+        if (kb.mikroorganismen.parasiten) types.push(this.t("Parasiten", "Parasites"));
+        this.addCheckboxField(`${this.t("Mikroorganismen", "Microorganisms")}: ${types.join(", ")}`, true);
+      }
+      if (kb.toxisch?.ja) {
+        const types: string[] = [];
+        if (kb.toxisch.schwermetalle) types.push(this.t("Schwermetalle", "Heavy Metals"));
+        if (kb.toxisch.chemikalien) types.push(this.t("Chemikalien", "Chemicals"));
+        if (kb.toxisch.pestizide) types.push(this.t("Pestizide", "Pesticides"));
+        if (kb.toxisch.erbtoxine) types.push(this.t("Erbtoxine", "Hereditary Toxins"));
+        this.addCheckboxField(`${this.t("Toxische Belastung", "Toxic Exposure")}: ${types.join(", ")}`, true);
+      }
+    }
+    this.addSpacing(10);
+  }
+
+  // === XIX. Infections ===
+  buildInfections(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XIX. Infektionen", "XIX. Infections"), "🦠");
+    const inf = fd.infektionen;
+    if (!inf) { this.addNoData(); this.addSpacing(10); return; }
+    if (inf.tropenReise?.ja) {
+      this.addCheckboxField(this.t("Tropenreise", "Tropical Travel"), true);
+      this.addField(this.t("Jahr", "Year"), inf.tropenReise.jahr, 10);
+      this.addField(this.t("Länder", "Countries"), inf.tropenReise.laender || inf.tropenReise.laenderList?.join(", "), 10);
+    }
+    this.renderCondition(this.t("Zeckenbiss", "Tick Bite"), inf.zeckenbiss);
+    this.renderCondition(this.t("Borreliose", "Lyme Disease"), inf.borreliose);
+    this.renderCondition(this.t("FSME-Impfung", "TBE Vaccination"), inf.fsmeImpfung);
+    if (inf.hund?.ja) this.addField(this.t("Hund", "Dog"), inf.hund.rasse, 5);
+    if (inf.katze?.ja) this.addField(this.t("Katze", "Cat"), inf.katze.rasse, 5);
+    if (inf.pferd?.ja) this.addField(this.t("Pferd", "Horse"), inf.pferd.kontakt, 5);
+    if (inf.andereHaustiere?.ja) this.addField(this.t("Andere Haustiere", "Other Pets"), inf.andereHaustiere.welche, 5);
+    this.addSpacing(10);
+  }
+
+  // === XX. Vaccinations ===
+  buildVaccinations(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XX. Impfstatus", "XX. Vaccinations"), "💉");
+    const imp = fd.impfungen;
+    if (!imp) { this.addNoData(); this.addSpacing(10); return; }
+    const vaccines: [string, string, string, any][] = [
+      ["mmr", "MMR", "MMR", imp.mmr],
+      ["tetanus", "Tetanus", "Tetanus", imp.tetanus],
+      ["diphtherie", "Diphtherie", "Diphtheria", imp.diphtherie],
+      ["keuchhusten", "Keuchhusten", "Whooping Cough", imp.keuchhusten],
+      ["polio", "Polio", "Polio", imp.polio],
+      ["hepatitisA", "Hepatitis A", "Hepatitis A", imp.hepatitisA],
+      ["hepatitisB", "Hepatitis B", "Hepatitis B", imp.hepatitisB],
+      ["windpocken", "Windpocken", "Chickenpox", imp.windpocken],
+      ["influenza", "Influenza", "Influenza", imp.influenza],
+      ["pneumokokken", "Pneumokokken", "Pneumococcal", imp.pneumokokken],
+    ];
+    let hasVax = false;
+    vaccines.forEach(([, de, en, vax]) => {
+      if (vax?.ja) {
+        hasVax = true;
+        const zeit = vax.jahr || vax.zuletzt || "";
+        this.addCheckboxField(`${this.t(de, en)}${zeit ? ` (${zeit})` : ""}`, true);
+      }
+    });
+
+    // COVID
+    if (imp.covid?.geimpft) {
+      hasVax = true;
+      this.addSubHeader("COVID-19");
+      [imp.covid.dosis1, imp.covid.dosis2, imp.covid.dosis3, imp.covid.dosis4].forEach((d, i) => {
+        if (d?.ja) {
+          this.addField(`${this.t("Dosis", "Dose")} ${i + 1}`, `${d.datum} – ${d.hersteller}`, 5);
+        }
+      });
+      if (imp.covid.weitereAnzahl) this.addField(this.t("Weitere Dosen", "Additional Doses"), imp.covid.weitereAnzahl, 5);
+      if (imp.covid.impfreaktionen?.ja) this.addField(this.t("Impfreaktionen", "Vaccine Reactions"), imp.covid.impfreaktionen.art, 5);
+      if (imp.covid.infiziert?.ja) {
+        this.addField(this.t("COVID-Infektion", "COVID Infection"), `${imp.covid.infiziert.wann} (${imp.covid.infiziert.schwere})`, 5);
+      }
+      if (imp.covid.longCovid?.ja) this.addField("Long COVID", imp.covid.longCovid.welche, 5);
+    }
+    if (!hasVax) this.addNoData(this.t("Keine Impfungen angegeben", "No vaccinations reported"));
+    this.addSpacing(10);
+  }
+
+  // === XXI. Complaints ===
+  buildComplaints(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XXI. Beschwerden", "XXI. Complaints"), "📋");
+    const b = fd.beschwerden;
+    if (!b || (!b.hauptbeschwerde && !b.weitereBeschwerden)) { this.addNoData(); this.addSpacing(10); return; }
+    this.addField(this.t("Hauptbeschwerde", "Main Complaint"), b.hauptbeschwerde, 5);
+    this.addField(this.t("Weitere Beschwerden", "Additional Complaints"), b.weitereBeschwerden, 5);
+    this.addField(this.t("Beginn", "Onset"), b.beginnDerBeschwerden, 5);
+    this.addField(this.t("Verlauf", "Course"), b.verlauf, 5);
+    if (b.auftreten?.length > 0) this.addField(this.t("Auftreten", "Occurrence"), b.auftreten.join(", "), 5);
+    this.addField(this.t("Ausstrahlung", "Radiation"), b.ausstrahlung, 5);
+    if (b.artDerBeschwerden?.length > 0) this.addField(this.t("Art der Beschwerden", "Type of Complaints"), b.artDerBeschwerden.join(", "), 5);
+    if (b.schmerzqualitaet?.length > 0) this.addField(this.t("Schmerzqualität", "Pain Quality"), b.schmerzqualitaet.join(", "), 5);
+    this.addField(this.t("Schmerzintensität (0-10)", "Pain Intensity (0-10)"), b.schmerzintensitaet, 5);
+    if (b.verschlimmerung?.length > 0) this.addField(this.t("Verschlimmerung durch", "Worsened by"), b.verschlimmerung.join(", "), 5);
+    if (b.verbesserung?.length > 0) this.addField(this.t("Verbesserung durch", "Improved by"), b.verbesserung.join(", "), 5);
+    this.addField(this.t("Bisherige Behandlungen", "Previous Treatments"), b.bisherigeBehandlungen, 5);
+    this.addField(this.t("Ergebnis", "Result"), b.ergebnisBisherigerBehandlungen, 5);
+    this.addSpacing(10);
+  }
+
+  // === XXII. Preferences ===
+  buildPreferences(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XXII. Behandlungspräferenzen", "XXII. Treatment Preferences"), "✨");
+    const bp = fd.behandlungspraeferenzen;
+    if (!bp) { this.addNoData(); this.addSpacing(10); return; }
+    const therapies: [string, string, string][] = [
+      ["homoeopathie", "Homöopathie", "Homeopathy"],
+      ["biophysikalisch", "Biophysikalische Therapie", "Biophysical Therapy"],
+      ["metatron", "Metatron/NLS", "Metatron/NLS"],
+      ["trikombin", "Trikombin", "Trikombin"],
+      ["zapper", "Zapper", "Zapper"],
+      ["eav", "EAV", "EAV"],
+      ["mineralTestung", "Mineral-Testung", "Mineral Testing"],
+      ["akupunktur", "Akupunktur", "Acupuncture"],
+      ["phytotherapie", "Phytotherapie", "Phytotherapy"],
+      ["bachblueten", "Bachblüten", "Bach Flowers"],
+      ["sanum", "Sanum-Therapie", "Sanum Therapy"],
+      ["hypnotherapie", "Hypnotherapie", "Hypnotherapy"],
+    ];
+    let hasAny = false;
+    therapies.forEach(([key, de, en]) => {
+      const val = bp[key as keyof typeof bp];
+      if (val && typeof val === 'object' && ('interesse' in val || 'erfahren' in val)) {
+        const tags: string[] = [];
+        if ((val as any).interesse) tags.push(this.t("Interesse", "Interested"));
+        if ((val as any).erfahren) tags.push(this.t("Erfahren", "Experienced"));
+        if (tags.length > 0) {
+          hasAny = true;
+          this.addCheckboxField(`${this.t(de, en)}: ${tags.join(", ")}`, true);
+        }
+      }
+    });
+    if (!hasAny) this.addNoData();
+    this.addField(this.t("Therapieerwartungen", "Therapy Expectations"), fd.therapieerwartungen, 5);
+    this.addField(this.t("Gesundheitsziele", "Health Goals"), fd.gesundheitsziele, 5);
+    this.addField(this.t("Weitere Erkrankungen", "Additional Conditions"), fd.weitereErkrankungen, 5);
+    this.addSpacing(10);
+  }
+
+  // === XXIII. Social ===
+  buildSocial(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XXIII. Persönliches", "XXIII. Personal"), "🏠");
+    const s = fd.soziales;
+    if (!s) { this.addNoData(); this.addSpacing(10); return; }
+    this.addField(this.t("Familienstand", "Marital Status"), s.familienstand, 5);
+    this.addField(this.t("Kinder (Anzahl)", "Children (Count)"), s.kinderAnzahl, 5);
+    this.addField(this.t("Alter der Kinder", "Children's Ages"), s.kinderAlter, 5);
+    this.addField(this.t("Wohnumfeld", "Living Environment"), s.wohnumfeld, 5);
+    this.addField(this.t("Wohntyp", "Housing Type"), s.wohntyp, 5);
+    this.addField(this.t("Beruflicher Stress", "Work Stress"), s.berufStress, 5);
+    this.addField(this.t("Finanzielle Belastung", "Financial Burden"), s.finanzBelastung, 5);
+    this.addField(this.t("Soziales Netzwerk", "Social Network"), s.sozialesNetzwerk, 5);
+    this.addField(this.t("Hobbys", "Hobbies"), s.hobbys, 5);
+    this.addSpacing(10);
+  }
+
+  // === XXIV. Signature ===
+  buildSignature(fd: AnamneseFormData) {
+    this.addSectionHeader(this.t("XXIV. Unterschrift", "XXIV. Signature"), "✍️");
+    const u = fd.unterschrift;
+    if (!u) return;
+    this.addField(this.t("Ort", "Place"), u.ort, 5);
+    this.addField(this.t("Datum", "Date"), u.datum, 5);
+    this.addField(this.t("Name in Druckbuchstaben", "Name in Block Letters"), u.nameInDruckbuchstaben, 5);
+    this.addCheckboxField(this.t("Datenschutzerklärung bestätigt", "Privacy Policy Confirmed"), u.bestaetigung);
+    this.addCheckboxField(this.t("Datenschutz-Einwilligung", "Data Protection Consent"), u.datenschutzEinwilligung);
+    this.addCheckboxField(this.t("Patientenaufklärung akzeptiert", "Patient Information Accepted"), u.patientenaufklaerungAkzeptiert);
+    this.addCheckboxField(this.t("2FA-Bestätigung", "2FA Confirmed"), u.bestaetigung2fa);
+    this.addField(this.t("Erziehungsberechtigter", "Legal Guardian"), u.erziehungsberechtigter, 5);
+    this.addField(this.t("Zusätzliche Informationen", "Additional Information"), fd.zusaetzlicheInfos, 5);
+  }
+
+  // ============ Output ============
+
+  save(formData: AnamneseFormData) {
+    const patientName = `${formData.nachname}_${formData.vorname}`.replace(/[^a-zA-Z0-9]/g, "_") || "Patient";
+    const date = new Date().toISOString().split("T")[0];
+    this.doc.save(`Anamnesebogen_${patientName}_${date}.pdf`);
+  }
+
+  toBase64(): string {
+    const dataUri = this.doc.output('datauristring');
+    return dataUri.split(',')[1];
+  }
+}
+
+// ============ Public API ============
+
+export const generateEnhancedAnamnesePdf = async ({ formData, language }: PdfExportOptions) => {
+  const builder = new AnamnesePdfBuilder(language);
+  builder.buildDocument(formData);
+  builder.save(formData);
 };
 
-/** Generate PDF and return as Base64 string (without saving) */
-export const generateAnamnesePdfBase64 = async ({ formData, language, logoBase64 }: PdfExportOptions): Promise<string> => {
-  // Re-use the same logic but return base64 instead of saving
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
-  const contentWidth = pageWidth - margin * 2;
-  const headerHeight = 35;
-  const footerHeight = 25;
-  let yPos = headerHeight + 10;
-  const lineHeight = 6;
-  const t = (de: string, en: string) => (language === "de" ? de : en);
-
-  // Copy all helper functions from generateEnhancedAnamnesePdf
-  const addHeader = () => {
-    doc.setFillColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.rect(0, 0, pageWidth, headerHeight, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text(PRACTICE_INFO.name, margin, 15);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(PRACTICE_INFO.owner, margin, 22);
-    doc.setFontSize(8);
-    doc.text(PRACTICE_INFO.street, pageWidth - margin, 12, { align: "right" });
-    doc.text(PRACTICE_INFO.city, pageWidth - margin, 17, { align: "right" });
-    doc.text(`Tel: ${PRACTICE_INFO.phone}`, pageWidth - margin, 22, { align: "right" });
-    doc.text(PRACTICE_INFO.email, pageWidth - margin, 27, { align: "right" });
-    doc.setDrawColor(BRAND_SECONDARY.r, BRAND_SECONDARY.g, BRAND_SECONDARY.b);
-    doc.setLineWidth(1);
-    doc.line(0, headerHeight, pageWidth, headerHeight);
-  };
-  const addFooterB64 = (pageNum: number, totalPages: number) => {
-    const footerY = pageHeight - footerHeight;
-    doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.setLineWidth(0.5);
-    doc.line(margin, footerY, pageWidth - margin, footerY);
-    doc.setTextColor(BRAND_MUTED.r, BRAND_MUTED.g, BRAND_MUTED.b);
-    doc.setFontSize(8);
-    doc.text(PRACTICE_INFO.web, margin, footerY + 8);
-    doc.text(t(`Seite ${pageNum} von ${totalPages}`, `Page ${pageNum} of ${totalPages}`), pageWidth / 2, footerY + 8, { align: "center" });
-    const dateStr = new Date().toLocaleDateString(language === "de" ? "de-DE" : "en-US");
-    doc.text(t(`Erstellt: ${dateStr}`, `Created: ${dateStr}`), pageWidth - margin, footerY + 8, { align: "right" });
-  };
-  const checkPageBreak = (requiredSpace: number) => {
-    if (yPos + requiredSpace > pageHeight - footerHeight - 10) { doc.addPage(); addHeader(); yPos = headerHeight + 10; }
-  };
-  const addSectionHeader = (text: string) => {
-    checkPageBreak(25);
-    doc.setFillColor(245, 250, 245);
-    doc.rect(margin - 2, yPos - 5, contentWidth + 4, 12, "F");
-    doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.setLineWidth(0.3);
-    doc.line(margin, yPos + 5, pageWidth - margin, yPos + 5);
-    doc.setTextColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(text, margin, yPos + 2);
-    yPos += 15;
-    doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-  };
-  const addSubHeader = (text: string) => {
-    checkPageBreak(15);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(BRAND_SECONDARY.r, BRAND_SECONDARY.g, BRAND_SECONDARY.b);
-    doc.text(text, margin, yPos);
-    yPos += lineHeight + 2;
-    doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-  };
-  const addField = (label: string, value: string | boolean | undefined | null, indent = 0) => {
-    checkPageBreak(10);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-    const displayValue = value === true ? t("Ja", "Yes") : value === false ? t("Nein", "No") : value || "-";
-    doc.text(`${label}:`, margin + indent, yPos);
-    doc.setFont("helvetica", "normal");
-    const labelWidth = doc.getTextWidth(`${label}: `);
-    const valueX = margin + indent + labelWidth;
-    const maxValueWidth = contentWidth - labelWidth - indent;
-    const lines = doc.splitTextToSize(String(displayValue), maxValueWidth);
-    doc.text(lines, valueX, yPos);
-    yPos += lines.length * lineHeight;
-  };
-  const addCheckboxField = (label: string, checked: boolean | undefined, indent = 5) => {
-    checkPageBreak(8);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-    const s = 3;
-    doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.rect(margin + indent, yPos - 3, s, s);
-    if (checked) { doc.setFillColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b); doc.rect(margin + indent + 0.5, yPos - 2.5, s - 1, s - 1, "F"); }
-    doc.text(label, margin + indent + s + 3, yPos);
-    yPos += lineHeight;
-  };
-  const addSpacing = (space: number = lineHeight) => { yPos += space; };
-
-  // Build document (same content as generateEnhancedAnamnesePdf)
-  addHeader();
-  doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text(t("Anamnesebogen", "Medical History Form"), pageWidth / 2, yPos + 5, { align: "center" });
-  yPos += 15;
-
-  if (formData.vorname || formData.nachname) {
-    doc.setFillColor(240, 248, 240);
-    doc.roundedRect(margin, yPos - 2, contentWidth, 18, 3, 3, "F");
-    doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(margin, yPos - 2, contentWidth, 18, 3, 3, "S");
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${t("Patient/in", "Patient")}: ${formData.vorname} ${formData.nachname}`, margin + 5, yPos + 5);
-    if (formData.geburtsdatum) {
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${t("Geburtsdatum", "Date of Birth")}: ${formData.geburtsdatum}`, margin + 5, yPos + 12);
-    }
-    yPos += 25;
-  }
-
-  addSectionHeader(t("I. Patientendaten", "I. Patient Data"));
-  addField(t("Name", "Name"), `${formData.vorname} ${formData.nachname}`);
-  addField(t("Geburtsdatum", "Date of Birth"), formData.geburtsdatum);
-  addField(t("Geschlecht", "Gender"), formData.geschlecht);
-  addField(t("Nationalität", "Nationality"), formData.nationalitaet);
-  addField(t("Zivilstand", "Marital Status"), formData.zivilstand);
-  addSpacing();
-  addSubHeader(t("Kontaktdaten", "Contact Information"));
-  addField(t("Adresse", "Address"), `${formData.strasse}, ${formData.plz} ${formData.wohnort}`, 5);
-  addField(t("E-Mail", "Email"), formData.email, 5);
-  addField(t("Telefon", "Phone"), formData.telefonPrivat || formData.mobil, 5);
-  addSpacing();
-  addSubHeader(t("Versicherung", "Insurance"));
-  addField(t("Typ", "Type"), formData.versicherungstyp, 5);
-  addField(t("Name", "Name"), formData.versicherungsname, 5);
-  addSpacing();
-  addSubHeader(t("Berufliche Situation", "Professional Situation"));
-  addField(t("Beruf", "Occupation"), formData.beruf, 5);
-  addField(t("Körpergröße / Gewicht", "Height / Weight"), `${formData.koerpergroesse} cm / ${formData.gewicht} kg`, 5);
-  addSpacing(10);
-
-  addSectionHeader(t("II. Familiengeschichte", "II. Family History"));
-  const familyConditions = [
-    { key: "hoherBlutdruck", de: "Hoher Blutdruck", en: "High Blood Pressure" },
-    { key: "herzinfarkt", de: "Herzinfarkt", en: "Heart Attack" },
-    { key: "schlaganfall", de: "Schlaganfall", en: "Stroke" },
-    { key: "diabetes", de: "Diabetes", en: "Diabetes" },
-    { key: "krebs", de: "Krebs", en: "Cancer" },
-    { key: "allergien", de: "Allergien", en: "Allergies" },
-  ];
-  let hasFamilyHistory = false;
-  familyConditions.forEach(({ key, de, en }) => {
-    const condition = formData.familyHistory?.[key as keyof typeof formData.familyHistory];
-    if (condition && typeof condition === 'object' && 'ja' in condition && condition.ja) {
-      hasFamilyHistory = true;
-      const relatives: string[] = [];
-      if ('vater' in condition && condition.vater) relatives.push(t("Vater", "Father"));
-      if ('mutter' in condition && condition.mutter) relatives.push(t("Mutter", "Mother"));
-      if ('grosseltern' in condition && condition.grosseltern) relatives.push(t("Großeltern", "Grandparents"));
-      if ('geschwister' in condition && condition.geschwister) relatives.push(t("Geschwister", "Siblings"));
-      addCheckboxField(`${t(de, en)}: ${relatives.join(", ") || t("Ja", "Yes")}`, true);
-    }
-  });
-  if (!hasFamilyHistory) { doc.setFontSize(9); doc.text(t("Keine relevanten Familienerkrankungen", "No relevant family conditions"), margin, yPos); yPos += lineHeight; }
-  addSpacing(10);
-
-  addSectionHeader(t("III. Eigene Erkrankungen", "III. Medical History"));
-  if (formData.herzKreislauf) {
-    addSubHeader(t("Herz & Kreislauf", "Heart & Circulation"));
-    if (formData.herzKreislauf.blutdruckHoch?.ja) addCheckboxField(t("Hoher Blutdruck", "High Blood Pressure"), true);
-    if (formData.herzKreislauf.herzrhythmusstörung?.ja) addCheckboxField(t("Herzrhythmusstörung", "Heart Arrhythmia"), true);
-    if (formData.herzKreislauf.herzinfarkt?.ja) addCheckboxField(t("Herzinfarkt", "Heart Attack"), true);
-    if (formData.herzKreislauf.thrombose?.ja) addCheckboxField(t("Thrombose", "Thrombosis"), true);
-  }
-  if (formData.magenDarm) {
-    addSubHeader(t("Magen & Darm", "Stomach & Intestines"));
-    if (formData.magenDarm.sodbrennen?.ja) addCheckboxField(t("Sodbrennen", "Heartburn"), true);
-    if (formData.magenDarm.reizdarm?.ja) addCheckboxField(t("Reizdarm", "Irritable Bowel"), true);
-    if (formData.magenDarm.morbusCrohn?.ja) addCheckboxField(t("Morbus Crohn", "Crohn's Disease"), true);
-  }
-  addSpacing(10);
-
-  addSectionHeader(t("VII. Allergien & Unverträglichkeiten", "VII. Allergies & Intolerances"));
-  if (formData.allergien?.inhalation?.ja) addField(t("Inhalationsallergien", "Inhalation Allergies"), "Ja");
-  if (formData.allergien?.nahrungsmittel?.ja) addField(t("Nahrungsmittelallergien", "Food Allergies"), formData.allergien.nahrungsmittel.details);
-  if (formData.allergien?.medikamente?.ja) addField(t("Medikamentenallergien", "Drug Allergies"), formData.allergien.medikamente.details);
-  addSpacing(10);
-
-  addSectionHeader(t("VIII. Medikamente", "VIII. Medications"));
-  if (formData.medikamente?.aktuelle?.length > 0) {
-    formData.medikamente.aktuelle.forEach((med: any, i: number) => { addField(`${i + 1}. ${med.name}`, `${med.dosierung} - ${med.grund}`); });
-  } else { doc.setFontSize(9); doc.text(t("Keine aktuellen Medikamente", "No current medications"), margin, yPos); yPos += lineHeight; }
-  addSpacing(10);
-
-  addSectionHeader(t("IX. Lebensweise", "IX. Lifestyle"));
-  addField(t("Raucher", "Smoker"), formData.lebensweise?.raucher || t("Nein", "No"));
-  addSpacing(10);
-
-  addSectionHeader(t("XVI. Unterschrift", "XVI. Signature"));
-  addField(t("Datum", "Date"), formData.unterschrift?.datum);
-  addField(t("Name", "Name"), formData.unterschrift?.nameInDruckbuchstaben);
-  addCheckboxField(t("Datenschutzerklärung bestätigt", "Privacy Policy Confirmed"), formData.unterschrift?.bestaetigung);
-
-  const pageCount = doc.internal.pages.length - 1;
-  for (let i = 1; i <= pageCount; i++) { doc.setPage(i); addFooterB64(i, pageCount); }
-
-  // Return as base64 string (data URI prefix stripped)
-  const dataUri = doc.output('datauristring');
-  return dataUri.split(',')[1];
+export const generateAnamnesePdfBase64 = async ({ formData, language }: PdfExportOptions): Promise<string> => {
+  const builder = new AnamnesePdfBuilder(language);
+  builder.buildDocument(formData);
+  return builder.toBase64();
 };
