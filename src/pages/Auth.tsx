@@ -287,7 +287,7 @@ const Auth: React.FC = () => {
         description: language === 'de' ? 'Anmeldung erfolgreich!' : 'Login successful!',
       });
 
-      navigate('/anamnesebogen');
+      navigate('/erstanmeldung');
     } catch (error: any) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
@@ -337,7 +337,7 @@ const Auth: React.FC = () => {
         description: language === 'de' ? 'Registrierung erfolgreich! Sie sind jetzt angemeldet.' : 'Registration successful! You are now logged in.',
       });
 
-      navigate('/anamnesebogen');
+      navigate('/erstanmeldung');
     } catch (error: any) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
