@@ -53,12 +53,12 @@ const steps: StepConfig[] = [
     icon: ClipboardList,
   },
   {
-    id: "datenschutz",
-    titleDe: "Datenschutz",
-    titleEn: "Data Protection",
-    descDe: "DSGVO-Einwilligung",
-    descEn: "GDPR Consent",
-    icon: Shield,
+    id: "iaa",
+    titleDe: "IAA-Fragebogen",
+    titleEn: "IAA Questionnaire",
+    descDe: "Individuelle Austestung (Trikombin)",
+    descEn: "Individual testing (Trikombin)",
+    icon: Activity,
   },
   {
     id: "patientenaufklaerung",
@@ -69,12 +69,12 @@ const steps: StepConfig[] = [
     icon: FileText,
   },
   {
-    id: "iaa",
-    titleDe: "IAA-Fragebogen",
-    titleEn: "IAA Questionnaire",
-    descDe: "Individuelle Austestung (Trikombin)",
-    descEn: "Individual testing (Trikombin)",
-    icon: Activity,
+    id: "datenschutz",
+    titleDe: "Datenschutz",
+    titleEn: "Data Protection",
+    descDe: "DSGVO-Einwilligung",
+    descEn: "GDPR Consent",
+    icon: Shield,
   },
 ];
 
@@ -145,12 +145,12 @@ export default function Erstanmeldung() {
   const stepCompletion = [
     true, // overview always accessible
     anamnesisComplete,
-    datenschutzAccepted,
-    aufklaerungAccepted,
     iaaComplete,
+    aufklaerungAccepted,
+    datenschutzAccepted,
   ];
 
-  const completedCount = [anamnesisComplete, datenschutzAccepted, aufklaerungAccepted, iaaComplete].filter(Boolean).length;
+  const completedCount = [anamnesisComplete, iaaComplete, aufklaerungAccepted, datenschutzAccepted].filter(Boolean).length;
   const progressPercent = (completedCount / 4) * 100;
 
   const handleIAASubmit = async () => {
@@ -422,62 +422,32 @@ export default function Erstanmeldung() {
             </div>
           )}
 
-          {/* Step 2: Datenschutz */}
+          {/* Step 2: IAA */}
           {currentStep === 2 && (
             <div className="space-y-6">
-              <Card className="shadow-card">
-                <CardContent className="p-8 space-y-6">
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-8 w-8 text-primary" />
-                    <h2 className="font-serif text-2xl font-semibold text-foreground">
-                      {t("Datenschutzverordnung", "Privacy Policy")}
-                    </h2>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t(
-                      "Bitte lesen Sie die vollständige Datenschutzverordnung und bestätigen Sie Ihre Kenntnisnahme.",
-                      "Please read the complete privacy policy and confirm your acknowledgment."
-                    )}
-                  </p>
-                  <div className="border rounded-lg p-4 max-h-96 overflow-y-auto bg-muted/30">
-                    <div className="prose prose-sm max-w-none text-muted-foreground">
-                      <h3>{t("Ihre Daten in unserer Praxis", "Your Data in Our Practice")}</h3>
-                      <p>
-                        {t(
-                          "Name, Adresse, E-Mail, Gesundheitsdaten (Anamnese, Diagnosen, Therapien), Messwerte von Geräten (Metatron, Vieva Pro, EAV, Trikombin) werden verarbeitet.",
-                          "Name, address, email, health data (medical history, diagnoses, therapies), measurements from devices (Metatron, Vieva Pro, EAV, Trikombin) are processed."
-                        )}
-                      </p>
-                      <p>
-                        {t(
-                          "Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Behandlungsvertrag), Art. 9 Abs. 2 lit. h DSGVO (Gesundheitsversorgung). Aufbewahrungsfrist: 10 Jahre. Sie haben jederzeit das Recht auf Auskunft, Berichtigung und Löschung.",
-                          "Legal basis: Art. 6(1)(b) GDPR (treatment contract), Art. 9(2)(h) GDPR (healthcare). Retention period: 10 years. You have the right to access, correct, and delete your data at any time."
-                        )}
-                      </p>
-                      <p className="text-sm">
-                        <Link to="/datenschutz" target="_blank" className="text-primary hover:underline inline-flex items-center gap-1">
-                          {t("Vollständige Datenschutzverordnung lesen", "Read full privacy policy")}
-                          <ExternalLink className="h-3 w-3" />
-                        </Link>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3 bg-sage-50 p-4 rounded-lg">
-                    <Checkbox
-                      id="ds-accept"
-                      checked={datenschutzAccepted}
-                      onCheckedChange={(c) => setDatenschutzAccepted(!!c)}
-                      className="mt-1"
-                    />
-                    <Label htmlFor="ds-accept" className="cursor-pointer leading-relaxed">
-                      {t(
-                        "Ich habe die Datenschutzverordnung gelesen und stimme der Verarbeitung meiner Daten gemäß DSGVO zu. *",
-                        "I have read the privacy policy and agree to the processing of my data according to GDPR. *"
-                      )}
-                    </Label>
-                  </div>
-                </CardContent>
-              </Card>
+              <IAAForm data={iaaData} onChange={setIaaData} readOnly={iaaComplete} />
+              {!iaaComplete && (
+                <div className="text-center">
+                  <Button
+                    size="lg"
+                    onClick={handleIAASubmit}
+                    disabled={iaaSubmitting || Object.keys(iaaData).length === 0}
+                    className="gap-2"
+                  >
+                    {iaaSubmitting
+                      ? t("Wird gespeichert...", "Saving...")
+                      : t("IAA-Fragebogen absenden", "Submit IAA questionnaire")}
+                  </Button>
+                </div>
+              )}
+              {iaaComplete && (
+                <div className="text-center bg-sage-50 border border-primary/20 rounded-lg p-4 inline-flex items-center gap-3 mx-auto">
+                  <Check className="h-6 w-6 text-primary" />
+                  <span className="font-medium text-primary">
+                    {t("IAA-Fragebogen bereits eingereicht ✓", "IAA questionnaire already submitted ✓")}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -554,32 +524,62 @@ export default function Erstanmeldung() {
             </div>
           )}
 
-          {/* Step 4: IAA */}
+          {/* Step 4: Datenschutz */}
           {currentStep === 4 && (
             <div className="space-y-6">
-              <IAAForm data={iaaData} onChange={setIaaData} readOnly={iaaComplete} />
-              {!iaaComplete && (
-                <div className="text-center">
-                  <Button
-                    size="lg"
-                    onClick={handleIAASubmit}
-                    disabled={iaaSubmitting || Object.keys(iaaData).length === 0}
-                    className="gap-2"
-                  >
-                    {iaaSubmitting
-                      ? t("Wird gespeichert...", "Saving...")
-                      : t("IAA-Fragebogen absenden", "Submit IAA questionnaire")}
-                  </Button>
-                </div>
-              )}
-              {iaaComplete && (
-                <div className="text-center bg-sage-50 border border-primary/20 rounded-lg p-4 inline-flex items-center gap-3 mx-auto">
-                  <Check className="h-6 w-6 text-primary" />
-                  <span className="font-medium text-primary">
-                    {t("IAA-Fragebogen bereits eingereicht ✓", "IAA questionnaire already submitted ✓")}
-                  </span>
-                </div>
-              )}
+              <Card className="shadow-card">
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <Shield className="h-8 w-8 text-primary" />
+                    <h2 className="font-serif text-2xl font-semibold text-foreground">
+                      {t("Datenschutzverordnung", "Privacy Policy")}
+                    </h2>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {t(
+                      "Bitte lesen Sie die vollständige Datenschutzverordnung und bestätigen Sie Ihre Kenntnisnahme.",
+                      "Please read the complete privacy policy and confirm your acknowledgment."
+                    )}
+                  </p>
+                  <div className="border rounded-lg p-4 max-h-96 overflow-y-auto bg-muted/30">
+                    <div className="prose prose-sm max-w-none text-muted-foreground">
+                      <h3>{t("Ihre Daten in unserer Praxis", "Your Data in Our Practice")}</h3>
+                      <p>
+                        {t(
+                          "Name, Adresse, E-Mail, Gesundheitsdaten (Anamnese, Diagnosen, Therapien), Messwerte von Geräten (Metatron, Vieva Pro, EAV, Trikombin) werden verarbeitet.",
+                          "Name, address, email, health data (medical history, diagnoses, therapies), measurements from devices (Metatron, Vieva Pro, EAV, Trikombin) are processed."
+                        )}
+                      </p>
+                      <p>
+                        {t(
+                          "Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Behandlungsvertrag), Art. 9 Abs. 2 lit. h DSGVO (Gesundheitsversorgung). Aufbewahrungsfrist: 10 Jahre. Sie haben jederzeit das Recht auf Auskunft, Berichtigung und Löschung.",
+                          "Legal basis: Art. 6(1)(b) GDPR (treatment contract), Art. 9(2)(h) GDPR (healthcare). Retention period: 10 years. You have the right to access, correct, and delete your data at any time."
+                        )}
+                      </p>
+                      <p className="text-sm">
+                        <Link to="/datenschutz" target="_blank" className="text-primary hover:underline inline-flex items-center gap-1">
+                          {t("Vollständige Datenschutzverordnung lesen", "Read full privacy policy")}
+                          <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 bg-sage-50 p-4 rounded-lg">
+                    <Checkbox
+                      id="ds-accept"
+                      checked={datenschutzAccepted}
+                      onCheckedChange={(c) => setDatenschutzAccepted(!!c)}
+                      className="mt-1"
+                    />
+                    <Label htmlFor="ds-accept" className="cursor-pointer leading-relaxed">
+                      {t(
+                        "Ich habe die Datenschutzverordnung gelesen und stimme der Verarbeitung meiner Daten gemäß DSGVO zu. *",
+                        "I have read the privacy policy and agree to the processing of my data according to GDPR. *"
+                      )}
+                    </Label>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
