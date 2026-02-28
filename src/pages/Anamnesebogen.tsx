@@ -489,23 +489,41 @@ const Anamnesebogen = () => {
     return `anamnesebogen:draft:${user.id}`;
   }, [user?.id]);
 
-  // Restore draft after (re-)login
+  // Restore draft after (re-)login – first try user-specific draft, then email-based cache
   useEffect(() => {
     if (!draftStorageKey) return;
     try {
       const raw = localStorage.getItem(draftStorageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        formData?: AnamneseFormData;
-        selectedLayout?: LayoutType;
-        wizardStep?: number;
-        openAccordionItems?: string[];
-      };
-      if (parsed.formData) setFormData(parsed.formData);
-      if (parsed.selectedLayout !== undefined) setSelectedLayout(parsed.selectedLayout);
-      if (typeof parsed.wizardStep === "number") setWizardStep(parsed.wizardStep);
-      if (Array.isArray(parsed.openAccordionItems) && parsed.openAccordionItems.length)
-        setOpenAccordionItems(parsed.openAccordionItems);
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          formData?: AnamneseFormData;
+          selectedLayout?: LayoutType;
+          wizardStep?: number;
+          openAccordionItems?: string[];
+          iaaData?: Record<string, number>;
+        };
+        if (parsed.formData) setFormData(parsed.formData);
+        if (parsed.selectedLayout !== undefined) setSelectedLayout(parsed.selectedLayout);
+        if (typeof parsed.wizardStep === "number") setWizardStep(parsed.wizardStep);
+        if (Array.isArray(parsed.openAccordionItems) && parsed.openAccordionItems.length)
+          setOpenAccordionItems(parsed.openAccordionItems);
+        if (parsed.iaaData && Object.keys(parsed.iaaData).length > 0) setIaaData(parsed.iaaData);
+        return;
+      }
+      // Fallback: try to restore from email-based cache (e.g. after account reset)
+      const email = user?.email;
+      if (email) {
+        const emailCacheKey = `anamnesebogen:email-cache:${email.toLowerCase()}`;
+        const emailRaw = localStorage.getItem(emailCacheKey);
+        if (emailRaw) {
+          const parsed = JSON.parse(emailRaw) as {
+            formData?: AnamneseFormData;
+            iaaData?: Record<string, number>;
+          };
+          if (parsed.formData) setFormData(parsed.formData);
+          if (parsed.iaaData && Object.keys(parsed.iaaData).length > 0) setIaaData(parsed.iaaData);
+        }
+      }
     } catch {
       // ignore corrupted draft
     }
@@ -526,6 +544,7 @@ const Anamnesebogen = () => {
             selectedLayout,
             wizardStep,
             openAccordionItems,
+            iaaData,
           })
         );
       } catch {
@@ -536,7 +555,7 @@ const Anamnesebogen = () => {
     return () => {
       if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
     };
-  }, [draftStorageKey, formData, selectedLayout, wizardStep, openAccordionItems]);
+  }, [draftStorageKey, formData, selectedLayout, wizardStep, openAccordionItems, iaaData]);
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -647,8 +666,14 @@ const Anamnesebogen = () => {
       
       setShowVerification(false);
       
-      // Clear draft after successful submission
+      // Clear draft after successful submission, but save email-based cache for future use
       if (draftStorageKey) localStorage.removeItem(draftStorageKey);
+      if (formData.email) {
+        try {
+          const emailCacheKey = `anamnesebogen:email-cache:${formData.email.toLowerCase()}`;
+          localStorage.setItem(emailCacheKey, JSON.stringify({ formData, iaaData }));
+        } catch { /* ignore */ }
+      }
 
       // Save IAA data if filled
       if (user && Object.keys(iaaData).length > 0) {

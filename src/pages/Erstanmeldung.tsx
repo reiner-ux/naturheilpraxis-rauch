@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,10 +72,22 @@ export default function Erstanmeldung() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [datenschutzAccepted, setDatenschutzAccepted] = useState(false);
-  const [aufklaerungAccepted, setAufklaerungAccepted] = useState(false);
-  const [terminConfirmed, setTerminConfirmed] = useState(false);
+  // Persist onboarding state in localStorage
+  const onboardingKey = user ? `erstanmeldung:state:${user.id}` : null;
+
+  const loadSavedState = () => {
+    if (!onboardingKey) return {};
+    try {
+      const raw = localStorage.getItem(onboardingKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  };
+
+  const savedState = loadSavedState();
+  const [currentStep, setCurrentStep] = useState<number>(savedState.currentStep ?? 0);
+  const [datenschutzAccepted, setDatenschutzAccepted] = useState<boolean>(savedState.datenschutzAccepted ?? false);
+  const [aufklaerungAccepted, setAufklaerungAccepted] = useState<boolean>(savedState.aufklaerungAccepted ?? false);
+  const [terminConfirmed, setTerminConfirmed] = useState<boolean>(savedState.terminConfirmed ?? false);
 
   // Check existing anamnesis submission
   const { data: anamnesisStatus } = useQuery({
@@ -108,6 +120,26 @@ export default function Erstanmeldung() {
   });
 
   const anamnesisComplete = anamnesisStatus?.status === "verified";
+
+  // Auto-confirm termin if anamnesis is already complete (user already went through the flow)
+  useEffect(() => {
+    if (anamnesisComplete && !terminConfirmed) {
+      setTerminConfirmed(true);
+    }
+  }, [anamnesisComplete]);
+
+  // Persist onboarding state changes to localStorage
+  useEffect(() => {
+    if (!onboardingKey) return;
+    try {
+      localStorage.setItem(onboardingKey, JSON.stringify({
+        currentStep,
+        datenschutzAccepted,
+        aufklaerungAccepted,
+        terminConfirmed,
+      }));
+    } catch { /* ignore */ }
+  }, [onboardingKey, currentStep, datenschutzAccepted, aufklaerungAccepted, terminConfirmed]);
 
   const stepCompletion = [
     true, // overview always accessible
