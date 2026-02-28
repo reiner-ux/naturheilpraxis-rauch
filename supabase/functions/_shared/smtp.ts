@@ -52,6 +52,14 @@ export async function sendEmail(
     payload.attachment = attachment;
   }
 
+  // Delay for local delivery addresses to avoid QMail timeout on same-domain routing
+  const isLocalDelivery = to.endsWith("@rauch-heilpraktiker.de");
+  if (isLocalDelivery) {
+    const delaySec = 60;
+    console.log(`[relay] delaying ${delaySec}s for local delivery to ${to}`);
+    await new Promise((r) => setTimeout(r, delaySec * 1000));
+  }
+
   console.log(`[relay] sending email to ${to} (attachment: ${!!attachment})`);
 
   const resp = await fetch(relayUrl, {
