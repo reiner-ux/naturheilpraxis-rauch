@@ -21,6 +21,7 @@ import {
   Phone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import IAAForm from "@/components/iaa/IAAForm";
@@ -608,14 +609,5 @@ export default function Erstanmeldung() {
       </div>
       )}
     </Layout>
-  );
-}
-
-// Badge component inline for this page
-function Badge({ children, variant, className }: { children: React.ReactNode; variant?: string; className?: string }) {
-  return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", variant === "secondary" ? "bg-sage-100 text-primary" : "bg-primary text-primary-foreground", className)}>
-      {children}
-    </span>
   );
 }
