@@ -51,6 +51,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (session?.user) {
           setTimeout(() => checkAdminRole(session.user.id), 0);
+          
+          // Log sign-in events for DSGVO audit trail
+          if (event === 'SIGNED_IN') {
+            supabase.from('audit_log').insert({
+              user_id: session.user.id,
+              action: 'login',
+              details: { method: 'email', email: session.user.email },
+            }).then(() => {}, () => {}); // fire-and-forget
+          }
         } else {
           setIsAdmin(false);
         }
@@ -84,6 +93,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = async () => {
+    // Log sign-out for DSGVO audit trail
+    if (user?.id) {
+      await supabase.from('audit_log').insert({
+        user_id: user.id,
+        action: 'logout',
+        details: {},
+      }).then(() => {}, () => {});
+    }
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
