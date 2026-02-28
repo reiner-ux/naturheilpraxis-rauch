@@ -40,7 +40,7 @@ function SeveritySelector({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex gap-1 flex-wrap">
+    <div className="flex gap-1.5 sm:gap-1 flex-wrap">
       {[1, 2, 3, 4, 5, 6].map((n) => (
         <button
           key={n}
@@ -48,7 +48,7 @@ function SeveritySelector({
           disabled={disabled}
           onClick={() => onChange(value === n ? 0 : n)}
           className={cn(
-            "w-8 h-8 rounded-md border text-sm font-medium transition-all",
+            "min-w-[36px] h-9 sm:w-8 sm:h-8 rounded-md border text-sm font-medium transition-all touch-manipulation",
             value === n
               ? severityColors[n]
               : "bg-background border-border text-muted-foreground hover:bg-muted",
@@ -98,7 +98,7 @@ function CategorySection({
           {category.questions.map((q) => (
             <div
               key={q.id}
-              className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-2 border-b border-border/50 last:border-0"
+              className="flex flex-col gap-2 py-2 border-b border-border/50 last:border-0"
             >
               <div className="flex-1 min-w-0">
                 <span className="text-xs text-muted-foreground mr-2">{q.id}</span>
@@ -146,8 +146,8 @@ export default function IAAForm({ data, onChange, readOnly }: IAAFormProps) {
     <div className="space-y-6">
       {/* Erklärung */}
       <Card className="border-primary/20 bg-sage-50">
-        <CardContent className="p-6">
-          <div className="flex gap-4">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex gap-3 sm:gap-4">
             <Info className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
             <div className="space-y-2">
               <h3 className="font-serif text-lg font-semibold text-foreground">
