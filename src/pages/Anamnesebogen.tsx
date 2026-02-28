@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,6 +82,7 @@ import PreferencesSection from "@/components/anamnese/PreferencesSection";
 import SocialSection from "@/components/anamnese/SocialSection";
 import SignatureSection from "@/components/anamnese/SignatureSection";
 import VerificationDialog from "@/components/anamnese/VerificationDialog";
+import IAAForm from "@/components/iaa/IAAForm";
 import { supabase } from "@/integrations/supabase/client";
 
 type LayoutType = "wizard" | "accordion" | null;
@@ -466,6 +468,9 @@ const AccordionLayout = ({
 const Anamnesebogen = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const cameFromErstanmeldung = (location.state as any)?.from === "erstanmeldung";
   const [selectedLayout, setSelectedLayout] = useState<LayoutType>(null);
   const [wizardStep, setWizardStep] = useState(0);
   const [formData, setFormData] = useState<AnamneseFormData>(initialFormData);
@@ -477,6 +482,7 @@ const Anamnesebogen = () => {
   const [showVerification, setShowVerification] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [tempUserId, setTempUserId] = useState<string | null>(null);
+  const [iaaData, setIaaData] = useState<Record<string, number>>({});
 
   const draftStorageKey = useMemo(() => {
     if (!user?.id) return null;
@@ -643,6 +649,19 @@ const Anamnesebogen = () => {
       
       // Clear draft after successful submission
       if (draftStorageKey) localStorage.removeItem(draftStorageKey);
+
+      // Save IAA data if filled
+      if (user && Object.keys(iaaData).length > 0) {
+        try {
+          await supabase.from("iaa_submissions").insert([{
+            user_id: user.id,
+            form_data: iaaData as any,
+            status: "submitted",
+          }]);
+        } catch (e) {
+          console.warn("IAA save failed:", e);
+        }
+      }
       
       toast.success(
         language === "de" ? "Anamnesebogen erfolgreich übermittelt!" : "Medical history form submitted successfully!",
@@ -653,6 +672,11 @@ const Anamnesebogen = () => {
           duration: 10000,
         }
       );
+
+      // Redirect back to Erstanmeldung if came from there
+      if (cameFromErstanmeldung) {
+        setTimeout(() => navigate("/erstanmeldung"), 2000);
+      }
     } catch (error: any) {
       const errorMsg = error?.message || "";
       if (errorMsg.includes("Ungültiger") || errorMsg.includes("abgelaufen")) {
@@ -771,6 +795,8 @@ const Anamnesebogen = () => {
         return <PreferencesSection formData={formData} updateFormData={updateFormData} />;
       case "social":
         return <SocialSection formData={formData} updateFormData={updateFormData} />;
+      case "iaa":
+        return <IAAForm data={iaaData} onChange={setIaaData} />;
       case "signature":
         return <SignatureSection formData={formData} updateFormData={updateFormData} />;
       default:

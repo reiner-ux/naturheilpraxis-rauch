@@ -413,7 +413,7 @@ export default function Erstanmeldung() {
                   ) : (
                     <Button
                       size="lg"
-                      onClick={() => navigate("/anamnesebogen")}
+                      onClick={() => navigate("/anamnesebogen", { state: { from: "erstanmeldung" } })}
                       className="gap-2"
                     >
                       {t("Anamnesebogen ausfüllen", "Fill out medical history")}

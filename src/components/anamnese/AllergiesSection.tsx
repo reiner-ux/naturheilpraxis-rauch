@@ -154,8 +154,10 @@ const AllergiesSection = ({ formData, updateFormData }: AllergiesSectionProps) =
               columns={3}
             />
           </div>
-        )}
+      )}
       </div>
+
+      <Separator />
 
       {/* Medikamentenallergien */}
       <div className="space-y-4">

@@ -35,7 +35,8 @@ export const formSections: FormSection[] = [
   { id: "complaints", titleDe: "XXI. Beschwerden", titleEn: "XXI. Complaints", emoji: "📋", icon: "ClipboardList", color: "bg-slate-100 dark:bg-slate-950/30", iconColor: "text-slate-500" },
   { id: "preferences", titleDe: "XXII. Präferenzen", titleEn: "XXII. Preferences", emoji: "✨", icon: "Wand2", color: "bg-violet-100 dark:bg-violet-950/30", iconColor: "text-violet-500" },
   { id: "social", titleDe: "XXIII. Persönliches", titleEn: "XXIII. Personal", emoji: "🏠", icon: "Home", color: "bg-sky-100 dark:bg-sky-950/30", iconColor: "text-sky-500" },
-  { id: "signature", titleDe: "XXIV. Unterschrift", titleEn: "XXIV. Signature", emoji: "✍️", icon: "PenTool", color: "bg-stone-100 dark:bg-stone-950/30", iconColor: "text-stone-500" },
+  { id: "iaa", titleDe: "XXIV. IAA-Fragebogen", titleEn: "XXIV. IAA Questionnaire", emoji: "📊", icon: "Activity", color: "bg-teal-100 dark:bg-teal-950/30", iconColor: "text-teal-500" },
+  { id: "signature", titleDe: "XXV. Unterschrift", titleEn: "XXV. Signature", emoji: "✍️", icon: "PenTool", color: "bg-stone-100 dark:bg-stone-950/30", iconColor: "text-stone-500" },
 ];
 
 // Initial form state with all fields
