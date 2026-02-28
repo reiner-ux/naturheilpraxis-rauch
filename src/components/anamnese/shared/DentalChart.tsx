@@ -272,7 +272,7 @@ const DentalChart = ({ chartData, onChartDataChange, className }: DentalChartPro
               }
             </h4>
             <div className="flex gap-2">
-              {selectedToothData && selectedToothData.diagnoses.length > 0 && (
+              {selectedToothData && Array.isArray(selectedToothData.diagnoses) && selectedToothData.diagnoses.length > 0 && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -295,7 +295,9 @@ const DentalChart = ({ chartData, onChartDataChange, className }: DentalChartPro
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {dentalDiagnoses.map((diag) => {
-              const isActive = selectedToothData?.diagnoses.includes(diag.id) || false;
+              const isActive = Array.isArray(selectedToothData?.diagnoses)
+                ? selectedToothData.diagnoses.includes(diag.id)
+                : false;
               return (
                 <div
                   key={diag.id}
@@ -305,11 +307,16 @@ const DentalChart = ({ chartData, onChartDataChange, className }: DentalChartPro
                       ? "bg-primary/10 border-primary"
                       : "bg-background border-muted hover:border-primary/50"
                   )}
-                  onClick={() => toggleDiagnosis(selectedTooth, diag.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleDiagnosis(selectedTooth, diag.id);
+                  }}
                 >
                   <Checkbox
                     checked={isActive}
-                    onCheckedChange={() => toggleDiagnosis(selectedTooth, diag.id)}
+                    onCheckedChange={(checked) => {
+                      // Prevent double-toggle from parent onClick
+                    }}
                   />
                   <div className="flex items-center gap-1.5">
                     <div className={cn("w-2.5 h-2.5 rounded-full", diag.color)} />
