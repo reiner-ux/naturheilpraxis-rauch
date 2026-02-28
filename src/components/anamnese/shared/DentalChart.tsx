@@ -86,14 +86,14 @@ const toothNames: Record<string, { de: string; en: string }> = {
 
 // Get the primary color for a tooth based on its first diagnosis
 const getToothColor = (toothData?: ToothData): string => {
-  if (!toothData || toothData.diagnoses.length === 0) return "";
+  if (!toothData || !Array.isArray(toothData.diagnoses) || toothData.diagnoses.length === 0) return "";
   const firstDiagnosis = toothData.diagnoses[0];
   const diag = dentalDiagnoses.find(d => d.id === firstDiagnosis);
   return diag?.color || "";
 };
 
 const getToothBorderColor = (toothData?: ToothData): string => {
-  if (!toothData || toothData.diagnoses.length === 0) return "border-muted-foreground/30";
+  if (!toothData || !Array.isArray(toothData.diagnoses) || toothData.diagnoses.length === 0) return "border-muted-foreground/30";
   return "border-primary ring-1 ring-primary/30";
 };
 
@@ -111,7 +111,7 @@ const ToothButton = ({
   language: string;
 }) => {
   const name = toothNames[toothId];
-  const hasDiagnoses = toothData && toothData.diagnoses.length > 0;
+  const hasDiagnoses = toothData && Array.isArray(toothData.diagnoses) && toothData.diagnoses.length > 0;
   const bgColor = getToothColor(toothData);
 
   return (
@@ -131,7 +131,7 @@ const ToothButton = ({
       )}
     >
       {toothId}
-      {hasDiagnoses && toothData.diagnoses.length > 1 && (
+      {hasDiagnoses && toothData!.diagnoses.length > 1 && (
         <span className="absolute -top-1 -right-1 w-4 h-4 bg-foreground text-background rounded-full text-[9px] flex items-center justify-center font-bold">
           {toothData.diagnoses.length}
         </span>
@@ -149,19 +149,26 @@ const DentalChart = ({ chartData, onChartDataChange, className }: DentalChartPro
   };
 
   const toggleDiagnosis = (toothId: string, diagnosisId: DentalDiagnosisId) => {
-    const current = chartData[toothId] || { diagnoses: [] };
-    const hasDiag = current.diagnoses.includes(diagnosisId);
-    const newDiagnoses = hasDiag
-      ? current.diagnoses.filter(d => d !== diagnosisId)
-      : [...current.diagnoses, diagnosisId];
+    try {
+      const raw = chartData[toothId];
+      const current: ToothData = raw && Array.isArray(raw.diagnoses)
+        ? raw
+        : { diagnoses: [] };
+      const hasDiag = current.diagnoses.includes(diagnosisId);
+      const newDiagnoses = hasDiag
+        ? current.diagnoses.filter(d => d !== diagnosisId)
+        : [...current.diagnoses, diagnosisId];
 
-    const newData = { ...chartData };
-    if (newDiagnoses.length === 0) {
-      delete newData[toothId];
-    } else {
-      newData[toothId] = { ...current, diagnoses: newDiagnoses };
+      const newData = { ...chartData };
+      if (newDiagnoses.length === 0) {
+        delete newData[toothId];
+      } else {
+        newData[toothId] = { ...current, diagnoses: newDiagnoses };
+      }
+      onChartDataChange(newData);
+    } catch (error) {
+      console.error("Error toggling dental diagnosis:", error);
     }
-    onChartDataChange(newData);
   };
 
   const clearTooth = (toothId: string) => {
@@ -173,8 +180,10 @@ const DentalChart = ({ chartData, onChartDataChange, className }: DentalChartPro
 
   const selectedToothData = selectedTooth ? chartData[selectedTooth] : undefined;
 
-  // Group affected teeth by diagnosis for the summary
-  const affectedTeeth = Object.entries(chartData).filter(([_, data]) => data.diagnoses.length > 0);
+  // Group affected teeth by diagnosis for the summary – safely handle corrupted data
+  const affectedTeeth = Object.entries(chartData).filter(
+    ([_, data]) => data && Array.isArray(data.diagnoses) && data.diagnoses.length > 0
+  );
 
   return (
     <div className={cn("space-y-6", className)}>

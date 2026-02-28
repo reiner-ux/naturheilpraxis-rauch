@@ -304,12 +304,41 @@ class AnamnesePdfBuilder {
         details.push(this.prettifyKey(k));
       } else if (typeof v === 'string' && v && k !== 'sonstige' && k !== 'details' && k !== 'welche' && k !== 'grund') {
         details.push(`${this.prettifyKey(k)}: ${v}`);
+      } else if (typeof v === 'number' && v) {
+        details.push(`${this.prettifyKey(k)}: ${v}`);
+      } else if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+        // Render nested sub-objects (e.g., protheseKiefer, severity levels)
+        const subDetails: string[] = [];
+        for (const [sk, sv] of Object.entries(v as Record<string, any>)) {
+          if (skipKeys.has(sk)) continue;
+          if (typeof sv === 'boolean' && sv) {
+            subDetails.push(this.prettifyKey(sk));
+          } else if (typeof sv === 'string' && sv) {
+            subDetails.push(`${this.prettifyKey(sk)}: ${sv}`);
+          }
+        }
+        if (subDetails.length > 0) {
+          details.push(`${this.prettifyKey(k)}: ${subDetails.join(", ")}`);
+        }
       }
     }
-    // Time info
-    const zeit = cond.seit || cond.jahr || "";
+    // Time info – support both legacy (seit/jahr) and new (seitYear/seitMonth) formats
+    let zeit = cond.seit || cond.jahr || "";
+    if (!zeit && cond.seitYear) {
+      zeit = cond.seitMonth ? `${cond.seitMonth}/${cond.seitYear}` : cond.seitYear;
+    }
     const zeitStr = zeit ? ` (${this.t("seit", "since")} ${zeit})` : "";
-    const statusStr = cond.status ? ` [${cond.status}]` : "";
+    
+    let bisStr = "";
+    if (cond.bisYear) {
+      const bis = cond.bisMonth ? `${cond.bisMonth}/${cond.bisYear}` : cond.bisYear;
+      bisStr = ` ${this.t("bis", "until")} ${bis}`;
+    }
+    
+    const statusLabel = cond.status === "nochVorhanden" ? this.t("noch vorhanden", "still present")
+      : cond.status === "geendet" ? this.t("geendet", "ended")
+      : cond.status || "";
+    const statusStr = statusLabel ? ` [${statusLabel}${bisStr}]` : "";
     
     const detailStr = details.length > 0 ? ` – ${details.join(", ")}` : "";
     const sonstigeStr = (cond.sonstige || cond.details || cond.welche || cond.grund || "");
