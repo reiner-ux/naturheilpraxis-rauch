@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FAQManager } from "@/components/admin/FAQManager";
 import { PracticeInfoManager } from "@/components/admin/PracticeInfoManager";
 import PricingManager from "@/components/admin/PricingManager";
+import { AuditLogManager } from "@/components/admin/AuditLogManager";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Shield, HelpCircle, Info, AlertTriangle, Euro } from "lucide-react";
+import { Shield, HelpCircle, Info, AlertTriangle, Euro, History } from "lucide-react";
 
 const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -73,7 +74,7 @@ const AdminDashboard = () => {
       <div className="container py-8">
         <div className="mx-auto max-w-5xl">
           <Tabs defaultValue="faqs" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 max-w-lg">
+            <TabsList className="grid w-full grid-cols-4 max-w-2xl">
               <TabsTrigger value="faqs" className="flex items-center gap-2">
                 <HelpCircle className="h-4 w-4" />
                 FAQs
@@ -85,6 +86,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="pricing" className="flex items-center gap-2">
                 <Euro className="h-4 w-4" />
                 Preise
+              </TabsTrigger>
+              <TabsTrigger value="audit" className="flex items-center gap-2">
+                <History className="h-4 w-4" />
+                Protokoll
               </TabsTrigger>
             </TabsList>
 
@@ -118,6 +123,20 @@ const AdminDashboard = () => {
 
             <TabsContent value="pricing">
               <PricingManager />
+            </TabsContent>
+
+            <TabsContent value="audit">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Aktivitätsprotokoll (DSGVO)</CardTitle>
+                  <CardDescription>
+                    Übersicht aller Anmeldungen und Aktionen mit Zeitstempeln gemäß DSGVO-Dokumentationspflicht.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AuditLogManager />
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

@@ -1,3 +1,4 @@
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -8,14 +9,23 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface PatientDataSectionProps {
   formData: AnamneseFormData;
   updateFormData: (field: string, value: any) => void;
+  userEmail?: string;
 }
 
-const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProps) => {
+const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientDataSectionProps) => {
   const { language } = useLanguage();
+
+  // Auto-fill email from logged-in user
+  React.useEffect(() => {
+    if (userEmail && !formData.email) {
+      updateFormData("email", userEmail);
+    }
+  }, [userEmail]);
 
   const sanitizeName = (raw: string) => {
     // Letters incl. German umlauts, spaces, hyphen, apostrophe
@@ -48,32 +58,35 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
           {language === "de" ? "A. Personalia" : "A. Personal Information"}
         </h3>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="nachname">{language === "de" ? "Nachname" : "Last Name"} *</Label>
+          <div className={cn("space-y-2", !formData.nachname && "required-field-highlight")}>
+            <Label htmlFor="nachname">{language === "de" ? "Nachname" : "Last Name"} <span className="text-destructive">*</span></Label>
             <Input 
               id="nachname" 
               value={formData.nachname} 
               onChange={(e) => updateFormData("nachname", sanitizeName(e.target.value))} 
               required 
+              className={cn(!formData.nachname && "border-accent")}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="vorname">{language === "de" ? "Vorname" : "First Name"} *</Label>
+          <div className={cn("space-y-2", !formData.vorname && "required-field-highlight")}>
+            <Label htmlFor="vorname">{language === "de" ? "Vorname" : "First Name"} <span className="text-destructive">*</span></Label>
             <Input 
               id="vorname" 
               value={formData.vorname} 
               onChange={(e) => updateFormData("vorname", sanitizeName(e.target.value))} 
               required 
+              className={cn(!formData.vorname && "border-accent")}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="geburtsdatum">{language === "de" ? "Geburtsdatum" : "Date of Birth"} *</Label>
+          <div className={cn("space-y-2", !formData.geburtsdatum && "required-field-highlight")}>
+            <Label htmlFor="geburtsdatum">{language === "de" ? "Geburtsdatum" : "Date of Birth"} <span className="text-destructive">*</span></Label>
             <Input 
               id="geburtsdatum" 
               type="date" 
               value={formData.geburtsdatum} 
               onChange={(e) => updateFormData("geburtsdatum", e.target.value)} 
               required 
+              className={cn(!formData.geburtsdatum && "border-accent")}
             />
           </div>
           <div className="space-y-2">
@@ -192,14 +205,15 @@ const PatientDataSection = ({ formData, updateFormData }: PatientDataSectionProp
               onChange={(e) => updateFormData("mobil", e.target.value)} 
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">{language === "de" ? "E-Mail" : "Email"} *</Label>
+          <div className={cn("space-y-2", !formData.email && "required-field-highlight")}>
+            <Label htmlFor="email">{language === "de" ? "E-Mail" : "Email"} <span className="text-destructive">*</span></Label>
             <Input 
               id="email" 
               type="email"
               value={formData.email} 
               onChange={(e) => updateFormData("email", e.target.value)} 
               required
+              className={cn(!formData.email && "border-accent")}
             />
           </div>
         </div>

@@ -164,6 +164,31 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Required field visual marking */
+  .required-field input:not(:placeholder-shown):invalid,
+  .required-field input[required]:invalid {
+    border-color: hsl(var(--destructive));
+    box-shadow: 0 0 0 1px hsl(var(--destructive) / 0.3);
+  }
+
+  .required-field-highlight {
+    border: 2px solid hsl(var(--accent));
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    background: hsl(var(--accent) / 0.04);
+    transition: border-color 0.2s ease;
+  }
+
+  .required-field-highlight:focus-within {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.15);
+  }
+
+  .required-field-highlight.filled {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary) / 0.03);
+  }
 }
 
 @layer utilities {

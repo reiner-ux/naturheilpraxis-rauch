@@ -724,7 +724,7 @@ const Anamnesebogen = () => {
       case "intro":
         return <IntroSection />;
       case "patientData":
-        return <PatientDataSection formData={formData} updateFormData={updateFormData} />;
+        return <PatientDataSection formData={formData} updateFormData={updateFormData} userEmail={user?.email} />;
       case "familyHistory":
         return <FamilyHistorySection formData={formData} updateFormData={updateFormData} />;
       case "neurology":

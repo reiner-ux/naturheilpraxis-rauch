@@ -431,6 +431,17 @@ serve(async (req) => {
         attachment: pdfAttachment,
       });
 
+      // Audit log entry for DSGVO compliance
+      await supabase.from("audit_log").insert({
+        user_id: effectiveUserId,
+        action: "anamnesis_submitted",
+        details: {
+          submission_id: submissionId || null,
+          patient_name: patientName,
+          verified_at: new Date().toISOString(),
+        },
+      });
+
       console.log("Anamnesis confirmed and emails sent for", email);
 
       return new Response(
