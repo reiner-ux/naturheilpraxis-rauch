@@ -625,7 +625,7 @@ const Anamnesebogen = () => {
       // Generate PDF as Base64 for email attachment
       let pdfBase64: string | undefined;
       try {
-        pdfBase64 = await generateAnamnesePdfBase64({ formData, language });
+        pdfBase64 = await generateAnamnesePdfBase64({ formData, language, iaaData });
       } catch (e) {
         console.warn("PDF generation failed, sending without attachment:", e);
       }
@@ -712,7 +712,7 @@ const Anamnesebogen = () => {
 
   const handleExportPdf = () => {
     try {
-      generateEnhancedAnamnesePdf({ formData, language: language as "de" | "en" });
+      generateEnhancedAnamnesePdf({ formData, language: language as "de" | "en", iaaData });
       toast.success(
         language === "de" ? "PDF erstellt!" : "PDF created!",
         {
