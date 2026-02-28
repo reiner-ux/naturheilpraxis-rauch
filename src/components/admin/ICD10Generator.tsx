@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, Brain, FileText, Loader2, Shield, Sparkles, Copy, Check } from "lucide-react";
+import { AlertTriangle, Brain, FileText, Loader2, Shield, Sparkles, Copy, Check, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { generateICD10Pdf } from "@/lib/icd10PdfExport";
 
 interface ICD10Result {
   code: string;
@@ -90,6 +91,22 @@ const ICD10Generator = () => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePdfExport = () => {
+    if (!icdResult || !selectedSubmission) return;
+    const sub = submissions?.find((s) => s.id === selectedSubmission);
+    const patientName = getPatientLabel(sub).split(" (")[0];
+    const submissionDate = sub ? new Date(sub.submitted_at).toLocaleDateString("de-DE") : "";
+    generateICD10Pdf({
+      patientName,
+      submissionDate,
+      codes: icdResult.icd10Codes,
+      fixedCount: icdResult.fixedCount,
+      aiCount: icdResult.aiCount,
+      aiSummary: icdResult.aiSummary,
+      language,
+    });
   };
 
   const getPatientLabel = (sub: any) => {
@@ -180,7 +197,11 @@ const ICD10Generator = () => {
                   <Badge variant="outline">{icdResult.aiCount} {t("KI", "AI")}</Badge>
                   <Button variant="outline" size="sm" onClick={handleCopyAll} className="gap-1">
                     {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    {copied ? t("Kopiert", "Copied") : t("Alle kopieren", "Copy all")}
+                    {copied ? t("Kopiert", "Copied") : t("Kopieren", "Copy")}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handlePdfExport} className="gap-1">
+                    <Download className="w-3 h-3" />
+                    {t("PDF", "PDF")}
                   </Button>
                 </div>
               </div>
