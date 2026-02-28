@@ -27,12 +27,13 @@ const Auth: React.FC = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
 
-  // Flag to suppress auto-redirect during 2FA login flow
-  const isAuthenticatingRef = React.useRef(false);
-
-  // Redirect if already logged in (but NOT during active authentication)
+  // Only redirect if user was ALREADY logged in when Auth page first mounted.
+  // Do NOT react to auth state changes during the login/2FA flow.
+  const hasCheckedInitialAuth = React.useRef(false);
   React.useEffect(() => {
-    if (user && !isAuthenticatingRef.current) {
+    if (hasCheckedInitialAuth.current) return;
+    hasCheckedInitialAuth.current = true;
+    if (user) {
       navigate('/');
     }
   }, [user, navigate]);
@@ -68,8 +69,6 @@ const Auth: React.FC = () => {
     setLoading(true);
 
     try {
-      // Suppress auto-redirect during authentication flow
-      isAuthenticatingRef.current = true;
 
       // First verify password is correct
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -78,7 +77,6 @@ const Auth: React.FC = () => {
       });
 
       if (signInError) {
-        isAuthenticatingRef.current = false;
         throw new Error(
           language === 'de' 
             ? 'E-Mail oder Passwort ist falsch' 
@@ -94,7 +92,6 @@ const Auth: React.FC = () => {
 
       if (isAdminData === true) {
         // Admin: direct login, no 2FA needed
-        isAuthenticatingRef.current = false;
         toast({
           title: language === 'de' ? 'Willkommen!' : 'Welcome!',
           description: language === 'de' ? 'Admin-Anmeldung erfolgreich.' : 'Admin login successful.',
@@ -105,7 +102,6 @@ const Auth: React.FC = () => {
 
       // Non-admin: Sign out and require 2FA
       await supabase.auth.signOut();
-      isAuthenticatingRef.current = false;
 
       // Request 2FA code
       const response = await supabase.functions.invoke('request-verification-code', {
@@ -126,7 +122,6 @@ const Auth: React.FC = () => {
           : 'Please check your email for the 2FA code.',
       });
     } catch (error: any) {
-      isAuthenticatingRef.current = false;
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
         description: error.message,
