@@ -176,6 +176,118 @@ class AnamnesePdfBuilder {
     this.doc.setFont("helvetica", "normal");
   }
 
+  /** Convert camelCase keys to readable labels */
+  private prettifyKey(key: string): string {
+    // Known label map for common sub-field keys (DE/EN)
+    const labelMap: Record<string, [string, string]> = {
+      // Head & Senses
+      hinterkopf: ["Hinterkopf", "Back of Head"], stirn: ["Stirn", "Forehead"],
+      rechts: ["rechts", "right"], links: ["links", "left"], beidseitig: ["beidseitig", "bilateral"],
+      migraene: ["Migräne", "Migraine"], spannungskopfschmerz: ["Spannungskopfschmerz", "Tension Headache"],
+      clusterkopfschmerz: ["Clusterkopfschmerz", "Cluster Headache"], medikamenteninduziert: ["medikamenteninduziert", "medication-induced"],
+      trigeminus: ["Trigeminus", "Trigeminal"], glossopharyngeus: ["Glossopharyngeus", "Glossopharyngeal"],
+      occipitalis: ["Occipitalis", "Occipital"], postzoster: ["Post-Zoster", "Post-Zoster"],
+      atypischerGesichtsschmerz: ["Atypischer Gesichtsschmerz", "Atypical Facial Pain"],
+      netzhaut: ["Netzhaut", "Retina"], grauerStar: ["Grauer Star", "Cataract"], gruenerStar: ["Grüner Star", "Glaucoma"],
+      makula: ["Makula", "Macula"], bindehautentzuendung: ["Bindehautentzündung", "Conjunctivitis"],
+      hornhautentzuendung: ["Hornhautentzündung", "Keratitis"], iritis: ["Iritis", "Iritis"],
+      sehnerventzuendung: ["Sehnerventzündung", "Optic Neuritis"], trockeneAugen: ["Trockene Augen", "Dry Eyes"],
+      sehstoerung: ["Sehstörung", "Vision Disorder"],
+      tinnitus: ["Tinnitus", "Tinnitus"], hoersturz: ["Hörsturz", "Sudden Hearing Loss"],
+      mittelohrentzuendung: ["Mittelohrentzündung", "Otitis Media"], morbusMeniere: ["Morbus Menière", "Menière's Disease"],
+      otosklerose: ["Otosklerose", "Otosclerosis"], gehoergangentzuendung: ["Gehörgangentzündung", "External Otitis"],
+      trommelfell: ["Trommelfelldefekt", "Eardrum Defect"],
+      chronisch: ["chronisch", "chronic"], akut: ["akut", "acute"],
+      // Sleep & Psyche
+      einschlaf: ["Einschlaf", "Falling asleep"], durchschlaf: ["Durchschlaf", "Staying asleep"],
+      einUndDurchschlaf: ["Ein- und Durchschlaf", "Both"], aufwachZeit: ["Aufwachzeit", "Wake-up time"],
+      morgens: ["morgens", "morning"], tagsueber: ["tagsüber", "daytime"], abends: ["abends", "evening"],
+      staendig: ["ständig", "constant"], beruflich: ["beruflich", "work-related"], privat: ["privat", "private"],
+      beides: ["beides", "both"], kurzfristig: ["kurzfristig", "short-term"], langfristig: ["langfristig", "long-term"],
+      libidoverlust: ["Libidoverlust", "Loss of Libido"], potenzstörung: ["Potenzstörung", "Potency Disorder"],
+      prozentVergleich: ["Leistung %", "Performance %"],
+      // Psyche
+      behandlung: ["In Behandlung", "Under Treatment"], psychotherapie: ["Psychotherapie", "Psychotherapy"],
+      agoraphobie: ["Agoraphobie", "Agoraphobia"], sozialePhobie: ["Soziale Phobie", "Social Phobia"],
+      spezifisch: ["Spezifisch", "Specific"], schulisch: ["schulisch", "at school"],
+      // Heart
+      systolisch: ["Systolisch", "Systolic"], diastolisch: ["Diastolisch", "Diastolic"],
+      symptome: ["Symptome", "Symptoms"], grad: ["Grad", "Grade"],
+      vorhofflimmern: ["Vorhofflimmern", "Atrial Fibrillation"], extrasystolen: ["Extrasystolen", "Extrasystoles"],
+      belastung: ["bei Belastung", "on exertion"], ruhe: ["in Ruhe", "at rest"],
+      anzahl: ["Anzahl", "Count"], aorta: ["Aorta", "Aortic"], mitral: ["Mitral", "Mitral"],
+      trikuspidal: ["Trikuspidal", "Tricuspid"], aortenklappe: ["Aortenklappe", "Aortic Valve"],
+      mitralklappe: ["Mitralklappe", "Mitral Valve"], trikuspidalklappe: ["Trikuspidalklappe", "Tricuspid Valve"],
+      pulmonalklappe: ["Pulmonalklappe", "Pulmonary Valve"],
+      reUnterschenkel: ["re. Unterschenkel", "rt. Lower Leg"], liUnterschenkel: ["li. Unterschenkel", "lt. Lower Leg"],
+      reOberschenkel: ["re. Oberschenkel", "rt. Upper Leg"], liOberschenkel: ["li. Oberschenkel", "lt. Upper Leg"],
+      tiefeBeinvene: ["Tiefe Beinvene", "Deep Leg Vein"], armvene: ["Armvene", "Arm Vein"],
+      reArm: ["re. Arm", "rt. Arm"], liArm: ["li. Arm", "lt. Arm"],
+      lungenembolie: ["Lungenembolie", "Pulmonary Embolism"], sinusvene: ["Sinusvene", "Sinus Vein"],
+      pfortader: ["Pfortader", "Portal Vein"], mesenterialvene: ["Mesenterialvene", "Mesenteric Vein"],
+      oberflaechlich: ["Oberflächlich", "Superficial"],
+      // Lung
+      allergisch: ["allergisch", "allergic"], nichtAllergisch: ["nicht-allergisch", "non-allergic"],
+      trocken: ["trocken", "dry"], mitAuswurf: ["mit Auswurf", "with sputum"],
+      farbe: ["Farbe", "Color"], stadium: ["Stadium", "Stage"],
+      // Digestive
+      regelmaessig: ["regelmäßig", "regular"], gelegentlich: ["gelegentlich", "occasional"],
+      nachEssen: ["nach dem Essen", "after eating"], haeufigkeit: ["Häufigkeit", "Frequency"],
+      lokalisation: ["Lokalisation", "Location"], diagnostiziert: ["diagnostiziert", "diagnosed"],
+      bereich: ["Bereich", "Area"], diarrhoe: ["Diarrhoe", "Diarrhea"],
+      obstipation: ["Obstipation", "Constipation"], wechselnd: ["wechselnd", "alternating"],
+      // Liver
+      hepatitisA: ["Hepatitis A", "Hepatitis A"], hepatitisB: ["Hepatitis B", "Hepatitis B"],
+      hepatitisC: ["Hepatitis C", "Hepatitis C"], fettleber: ["Fettleber", "Fatty Liver"],
+      symptomatisch: ["symptomatisch", "symptomatic"], asymptomatisch: ["asymptomatisch", "asymptomatic"],
+      // Kidney
+      blasenentzuendung: ["Blasenentzündung", "Bladder Infection"],
+      brennen: ["Brennen", "Burning"], schmerz: ["Schmerz", "Pain"], drang: ["Drang", "Urgency"],
+      ueberlauf: ["Überlauf", "Overflow"], anzahlProNacht: ["pro Nacht", "per night"],
+      // Hormones
+      unterfunktion: ["Unterfunktion", "Hypothyroidism"], ueberfunktion: ["Überfunktion", "Hyperthyroidism"],
+      hashimoto: ["Hashimoto", "Hashimoto's"], basedow: ["Basedow", "Graves' Disease"],
+      knoten: ["Knoten", "Nodules"], schilddruesenkrebs: ["Schilddrüsenkrebs", "Thyroid Cancer"],
+      schilddruesenop: ["Schilddrüsen-OP", "Thyroid Surgery"], radiojodtherapie: ["Radiojodtherapie", "Radioiodine"],
+      hypophysenadenom: ["Hypophysenadenom", "Pituitary Adenoma"], prolaktinom: ["Prolaktinom", "Prolactinoma"],
+      akromegalie: ["Akromegalie", "Acromegaly"], hypophyseninsuffizienz: ["Hypophyseninsuffizienz", "Pituitary Insufficiency"],
+      diabetesInsipidus: ["Diabetes Insipidus", "Diabetes Insipidus"],
+      nebenniereninsuffizienz: ["Nebenniereninsuffizienz", "Adrenal Insufficiency"],
+      cushingSyndrom: ["Cushing-Syndrom", "Cushing's Syndrome"], phaeochromozytom: ["Phäochromozytom", "Pheochromocytoma"],
+      nebennierenerschoepfung: ["Nebennierenerschöpfung", "Adrenal Fatigue"],
+      // Musculoskeletal
+      verspannung: ["Verspannung", "Tension"], bsv: ["BSV (Bandscheibenvorfall)", "Disc Herniation"],
+      arthrose: ["Arthrose", "Arthritis"],
+      // Skin
+      atopisch: ["atopisch", "atopic"], kontakt: ["Kontakt", "contact"],
+      leicht: ["leicht", "mild"], mittel: ["mittel", "moderate"], schwer: ["schwer", "severe"],
+      haende: ["Hände", "Hands"], fuesse: ["Füße", "Feet"], achseln: ["Achseln", "Armpits"], gesicht: ["Gesicht", "Face"],
+      // Women's health
+      teilweise: ["teilweise", "partial"], vollstaendig: ["vollständig", "complete"],
+      einseitig: ["einseitig", "unilateral"],
+      vaginal: ["vaginal", "vaginal"], kaiserschnitt: ["Kaiserschnitt", "C-section"],
+      uebelkeit: ["Übelkeit", "Nausea"], kopf: ["Kopfschmerzen", "Headaches"],
+      // Men's health
+      bph: ["BPH", "BPH"], prostatitis: ["Prostatitis", "Prostatitis"], prostatakarzinom: ["Prostatakarzinom", "Prostate Cancer"],
+      psa: ["PSA-Wert", "PSA Level"],
+      hodenentzuendung: ["Hodenentzündung", "Orchitis"], hodentorsion: ["Hodentorsion", "Testicular Torsion"],
+      hodenkrebs: ["Hodenkrebs", "Testicular Cancer"], varikozele: ["Varikozele", "Varicocele"],
+      hydrozele: ["Hydrozele", "Hydrocele"], epididymitis: ["Epididymitis", "Epididymitis"],
+      nebenhodenzyste: ["Nebenhodenzyste", "Epididymal Cyst"],
+      // Infections
+      roterHof: ["Roter Hof (Wanderröte)", "Erythema migrans"],
+      // Surgeries
+      wurzelbehandlungen: ["Wurzelbehandlungen", "Root Canals"],
+    };
+    const mapped = labelMap[key];
+    if (mapped) return this.t(mapped[0], mapped[1]);
+    // Fallback: capitalize first letter, add spaces before uppercase
+    return key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, s => s.toUpperCase())
+      .trim();
+  }
+
   /** Render a medical condition object: { ja, seit/jahr, ...booleanSubItems, sonstige/details } */
   renderCondition(label: string, cond: any, indent = 5) {
     if (!cond || (typeof cond === 'object' && !cond.ja)) return false;
@@ -189,9 +301,9 @@ class AnamnesePdfBuilder {
     for (const [k, v] of Object.entries(cond)) {
       if (skipKeys.has(k)) continue;
       if (typeof v === 'boolean' && v) {
-        details.push(k);
+        details.push(this.prettifyKey(k));
       } else if (typeof v === 'string' && v && k !== 'sonstige' && k !== 'details' && k !== 'welche' && k !== 'grund') {
-        details.push(`${k}: ${v}`);
+        details.push(`${this.prettifyKey(k)}: ${v}`);
       }
     }
     // Time info
@@ -312,6 +424,14 @@ class AnamnesePdfBuilder {
     this.addField(this.t("Nummer", "Number"), fd.versicherungsnummer, 5);
     this.addField(this.t("Tarif", "Plan"), fd.tarif, 5);
     this.addCheckboxField(this.t("Kostenübernahme Naturheilkunde", "Coverage for naturopathy"), fd.kostenuebernahmeNaturheilkunde, 5);
+    // Mitversicherte
+    if (fd.mitversicherte?.length > 0) {
+      this.addSpacing();
+      this.addSubHeader(this.t("Mitversicherte", "Co-insured Persons"));
+      fd.mitversicherte.forEach((mv, i) => {
+        this.addField(`${i + 1}.`, `${mv.name} (${mv.verhaeltnis}), ${this.t("geb.", "DOB")} ${mv.geburtsdatum}`, 5);
+      });
+    }
     this.addSpacing();
     this.addSubHeader(this.t("Berufliche Situation", "Professional Situation"));
     this.addField(this.t("Beruf", "Occupation"), fd.beruf, 5);
@@ -590,6 +710,11 @@ class AnamnesePdfBuilder {
     this.renderCondition(this.t("Pille", "Birth Control Pill"), fg.pille);
     this.renderCondition(this.t("Hormonbehandlung", "Hormone Treatment"), fg.hormonbehandlung);
     this.renderCondition(this.t("Menopause", "Menopause"), fg.menopause);
+    // Period details
+    this.renderCondition(this.t("Periode normal", "Period Normal"), fg.periodeNormal);
+    this.renderCondition(this.t("Periode schwach", "Period Light"), fg.periodeSchwach);
+    if (fg.periodeStark) this.addCheckboxField(this.t("Periode stark", "Period Heavy"), true);
+    this.renderCondition(this.t("Periode unregelmäßig", "Period Irregular"), fg.periodeUnregelmaessig);
     this.renderCondition(this.t("Periodenbeschwerden", "Period Complaints"), fg.periodenbeschwerden);
     if (fg.schwangerschaften?.anzahl) this.addField(this.t("Schwangerschaften", "Pregnancies"), fg.schwangerschaften.anzahl, 5);
     if (fg.fehlgeburten?.anzahl) this.addField(this.t("Fehlgeburten", "Miscarriages"), fg.fehlgeburten.anzahl, 5);
