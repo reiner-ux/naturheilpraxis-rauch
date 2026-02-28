@@ -360,7 +360,7 @@ serve(async (req) => {
       } : undefined;
 
       // ── Send notification to practice (both email addresses) ──
-      const practiceEmails = ["info@stop-the-point.com", "praxis_rauch@icloud.com"];
+      const practiceEmails = ["info@rauch-heilpraktiker.de", "praxis_rauch@icloud.com"];
       
       for (const practiceEmail of practiceEmails) {
         await sendEmail({
