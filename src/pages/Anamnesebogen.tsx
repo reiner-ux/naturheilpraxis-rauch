@@ -502,7 +502,7 @@ const Anamnesebogen = () => {
           openAccordionItems?: string[];
           iaaData?: Record<string, number>;
         };
-        if (parsed.formData) setFormData(parsed.formData);
+        if (parsed.formData) setFormData((prev) => ({ ...prev, ...parsed.formData }));
         if (parsed.selectedLayout !== undefined) setSelectedLayout(parsed.selectedLayout);
         if (typeof parsed.wizardStep === "number") setWizardStep(parsed.wizardStep);
         if (Array.isArray(parsed.openAccordionItems) && parsed.openAccordionItems.length)
@@ -520,7 +520,7 @@ const Anamnesebogen = () => {
             formData?: AnamneseFormData;
             iaaData?: Record<string, number>;
           };
-          if (parsed.formData) setFormData(parsed.formData);
+          if (parsed.formData) setFormData((prev) => ({ ...prev, ...parsed.formData }));
           if (parsed.iaaData && Object.keys(parsed.iaaData).length > 0) setIaaData(parsed.iaaData);
         }
       }
