@@ -91,6 +91,7 @@ export const initialFormData = {
   sorgeberechtigterOrt: "",
   sorgeberechtigterTelefon: "",
   sorgeberechtigterEmail: "",
+  sorgeberechtigterFestnetz: "", // Festnetz bei abweichender Adresse
   
   // Informationsquelle
   informationsquelle: [] as string[],
