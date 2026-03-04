@@ -347,8 +347,8 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
                 <>
                   <div className="md:col-span-2 text-sm text-muted-foreground">
                     {language === "de"
-                      ? `Bitte geben Sie die Adresse der/des ${formData.sorgeberechtigterTyp === "mutter" ? "Mutter" : formData.sorgeberechtigterTyp === "vater" ? "Vaters" : "Sorgeberechtigten"} an:`
-                      : `Please provide the address of the ${formData.sorgeberechtigterTyp === "mutter" ? "mother" : formData.sorgeberechtigterTyp === "vater" ? "father" : "guardian"}:`}
+                      ? `Bitte geben Sie die Adresse und Erreichbarkeit der/des ${formData.sorgeberechtigterTyp === "mutter" ? "Mutter" : formData.sorgeberechtigterTyp === "vater" ? "Vaters" : "Sorgeberechtigten"} an:`
+                      : `Please provide the address and contact details of the ${formData.sorgeberechtigterTyp === "mutter" ? "mother" : formData.sorgeberechtigterTyp === "vater" ? "father" : "guardian"}:`}
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="sorgeStrasse">{language === "de" ? "Straße, Hausnummer" : "Street, House Number"}</Label>
@@ -372,6 +372,19 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
                       id="sorgeOrt"
                       value={formData.sorgeberechtigterOrt}
                       onChange={(e) => updateFormData("sorgeberechtigterOrt", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sorgeFestnetz">
+                      {language === "de" 
+                        ? `Festnetz ${formData.sorgeberechtigterTyp === "mutter" ? "Mutter" : formData.sorgeberechtigterTyp === "vater" ? "Vater" : "Sorgeberechtigte/r"}`
+                        : `Landline ${formData.sorgeberechtigterTyp === "mutter" ? "Mother" : formData.sorgeberechtigterTyp === "vater" ? "Father" : "Guardian"}`}
+                    </Label>
+                    <Input
+                      id="sorgeFestnetz"
+                      type="tel"
+                      value={formData.sorgeberechtigterFestnetz || ""}
+                      onChange={(e) => updateFormData("sorgeberechtigterFestnetz", e.target.value)}
                     />
                   </div>
                 </>
