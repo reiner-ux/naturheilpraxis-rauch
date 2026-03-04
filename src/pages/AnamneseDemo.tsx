@@ -346,6 +346,7 @@ const xaverDemoData: AnamneseFormData = {
     ort: "Augsburg",
     datum: new Date().toISOString().split("T")[0],
     nameInDruckbuchstaben: "XAVER LOVABLE",
+    geburtsdatumUnterzeichner: "",
     bestaetigung: true,
     datenschutzEinwilligung: true,
     patientenaufklaerungAkzeptiert: true,

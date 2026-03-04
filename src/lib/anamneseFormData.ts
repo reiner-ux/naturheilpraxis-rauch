@@ -604,6 +604,7 @@ export const initialFormData = {
     ort: "Augsburg",
     datum: "",
     nameInDruckbuchstaben: "",
+    geburtsdatumUnterzeichner: "", // Bei Minderjährigen: Geb.datum des Sorgeberechtigten
     bestaetigung: false,
     datenschutzEinwilligung: false,
     patientenaufklaerungAkzeptiert: false,

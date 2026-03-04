@@ -5,9 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AnamneseFormData } from "@/lib/anamneseFormData";
-import { AlertTriangle, Shield, FileCheck, ExternalLink } from "lucide-react";
+import { AlertTriangle, Shield, FileCheck, ExternalLink, Baby } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+
 interface SignatureSectionProps {
   formData: AnamneseFormData;
   updateFormData: (field: string, value: any) => void;
@@ -15,6 +17,26 @@ interface SignatureSectionProps {
 
 const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) => {
   const { language } = useLanguage();
+
+  // Check if patient is a minor
+  const isMinor = React.useMemo(() => {
+    if (!formData.geburtsdatum) return false;
+    const birth = new Date(formData.geburtsdatum);
+    if (isNaN(birth.getTime())) return false;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age >= 0 && age < 18;
+  }, [formData.geburtsdatum]);
+
+  const guardianLabel = React.useMemo(() => {
+    if (formData.sorgeberechtigterTyp === "mutter") return language === "de" ? "Mutter" : "Mother";
+    if (formData.sorgeberechtigterTyp === "vater") return language === "de" ? "Vater" : "Father";
+    return language === "de" ? "Sorgeberechtigte/r" : "Guardian";
+  }, [formData.sorgeberechtigterTyp, language]);
 
   // Auto-set today's date if not already set
   React.useEffect(() => {
@@ -26,6 +48,40 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
       });
     }
   }, []);
+
+  // Auto-fill guardian name if minor and name is empty
+  React.useEffect(() => {
+    if (isMinor && formData.sorgeberechtigterVorname && formData.sorgeberechtigterNachname) {
+      const guardianName = `${formData.sorgeberechtigterVorname} ${formData.sorgeberechtigterNachname}`;
+      if (!formData.unterschrift?.nameInDruckbuchstaben) {
+        updateFormData("unterschrift", {
+          ...formData.unterschrift,
+          nameInDruckbuchstaben: guardianName.toUpperCase()
+        });
+      }
+    }
+  }, [isMinor, formData.sorgeberechtigterVorname, formData.sorgeberechtigterNachname]);
+
+  // Validate signature date – for minors, signer must be ≥18
+  const signatureDateError = React.useMemo(() => {
+    if (!isMinor) return "";
+    const datum = formData.unterschrift?.geburtsdatumUnterzeichner;
+    if (!datum) return "";
+    const birth = new Date(datum);
+    if (isNaN(birth.getTime())) return "";
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      return language === "de"
+        ? "Der/Die Unterzeichnende muss mindestens 18 Jahre alt sein."
+        : "The signer must be at least 18 years old.";
+    }
+    return "";
+  }, [isMinor, formData.unterschrift?.geburtsdatumUnterzeichner, language]);
 
   const updateUnterschrift = (field: string, value: any) => {
     updateFormData("unterschrift", {
@@ -99,6 +155,27 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
           {language === "de" ? "Unterschrift & Bestätigung" : "Signature & Confirmation"}
         </h3>
 
+        {/* Hinweis bei Minderjährigen */}
+        {isMinor && (
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+            <div className="flex gap-3">
+              <Baby className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  {language === "de"
+                    ? `Da der Patient minderjährig ist, muss dieser Abschnitt vom Sorgeberechtigten (${guardianLabel}) ausgefüllt und unterschrieben werden.`
+                    : `Since the patient is a minor, this section must be completed and signed by the legal guardian (${guardianLabel}).`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {language === "de"
+                    ? "Bitte geben Sie das Geburtsdatum und den Namen des/der Sorgeberechtigten ein."
+                    : "Please enter the date of birth and name of the legal guardian."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="ort">{language === "de" ? "Ort" : "Location"}</Label>
@@ -120,9 +197,36 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
           </div>
         </div>
 
+        {/* Geburtsdatum des Unterzeichners – nur bei Minderjährigen */}
+        {isMinor && (
+          <div className="space-y-2">
+            <Label htmlFor="geburtsdatumUnterzeichner">
+              {language === "de"
+                ? `Geburtsdatum ${guardianLabel}`
+                : `Date of Birth ${guardianLabel}`} *
+            </Label>
+            <Input
+              id="geburtsdatumUnterzeichner"
+              type="date"
+              value={formData.unterschrift?.geburtsdatumUnterzeichner || ""}
+              onChange={(e) => updateUnterschrift("geburtsdatumUnterzeichner", e.target.value)}
+              required
+              className={cn(signatureDateError && "border-destructive")}
+            />
+            {signatureDateError && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                {signatureDateError}
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="nameInDruckbuchstaben">
-            {language === "de" ? "Name in Druckbuchstaben" : "Name in Block Letters"} *
+            {isMinor
+              ? (language === "de" ? `Name ${guardianLabel} in Druckbuchstaben` : `Name of ${guardianLabel} in Block Letters`)
+              : (language === "de" ? "Name in Druckbuchstaben" : "Name in Block Letters")} *
           </Label>
           <Input
             id="nameInDruckbuchstaben"
@@ -133,26 +237,15 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
           />
         </div>
 
-        {formData.geschlecht === "weiblich" && (
-          <div className="space-y-2">
-            <Label htmlFor="erziehungsberechtigter">
-              {language === "de" 
-                ? "Unterschrift Erziehungsberechtigter (falls minderjährig)" 
-                : "Guardian Signature (if minor)"}
-            </Label>
-            <Input
-              id="erziehungsberechtigter"
-              value={formData.unterschrift?.erziehungsberechtigter || ""}
-              onChange={(e) => updateUnterschrift("erziehungsberechtigter", e.target.value)}
-            />
-          </div>
-        )}
-
         <div className="bg-muted/50 rounded-lg p-6 space-y-4">
           <p className="text-sm">
-            {language === "de"
-              ? 'Hiermit bestätige ich, dass ich die obigen Informationen zu meiner Person nach bestem Wissen und Gewissen wahrheitsgemäß ausgefüllt habe. Ich habe die "Anleitung zum Ausfüllen" (S. 1) gelesen und verstanden. Ich bin damit einverstanden, dass diese Daten in meiner Patientenakte hinterlegt werden und in Zusammenhang mit meiner Behandlung verwendet werden.'
-              : 'I hereby confirm that I have filled in the above information about myself truthfully to the best of my knowledge and belief. I have read and understood the "Instructions for Completion" (p. 1). I agree that this data will be stored in my patient file and used in connection with my treatment.'}
+            {isMinor
+              ? (language === "de"
+                ? `Hiermit bestätige ich als ${guardianLabel} und Sorgeberechtigte/r, dass ich die obigen Informationen zum Patienten ${formData.vorname || ""} ${formData.nachname || ""} nach bestem Wissen und Gewissen wahrheitsgemäß ausgefüllt habe. Ich habe die "Anleitung zum Ausfüllen" (S. 1) gelesen und verstanden. Ich bin damit einverstanden, dass diese Daten in der Patientenakte hinterlegt werden und in Zusammenhang mit der Behandlung verwendet werden.`
+                : `I hereby confirm as ${guardianLabel} and legal guardian that I have filled in the above information about the patient ${formData.vorname || ""} ${formData.nachname || ""} truthfully to the best of my knowledge and belief. I have read and understood the "Instructions for Completion" (p. 1). I agree that this data will be stored in the patient file and used in connection with the treatment.`)
+              : (language === "de"
+                ? 'Hiermit bestätige ich, dass ich die obigen Informationen zu meiner Person nach bestem Wissen und Gewissen wahrheitsgemäß ausgefüllt habe. Ich habe die "Anleitung zum Ausfüllen" (S. 1) gelesen und verstanden. Ich bin damit einverstanden, dass diese Daten in meiner Patientenakte hinterlegt werden und in Zusammenhang mit meiner Behandlung verwendet werden.'
+                : 'I hereby confirm that I have filled in the above information about myself truthfully to the best of my knowledge and belief. I have read and understood the "Instructions for Completion" (p. 1). I agree that this data will be stored in my patient file and used in connection with my treatment.')}
           </p>
 
           <div className="flex items-start space-x-3">
@@ -163,9 +256,13 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
               className="mt-1"
             />
             <Label htmlFor="bestaetigung" className="font-medium cursor-pointer">
-              {language === "de"
-                ? "Ich bestätige die Richtigkeit meiner Angaben. *"
-                : "I confirm the accuracy of my information. *"}
+              {isMinor
+                ? (language === "de"
+                  ? `Ich bestätige als ${guardianLabel} die Richtigkeit der Angaben. *`
+                  : `I confirm as ${guardianLabel} the accuracy of the information. *`)
+                : (language === "de"
+                  ? "Ich bestätige die Richtigkeit meiner Angaben. *"
+                  : "I confirm the accuracy of my information. *")}
             </Label>
           </div>
 
