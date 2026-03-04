@@ -81,6 +81,16 @@ export const initialFormData = {
   koerpergroesse: "",
   gewicht: "",
   
+  // Sorgeberechtigter (bei Minderjährigen unter 18)
+  sorgeberechtigterTyp: "" as string, // "mutter" | "vater" | ""
+  sorgeberechtigterVorname: "",
+  sorgeberechtigterNachname: "",
+  sorgeberechtigterStrasse: "",
+  sorgeberechtigterPlz: "",
+  sorgeberechtigterOrt: "",
+  sorgeberechtigterTelefon: "",
+  sorgeberechtigterEmail: "",
+  
   // Informationsquelle
   informationsquelle: [] as string[],
   empfehlungVon: "",
