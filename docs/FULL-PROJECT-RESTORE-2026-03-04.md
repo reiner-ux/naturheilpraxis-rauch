@@ -326,24 +326,158 @@ $$;
 
 ---
 
-## 6. E-Mail-System
+## 6. E-Mail-System (Vollständige Dokumentation)
 
-### Architektur
+### Architektur-Kette
 ```
-Edge Function → _shared/smtp.ts → PHP Mail-Relay → QMail/SMTP → Empfänger
+Frontend (Base64 PDF) → Edge Function → _shared/smtp.ts → HTTPS POST → PHP Mail-Relay (v3.2) → QMail SMTP (Port 587) → Empfänger
 ```
 
-### Relay-URL
-`https://rauch-heilpraktiker.de/mail-relay.php`
+### PHP Mail-Relay v3.2 – Technische Details
 
-### Authentifizierung
-Header `X-Relay-Token` mit Wert aus Secret `RELAY_SECRET`
+**Datei auf Server:** `/var/www/vhosts/rauch-heilpraktiker.de/httpdocs/mail-relay.php`
+**Dokumentation:** `docs/mail-relay-v3-smtp.php` (523 Zeilen – vollständiger Quellcode)
+**Relay-URL:** `https://rauch-heilpraktiker.de/mail-relay.php`
+**Version:** `2026-02-26-v3.2-qmail-tlsfix`
 
-### E-Mail-Typen
-1. **Verifizierungscode** (Login, Registration, Password Reset)
-2. **Anamnese-Verifizierungscode** (2FA für Formular-Submit)
-3. **Anamnese-Bestätigung** (an Patient + Praxis, mit PDF)
-4. **ICD-10-Bericht** (an Praxis, mit PDF)
+#### SMTP-Konfiguration
+- **Host:** `185.248.141.144` (Server-IP, nicht Hostname – vermeidet TLS-Zertifikatsprobleme)
+- **Port:** `587` (Submission-Port, Plesk QMail SMTP-Service)
+- **User:** `info@rauch-heilpraktiker.de`
+- **TLS:** STARTTLS wird automatisch verhandelt (nicht SSL von Anfang an)
+- **Verbindung:** `stream_socket_client` (nicht `fsockopen`) für TLS-Kontext
+- **Zertifikatsprüfung:** Deaktiviert (`verify_peer=false`, `verify_peer_name=false`) – notwendig weil Verbindung über IP statt Hostname
+
+#### Kritische Fixes (viel Arbeit!)
+1. **v3.0 → v3.2 TLS-Fix:** `fsockopen` konnte STARTTLS auf QMail nicht korrekt verhandeln → Umstellung auf `stream_socket_client` mit explizitem `stream_context_create()` und deaktivierter Zertifikatsprüfung
+2. **Anhang-Übertragung:** Base64-encodierte PDFs werden in **8KB-Blöcken** (chunked) übertragen, um QMail-Puffergrenzen nicht zu überschreiten
+3. **Same-Domain-Delay:** 60-Sekunden-Verzögerung in `_shared/smtp.ts` für E-Mails an `@rauch-heilpraktiker.de`, weil QMail bei lokaler Zustellung (Same-Domain-Routing) sonst Timeouts produziert
+4. **mail()-Fallback:** Falls SMTP fehlschlägt, versucht PHP `mail()` als Backup – jetzt auch mit Multipart-MIME für Anhänge
+5. **Anhang-Fallback in smtp.ts:** Wenn Versand MIT PDF scheitert → automatischer Retry OHNE Anhang + Hinweistext im HTML
+
+#### Authentifizierung
+- Header `X-Relay-Token` muss mit `RELAY_SECRET` übereinstimmen (timing-safe `hash_equals()`)
+- Secret ist identisch im Edge-Function-Secret und in der PHP-Datei konfiguriert
+
+#### Debug-Logging auf Server
+- Datei: `/var/www/vhosts/rauch-heilpraktiker.de/httpdocs/mail-debug.log`
+- Jeder Relay-Aufruf wird mit Zeitstempel, Empfänger und Ergebnis protokolliert
+
+### _shared/smtp.ts – Edge-Function-Seite
+
+**Datei:** `supabase/functions/_shared/smtp.ts` (112 Zeilen)
+
+**Funktionsweise:**
+1. Liest `RELAY_SECRET` aus Environment
+2. Baut JSON-Payload: `{ to, subject, html, from, attachment? }`
+3. Attachment-Format: `{ filename, base64, contentType: "application/pdf" }`
+4. Prüft lokale Zustellung → ggf. 60s Delay
+5. POST an `https://rauch-heilpraktiker.de/mail-relay.php` mit `X-Relay-Token` Header
+6. Fehlerbehandlung:
+   - HTML-Antwort statt JSON → Fehler (z.B. PHP-Crash)
+   - `result.success === false` → Fehler
+   - Bei Anhang-Fehler → Retry ohne Anhang + Hinweistext
+7. Rückgabe: `{ attachmentSent: boolean }`
+
+### E-Mail-Typen im Detail
+
+| Typ | Edge Function | Empfänger | PDF-Anhang | Betreff |
+|-----|--------------|-----------|------------|---------|
+| Login-2FA | `request-verification-code` | Patient | ❌ | "Ihr Anmeldecode" |
+| Registrierung-2FA | `request-verification-code` | Patient | ❌ | "Ihr Registrierungscode" |
+| PW-Reset-Code | `request-verification-code` | Patient | ❌ | "Passwort zurücksetzen" |
+| Anamnese-2FA | `submit-anamnesis` (submit) | Patient | ❌ | "Ihr Bestätigungscode" |
+| Anamnese → Praxis | `submit-anamnesis` (confirm) | info@ + praxis_rauch@ | ✅ PDF | "Neuer Anamnesebogen: {Name}" |
+| Anamnese → Patient | `submit-anamnesis` (confirm) | Patient | ✅ PDF | "Bestätigung: Ihr Anamnesebogen..." |
+| ICD-10-Bericht | `send-icd10-report` | info@ + praxis_rauch@ | ✅ PDF | "ICD-10 Diagnoseübersicht: {Name}" |
+
+### Praxis-E-Mail-Adressen
+- **Primär:** `info@rauch-heilpraktiker.de`
+- **Kopie:** `praxis_rauch@icloud.com`
+- Beide erhalten identische Benachrichtigungen mit PDF-Anhang
+
+---
+
+## 6b. PDF-Export-System (Vollständige Dokumentation)
+
+### Übersicht der PDF-Module
+
+| Modul | Datei | Zeilen | Zweck |
+|-------|-------|--------|-------|
+| Basis-Export | `src/lib/pdfExport.ts` | 12 | Wrapper → delegiert an Enhanced |
+| Enhanced-Export | `src/lib/pdfExportEnhanced.ts` | **1337** | Vollständiger Anamnesebogen-PDF |
+| ICD-10-Export | `src/lib/icd10PdfExport.ts` | 235 | ICD-10-Diagnoseübersicht-PDF |
+| Datenschutz-Export | `src/lib/datenschutzPdfExport.ts` | – | DSGVO-Einwilligungserklärung |
+
+### AnamnesePdfBuilder (pdfExportEnhanced.ts – 1337 Zeilen!)
+
+Dies war das **aufwändigste Modul** des Projekts. Kernmerkmale:
+
+#### Architektur
+- **Klasse:** `AnamnesePdfBuilder` – objektbasierter PDF-Generator mit jsPDF
+- **A4-Format:** 210×297mm, Margins 20mm, Header 35mm, Footer 25mm
+- **Automatische Seitenumbrüche:** `checkPageBreak(requiredSpace)` prüft vor jedem Element
+- **Konsistentes Branding:** Sage-Green Header, Praxis-Logo-Platzhalter, professioneller Footer
+
+#### Farbschema im PDF
+```typescript
+BRAND_PRIMARY = { r: 76, g: 140, b: 74 };    // Sage Green (Header, Überschriften)
+BRAND_SECONDARY = { r: 91, g: 173, b: 88 };  // Light Green (Subheader, Linien)
+BRAND_TEXT = { r: 51, g: 51, b: 51 };         // Dunkelgrau (Fließtext)
+BRAND_MUTED = { r: 120, g: 120, b: 120 };     // Grau (Platzhalter, "Keine Angaben")
+```
+
+#### Kern-Methoden
+- `addHeader()` – Grüner Balken mit Praxisdaten und Kontaktinfo
+- `addFooter(pageNum, totalPages)` – Seitenzahl, Webseite, Erstellungsdatum, Rechtshinweis
+- `addSectionHeader(text, emoji)` – Hellgrüne Box mit Trennlinie (25 Sektionen)
+- `addField(label, value, indent)` – Schlüssel-Wert-Paar, überspringt leere Werte
+- `addFieldAlways(label, value)` – Zeigt auch leere Werte als "–"
+- `addCheckboxField(label, checked)` – Grüne Checkbox-Grafik
+- `addNoData(text)` – Kursiver "Keine Angaben" Hinweis
+- `prettifyKey(key)` – CamelCase → lesbare Labels mit 100+ medizinischen Übersetzungen DE/EN
+
+#### Rekursive Datenverarbeitung
+Das PDF verarbeitet **verschachtelte medizinische Daten** rekursiv:
+- Temporale Records (z.B. `{ status: "aktuell", seit: "2020" }`)
+- Dental-Charts (Einzelzahn-Befunde)
+- Verschachtelte Objekte bis Tiefe 4
+- Arrays von Strings/Objekten
+- Boolean-Felder werden als Checkboxen dargestellt
+
+#### Alle 25+ gerenderten Sektionen
+I. Patientendaten, II. Beschwerden, III. Allergien, IV. Vorerkrankungen,
+V. Operationen, VI. Medikamente, VII. Familiengeschichte, VIII. Lebensstil,
+IX. Soziales, X. Herz-Kreislauf, XI. Lunge/Atemwege, XII. Verdauung,
+XIII. Leber/Galle, XIV. Niere/Harnwege, XV. Hormonsystem, XVI. Neurologie,
+XVII. Bewegungsapparat, XVIII. Zähne/Kiefer (mit Dental-Chart),
+XIX. Infektionen, XX. Krebserkrankungen, XXI. Impfungen, XXII. Umwelt,
+XXIII. Frauengesundheit / Männergesundheit (geschlechtsspezifisch),
+XXIV. IAA-Fragebogen (Trikombin), XXV. Unterschrift + Einwilligung
+
+#### Base64-Export für E-Mail-Anhang
+```typescript
+// Im Anamnesebogen.tsx:
+const pdfBase64 = generateEnhancedAnamnesePdf({
+  formData: filteredData,
+  language,
+}, { returnBase64: true }) as string;
+
+// Wird an submit-anamnesis Edge Function gesendet:
+body: { action: "confirm", pdfBase64, ... }
+```
+Die `returnBase64: true` Option gibt den PDF-Inhalt als Base64-String zurück statt ihn zu downloaden. Dieser String wird dann über die Edge Function → smtp.ts → PHP Relay als `attachment.base64` an den SMTP-Server übermittelt.
+
+#### Bekanntes Problem
+Sporadische Layout-Überlappungen bei sehr langen Freitextfeldern – bekanntes Formatierungsproblem für zukünftige Verfeinerung.
+
+### ICD-10-PDF (icd10PdfExport.ts – 235 Zeilen)
+
+- **Format:** A4 Hochformat mit professionellem Briefkopf
+- **Inhalt:** Patientendaten, tabellarische ICD-10-Codes, Konfidenz-Scores, KI-Zusammenfassung
+- **Farbcodierung:** Feste Codes grün, KI-Codes blau mit Konfidenzbalken
+- **Disclaimer:** Rechtlicher Haftungsausschluss am Ende
+- **Dual-Modus:** Download ODER Base64-Rückgabe (für E-Mail-Versand)
 
 ---
 
