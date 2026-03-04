@@ -54,13 +54,16 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
   const isMinor = React.useMemo(() => {
     if (!formData.geburtsdatum) return false;
     const birth = new Date(formData.geburtsdatum);
+    if (isNaN(birth.getTime())) return false;
     const today = new Date();
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--;
     }
-    return age >= 0 && age < 18;
+    const minor = age >= 0 && age < 18;
+    console.log('[PatientData] geburtsdatum:', formData.geburtsdatum, 'age:', age, 'isMinor:', minor);
+    return minor;
   }, [formData.geburtsdatum]);
 
   // Clear guardian data when patient becomes adult
