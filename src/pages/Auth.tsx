@@ -871,7 +871,7 @@ const Auth: React.FC = () => {
               <Shield className="h-8 w-8 text-primary" />
             </div>
             <CardTitle className="text-2xl">
-              {language === 'de' ? 'Patientenportal' : 'Patient Portal'}
+              {language === 'de' ? 'Praxis-Login' : 'Practice Login'}
             </CardTitle>
             <CardDescription>
               {language === 'de' 
