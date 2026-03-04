@@ -61,9 +61,7 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--;
     }
-    const minor = age >= 0 && age < 18;
-    console.log('[PatientData] geburtsdatum:', formData.geburtsdatum, 'age:', age, 'isMinor:', minor);
-    return minor;
+    return age >= 0 && age < 18;
   }, [formData.geburtsdatum]);
 
   // Clear guardian data when patient becomes adult
