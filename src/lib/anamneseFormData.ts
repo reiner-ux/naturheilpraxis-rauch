@@ -85,6 +85,7 @@ export const initialFormData = {
   sorgeberechtigterTyp: "" as string, // "mutter" | "vater" | ""
   sorgeberechtigterVorname: "",
   sorgeberechtigterNachname: "",
+  sorgeberechtigterAbweichendeAdresse: false, // Kind wohnt woanders (z.B. Heim)
   sorgeberechtigterStrasse: "",
   sorgeberechtigterPlz: "",
   sorgeberechtigterOrt: "",
