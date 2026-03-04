@@ -262,11 +262,12 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               {language === "de"
-                ? "Da der Patient minderjährig ist, benötigen wir die Daten eines Sorgeberechtigten (Mutter oder Vater)."
-                : "Since the patient is a minor, we need the data of a legal guardian (mother or father)."}
+                ? "Da der Patient minderjährig ist, benötigen wir die Daten eines Sorgeberechtigten."
+                : "Since the patient is a minor, we need the data of a legal guardian."}
             </p>
-            <div className="space-y-4">
-              <div className="space-y-3">
+            <div className="grid gap-4 md:grid-cols-2 p-4 border rounded-lg bg-muted/30">
+              {/* Mutter/Vater Auswahl */}
+              <div className={cn("space-y-3 md:col-span-2", !formData.sorgeberechtigterTyp && "required-field-highlight")}>
                 <Label>{language === "de" ? "Sorgeberechtigte/r" : "Guardian"} <span className="text-destructive">*</span></Label>
                 <RadioGroup
                   value={formData.sorgeberechtigterTyp || ""}
@@ -284,96 +285,95 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
                 </RadioGroup>
               </div>
 
-              {(formData.sorgeberechtigterTyp === "mutter" || formData.sorgeberechtigterTyp === "vater") && (
-                <div className="grid gap-4 md:grid-cols-2 p-4 border rounded-lg bg-muted/30">
-                  <div className={cn("space-y-2", !formData.sorgeberechtigterVorname && "required-field-highlight")}>
-                    <Label htmlFor="sorgeVorname">{language === "de" ? "Vorname" : "First Name"} <span className="text-destructive">*</span></Label>
-                    <Input
-                      id="sorgeVorname"
-                      value={formData.sorgeberechtigterVorname}
-                      onChange={(e) => updateFormData("sorgeberechtigterVorname", sanitizeName(e.target.value))}
-                      className={cn(!formData.sorgeberechtigterVorname && "border-accent")}
-                    />
-                  </div>
-                  <div className={cn("space-y-2", !formData.sorgeberechtigterNachname && "required-field-highlight")}>
-                    <Label htmlFor="sorgeNachname">{language === "de" ? "Nachname" : "Last Name"} <span className="text-destructive">*</span></Label>
-                    <Input
-                      id="sorgeNachname"
-                      value={formData.sorgeberechtigterNachname}
-                      onChange={(e) => updateFormData("sorgeberechtigterNachname", sanitizeName(e.target.value))}
-                      className={cn(!formData.sorgeberechtigterNachname && "border-accent")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sorgeTelefon">{language === "de" ? "Telefon" : "Phone"} <span className="text-destructive">*</span></Label>
-                    <Input
-                      id="sorgeTelefon"
-                      type="tel"
-                      value={formData.sorgeberechtigterTelefon}
-                      onChange={(e) => updateFormData("sorgeberechtigterTelefon", e.target.value)}
-                      className={cn(!formData.sorgeberechtigterTelefon && "border-accent")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sorgeEmail">{language === "de" ? "E-Mail" : "Email"}</Label>
-                    <Input
-                      id="sorgeEmail"
-                      type="email"
-                      value={formData.sorgeberechtigterEmail}
-                      onChange={(e) => updateFormData("sorgeberechtigterEmail", e.target.value)}
-                    />
-                  </div>
+              {/* Name */}
+              <div className={cn("space-y-2", !formData.sorgeberechtigterVorname && "required-field-highlight")}>
+                <Label htmlFor="sorgeVorname">{language === "de" ? "Vorname" : "First Name"} <span className="text-destructive">*</span></Label>
+                <Input
+                  id="sorgeVorname"
+                  value={formData.sorgeberechtigterVorname}
+                  onChange={(e) => updateFormData("sorgeberechtigterVorname", sanitizeName(e.target.value))}
+                  className={cn(!formData.sorgeberechtigterVorname && "border-accent")}
+                />
+              </div>
+              <div className={cn("space-y-2", !formData.sorgeberechtigterNachname && "required-field-highlight")}>
+                <Label htmlFor="sorgeNachname">{language === "de" ? "Nachname" : "Last Name"} <span className="text-destructive">*</span></Label>
+                <Input
+                  id="sorgeNachname"
+                  value={formData.sorgeberechtigterNachname}
+                  onChange={(e) => updateFormData("sorgeberechtigterNachname", sanitizeName(e.target.value))}
+                  className={cn(!formData.sorgeberechtigterNachname && "border-accent")}
+                />
+              </div>
 
-                  {/* Abweichende Adresse – z.B. Kind im Heim */}
-                  <div className="md:col-span-2 pt-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="sorgeAbweichendeAdresse"
-                        checked={formData.sorgeberechtigterAbweichendeAdresse}
-                        onCheckedChange={(checked) => updateFormData("sorgeberechtigterAbweichendeAdresse", !!checked)}
-                      />
-                      <Label htmlFor="sorgeAbweichendeAdresse" className="font-normal text-sm">
-                        {language === "de"
-                          ? "Kind wohnt nicht beim Sorgeberechtigten (z. B. Heim, Pflegefamilie, anderer Wohnort)"
-                          : "Child does not live with the guardian (e.g. care home, foster family, different address)"}
-                      </Label>
-                    </div>
-                  </div>
+              {/* Kontakt */}
+              <div className="space-y-2">
+                <Label htmlFor="sorgeTelefon">{language === "de" ? "Telefon" : "Phone"} <span className="text-destructive">*</span></Label>
+                <Input
+                  id="sorgeTelefon"
+                  type="tel"
+                  value={formData.sorgeberechtigterTelefon}
+                  onChange={(e) => updateFormData("sorgeberechtigterTelefon", e.target.value)}
+                  className={cn(!formData.sorgeberechtigterTelefon && "border-accent")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sorgeEmail">{language === "de" ? "E-Mail" : "Email"}</Label>
+                <Input
+                  id="sorgeEmail"
+                  type="email"
+                  value={formData.sorgeberechtigterEmail}
+                  onChange={(e) => updateFormData("sorgeberechtigterEmail", e.target.value)}
+                />
+              </div>
 
-                  {formData.sorgeberechtigterAbweichendeAdresse && (
-                    <>
-                      <div className="md:col-span-2 text-sm text-muted-foreground">
-                        {language === "de"
-                          ? `Bitte geben Sie die Adresse der/des ${formData.sorgeberechtigterTyp === "mutter" ? "Mutter" : "Vaters"} an:`
-                          : `Please provide the address of the ${formData.sorgeberechtigterTyp === "mutter" ? "mother" : "father"}:`}
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="sorgeStrasse">{language === "de" ? "Straße, Hausnummer" : "Street, House Number"}</Label>
-                        <Input
-                          id="sorgeStrasse"
-                          value={formData.sorgeberechtigterStrasse}
-                          onChange={(e) => updateFormData("sorgeberechtigterStrasse", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="sorgePlz">{language === "de" ? "PLZ" : "Postal Code"}</Label>
-                        <Input
-                          id="sorgePlz"
-                          value={formData.sorgeberechtigterPlz}
-                          onChange={(e) => updateFormData("sorgeberechtigterPlz", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="sorgeOrt">{language === "de" ? "Wohnort" : "City"}</Label>
-                        <Input
-                          id="sorgeOrt"
-                          value={formData.sorgeberechtigterOrt}
-                          onChange={(e) => updateFormData("sorgeberechtigterOrt", e.target.value)}
-                        />
-                      </div>
-                    </>
-                  )}
+              {/* Abweichende Adresse – z.B. Kind im Heim */}
+              <div className="md:col-span-2 pt-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="sorgeAbweichendeAdresse"
+                    checked={formData.sorgeberechtigterAbweichendeAdresse}
+                    onCheckedChange={(checked) => updateFormData("sorgeberechtigterAbweichendeAdresse", !!checked)}
+                  />
+                  <Label htmlFor="sorgeAbweichendeAdresse" className="font-normal text-sm">
+                    {language === "de"
+                      ? "Kind wohnt nicht beim Sorgeberechtigten (z. B. Heim, Pflegefamilie, anderer Wohnort)"
+                      : "Child does not live with the guardian (e.g. care home, foster family, different address)"}
+                  </Label>
                 </div>
+              </div>
+
+              {formData.sorgeberechtigterAbweichendeAdresse && (
+                <>
+                  <div className="md:col-span-2 text-sm text-muted-foreground">
+                    {language === "de"
+                      ? `Bitte geben Sie die Adresse der/des ${formData.sorgeberechtigterTyp === "mutter" ? "Mutter" : formData.sorgeberechtigterTyp === "vater" ? "Vaters" : "Sorgeberechtigten"} an:`
+                      : `Please provide the address of the ${formData.sorgeberechtigterTyp === "mutter" ? "mother" : formData.sorgeberechtigterTyp === "vater" ? "father" : "guardian"}:`}
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="sorgeStrasse">{language === "de" ? "Straße, Hausnummer" : "Street, House Number"}</Label>
+                    <Input
+                      id="sorgeStrasse"
+                      value={formData.sorgeberechtigterStrasse}
+                      onChange={(e) => updateFormData("sorgeberechtigterStrasse", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sorgePlz">{language === "de" ? "PLZ" : "Postal Code"}</Label>
+                    <Input
+                      id="sorgePlz"
+                      value={formData.sorgeberechtigterPlz}
+                      onChange={(e) => updateFormData("sorgeberechtigterPlz", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sorgeOrt">{language === "de" ? "Wohnort" : "City"}</Label>
+                    <Input
+                      id="sorgeOrt"
+                      value={formData.sorgeberechtigterOrt}
+                      onChange={(e) => updateFormData("sorgeberechtigterOrt", e.target.value)}
+                    />
+                  </div>
+                </>
               )}
             </div>
           </div>
