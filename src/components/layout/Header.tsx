@@ -20,12 +20,12 @@ export function Header() {
   const nav = translations.nav;
   const header = translations.header;
 
-  // Show Test link for admins so they can access patient forms without patient login
-  const showTestLink = isAdmin;
+  // Show Test link in non-production environments (preview/localhost) OR for logged-in admins
+  const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('localhost');
+  const showTestLink = isAdmin || isNonProduction;
   
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
-    // Test link visible in non-production environments (no login required, but hidden on published site)
     ...(showTestLink ? [{ label: "🧪 Test", href: "/anamnesebogen?dev=true" }] : []),
     { label: t("Erstanmeldung", "First Registration"), href: "/erstanmeldung" },
   ];
