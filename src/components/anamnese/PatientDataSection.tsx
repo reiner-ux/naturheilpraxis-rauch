@@ -269,7 +269,7 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
               <div className="space-y-3">
                 <Label>{language === "de" ? "Sorgeberechtigte/r" : "Guardian"} <span className="text-destructive">*</span></Label>
                 <RadioGroup
-                  value={formData.sorgeberechtigterTyp}
+                  value={formData.sorgeberechtigterTyp || ""}
                   onValueChange={(value) => updateFormData("sorgeberechtigterTyp", value)}
                   className="flex gap-6"
                 >
@@ -284,7 +284,7 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
                 </RadioGroup>
               </div>
 
-              {formData.sorgeberechtigterTyp && (
+              {(formData.sorgeberechtigterTyp === "mutter" || formData.sorgeberechtigterTyp === "vater") && (
                 <div className="grid gap-4 md:grid-cols-2 p-4 border rounded-lg bg-muted/30">
                   <div className={cn("space-y-2", !formData.sorgeberechtigterVorname && "required-field-highlight")}>
                     <Label htmlFor="sorgeVorname">{language === "de" ? "Vorname" : "First Name"} <span className="text-destructive">*</span></Label>
