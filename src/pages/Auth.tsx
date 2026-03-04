@@ -27,16 +27,21 @@ const Auth: React.FC = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
 
+  // Preview/Dev bypass: skip auth page entirely in non-production environments
+  const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('localhost');
+  const searchParams = new URLSearchParams(window.location.search);
+  const devBypass = isNonProduction && searchParams.get('dev') === 'true';
+
   // Only redirect if user was ALREADY logged in when Auth page first mounted.
   // Do NOT react to auth state changes during the login/2FA flow.
   const hasCheckedInitialAuth = React.useRef(false);
   React.useEffect(() => {
     if (hasCheckedInitialAuth.current) return;
     hasCheckedInitialAuth.current = true;
-    if (user) {
+    if (user || devBypass) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, navigate, devBypass]);
 
   const [mode, setMode] = useState<AuthMode>('login');
   const [step, setStep] = useState<AuthStep>('credentials');
