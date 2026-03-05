@@ -365,6 +365,42 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
           </div>
         </div>
 
+        {/* DSGVO-konformer Hinweis zur Datenübermittlung an die Praxis */}
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex gap-3">
+            <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+              <p className="font-medium">
+                {language === "de"
+                  ? "Hinweis zur Datenübermittlung (Art. 13 DSGVO):"
+                  : "Data Transmission Notice (Art. 13 GDPR):"}
+              </p>
+              <p>
+                {language === "de"
+                  ? "Mit dem Absenden werden folgende Kopien parallel an die Naturheilpraxis Peter Rauch übermittelt, um die Erstaufnahme und Behandlung vorzubereiten:"
+                  : "Upon submission, the following copies are simultaneously transmitted to Naturopathic Practice Peter Rauch to prepare for your initial consultation and treatment:"}
+              </p>
+              <ul className="list-disc ml-4 space-y-1">
+                <li>
+                  {language === "de"
+                    ? "Ihr ausgefüllter Anamnesebogen (an die Praxis-Fachabteilung)"
+                    : "Your completed medical history form (to the practice department)"}
+                </li>
+                <li>
+                  {language === "de"
+                    ? "Ihr IAA-Fragebogen (Individuelle Austestung und Analyse) mit zugeordneten Diagnoseschlüsseln (an die medizinische Auswertung)"
+                    : "Your IAA questionnaire (Individual Testing and Analysis) with assigned diagnostic codes (to medical evaluation)"}
+                </li>
+              </ul>
+              <p>
+                {language === "de"
+                  ? "Sie selbst erhalten eine Kopie Ihres Anamnesebogens per E-Mail. Der IAA-Fragebogen mit Diagnoseschlüsseln wird ausschließlich der Praxis zur Verfügung gestellt und nicht an Sie übermittelt. Rechtsgrundlage: Art. 9 Abs. 2 lit. h DSGVO i.V.m. § 630f BGB."
+                  : "You will receive a copy of your medical history form by email. The IAA questionnaire with diagnostic codes is provided exclusively to the practice and will not be sent to you. Legal basis: Art. 9(2)(h) GDPR in conjunction with § 630f BGB."}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Hinweis auf 2FA */}
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
           <div className="flex gap-3">
