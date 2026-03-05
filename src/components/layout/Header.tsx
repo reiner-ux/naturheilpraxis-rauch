@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Leaf, LogIn, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,16 @@ export function Header() {
   const nav = translations.nav;
   const header = translations.header;
 
-  // Show Test/Patienten links: for admins (from auth or dev bypass)
-  // The dev bypass in AuthContext now properly sets isAdmin=true and persists via sessionStorage
+  // Non-production detection for showing dev activate button
+  const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('localhost');
+  const devActive = sessionStorage.getItem('dev_admin_bypass') === 'true';
+  const showDevButton = isNonProduction && !isAdmin && !devActive;
+  
+  const activateDevMode = useCallback(() => {
+    sessionStorage.setItem('dev_admin_bypass', 'true');
+    window.location.search = '?dev=true';
+  }, []);
+
   const showTestLink = isAdmin;
   
   const navItems = [
@@ -77,6 +85,19 @@ export function Header() {
           <InfothekDropdown />
           
           <LanguageSwitcher className="ml-2" />
+
+          {/* Dev Mode Activate Button - only in non-production when not yet active */}
+          {showDevButton && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={activateDevMode}
+              className="ml-2 gap-1 border-amber-400 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+            >
+              <Shield className="h-3.5 w-3.5" />
+              Admin
+            </Button>
+          )}
           
           {/* Auth Button Desktop */}
           {user ? (
@@ -169,6 +190,18 @@ export function Header() {
             {/* Infothek Dropdown Mobile */}
             <InfothekDropdown isMobile onItemClick={() => setIsMenuOpen(false)} />
             
+            {/* Dev Mode Activate Button Mobile */}
+            {showDevButton && (
+              <Button
+                variant="outline"
+                onClick={activateDevMode}
+                className="w-full justify-start gap-2 border-amber-400 text-amber-600"
+              >
+                <Shield className="h-4 w-4" />
+                Admin-Modus aktivieren
+              </Button>
+            )}
+
             {/* Auth Button Mobile */}
             {user ? (
               <div className="mt-2 space-y-2">
