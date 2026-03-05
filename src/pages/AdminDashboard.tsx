@@ -1,5 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FAQManager } from "@/components/admin/FAQManager";
 import { PracticeInfoManager } from "@/components/admin/PracticeInfoManager";
@@ -16,6 +17,8 @@ import { Shield, HelpCircle, Info, AlertTriangle, Euro, History, Brain, Users } 
 const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminCheck();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') === 'patients' ? 'patients' : 'faqs';
 
   if (authLoading || adminLoading) {
     return (
@@ -75,7 +78,7 @@ const AdminDashboard = () => {
 
       <div className="container py-8">
         <div className="mx-auto max-w-5xl">
-          <Tabs defaultValue="faqs" className="space-y-6">
+          <Tabs defaultValue={defaultTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-6 max-w-4xl">
               <TabsTrigger value="patients" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
