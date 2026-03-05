@@ -203,7 +203,25 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
             <Input 
               id="plz" 
               value={formData.plz} 
-              onChange={(e) => updateFormData("plz", e.target.value)} 
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 5);
+                updateFormData("plz", digitsOnly);
+                // Auto-fill city when 5-digit PLZ is entered
+                if (digitsOnly.length === 5) {
+                  fetch(`https://api.zippopotam.us/de/${digitsOnly}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(data => {
+                      if (data?.places?.[0]?.["place name"]) {
+                        updateFormData("wohnort", data.places[0]["place name"]);
+                      }
+                    })
+                    .catch(() => { /* ignore lookup errors */ });
+                }
+              }}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={5}
+              placeholder="z.B. 86163"
               required
               className={cn(!formData.plz && "border-accent")}
             />

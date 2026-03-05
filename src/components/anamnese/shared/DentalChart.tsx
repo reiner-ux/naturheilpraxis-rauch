@@ -308,15 +308,22 @@ const DentalChart = ({ chartData, onChartDataChange, className }: DentalChartPro
                       : "bg-background border-muted hover:border-primary/50"
                   )}
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    toggleDiagnosis(selectedTooth, diag.id);
+                    if (selectedTooth) {
+                      toggleDiagnosis(selectedTooth, diag.id);
+                    }
                   }}
+                  role="button"
+                  tabIndex={0}
                 >
                   <Checkbox
                     checked={isActive}
                     onCheckedChange={(checked) => {
-                      // Prevent double-toggle from parent onClick
+                      // State is managed by parent onClick – prevent Radix internal toggle
+                      // which can cause double-toggle and rendering issues
                     }}
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <div className="flex items-center gap-1.5">
                     <div className={cn("w-2.5 h-2.5 rounded-full", diag.color)} />

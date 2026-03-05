@@ -1,10 +1,15 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Stethoscope, BookOpen, Heart, Shield, Scale, Leaf, GraduationCap, FileCheck, Users } from "lucide-react";
+import SEOHead from "@/components/seo/SEOHead";
 
 const Heilpraktiker = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Was ist ein Heilpraktiker?"
+        description="Heilpraktiker in Deutschland: Staatlich geprüfte Fachkräfte für Naturheilkunde, Irisdiagnose, Darmsanierung und ganzheitliche Therapien. Erfahren Sie mehr über Ausbildung, Berufsbild und Behandlungsmethoden."
+      />
       <div className="bg-sage-50 py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-3xl text-center">
