@@ -9,12 +9,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Users, RefreshCw, Loader2, Mail } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { toast } from "sonner";
 
 interface PatientProfile {
   user_id: string;
@@ -28,14 +26,12 @@ interface PatientProfile {
   phone: string | null;
   created_at: string;
   login_count: number;
-  submission_id: string | null;
 }
 
 export function PatientManager() {
   const [patients, setPatients] = useState<PatientProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [resending, setResending] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPatients();
@@ -58,17 +54,6 @@ export function PatientManager() {
 
       if (loginError) throw loginError;
 
-      // Fetch submissions to get submission IDs
-      const { data: submissions } = await supabase
-        .from("anamnesis_submissions")
-        .select("id, user_id, status")
-        .eq("status", "verified");
-
-      const submissionMap: Record<string, string> = {};
-      submissions?.forEach((s) => {
-        if (!submissionMap[s.user_id]) submissionMap[s.user_id] = s.id;
-      });
-
       const countMap: Record<string, number> = {};
       loginCounts?.forEach((entry) => {
         countMap[entry.user_id] = (countMap[entry.user_id] || 0) + 1;
@@ -86,7 +71,6 @@ export function PatientManager() {
         phone: p.phone,
         created_at: p.created_at,
         login_count: countMap[p.user_id] || 0,
-        submission_id: submissionMap[p.user_id] || null,
       }));
 
       setPatients(enriched);
@@ -94,25 +78,6 @@ export function PatientManager() {
       console.error("Error fetching patients:", err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResend = async (submissionId: string, patientName: string) => {
-    setResending(submissionId);
-    try {
-      const { data, error } = await supabase.functions.invoke("resend-submission", {
-        body: { submissionId },
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Resend failed");
-      toast.success(`E-Mails erneut gesendet für ${patientName}`, {
-        description: `${data.icd10Count} ICD-10 Codes, ${data.iaaEntries} IAA-Einträge`,
-      });
-    } catch (err: any) {
-      console.error("Resend error:", err);
-      toast.error("Fehler beim erneuten Senden", { description: err?.message });
-    } finally {
-      setResending(null);
     }
   };
 
@@ -174,13 +139,12 @@ export function PatientManager() {
               <TableHead>Geburtsdatum</TableHead>
               <TableHead>Erstanmeldung</TableHead>
               <TableHead className="text-right">Logins</TableHead>
-              <TableHead>Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   Keine Patienten gefunden.
                 </TableCell>
               </TableRow>
@@ -200,26 +164,6 @@ export function PatientManager() {
                     <TableCell>{formatDate(p.date_of_birth)}</TableCell>
                     <TableCell>{formatDate(p.created_at)}</TableCell>
                     <TableCell className="text-right">{p.login_count}</TableCell>
-                    <TableCell>
-                      {p.submission_id ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1.5"
-                          disabled={resending === p.submission_id}
-                          onClick={() => handleResend(p.submission_id!, name)}
-                        >
-                          {resending === p.submission_id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Mail className="h-3 w-3" />
-                          )}
-                          Resend
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">–</span>
-                      )}
-                    </TableCell>
                   </TableRow>
                 );
               })
