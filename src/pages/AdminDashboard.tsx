@@ -6,11 +6,12 @@ import { PracticeInfoManager } from "@/components/admin/PracticeInfoManager";
 import PricingManager from "@/components/admin/PricingManager";
 import { AuditLogManager } from "@/components/admin/AuditLogManager";
 import ICD10Generator from "@/components/admin/ICD10Generator";
+import { PatientManager } from "@/components/admin/PatientManager";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Shield, HelpCircle, Info, AlertTriangle, Euro, History, Brain } from "lucide-react";
+import { Shield, HelpCircle, Info, AlertTriangle, Euro, History, Brain, Users } from "lucide-react";
 
 const AdminDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -75,7 +76,11 @@ const AdminDashboard = () => {
       <div className="container py-8">
         <div className="mx-auto max-w-5xl">
           <Tabs defaultValue="faqs" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 max-w-3xl">
+            <TabsList className="grid w-full grid-cols-6 max-w-4xl">
+              <TabsTrigger value="patients" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Patienten
+              </TabsTrigger>
               <TabsTrigger value="faqs" className="flex items-center gap-2">
                 <HelpCircle className="h-4 w-4" />
                 FAQs
@@ -97,6 +102,20 @@ const AdminDashboard = () => {
                 Protokoll
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="patients">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Patientenübersicht</CardTitle>
+                  <CardDescription>
+                    Alle registrierten Patienten mit personenbezogenen Daten und Anmeldehistorie.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PatientManager />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="faqs">
               <Card>

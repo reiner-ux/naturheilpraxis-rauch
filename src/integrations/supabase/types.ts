@@ -232,6 +232,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          city: string | null
           created_at: string
           date_of_birth: string | null
           email: string
@@ -239,10 +240,13 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          postal_code: string | null
+          street: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          city?: string | null
           created_at?: string
           date_of_birth?: string | null
           email: string
@@ -250,10 +254,13 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          postal_code?: string | null
+          street?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          city?: string | null
           created_at?: string
           date_of_birth?: string | null
           email?: string
@@ -261,6 +268,8 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          postal_code?: string | null
+          street?: string | null
           updated_at?: string
           user_id?: string
         }
