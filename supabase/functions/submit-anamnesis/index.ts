@@ -27,6 +27,7 @@ const requestSchema = z.object({
   pdfBase64: z.string().optional(),
   pdfBase64WithoutIAA: z.string().optional(),
   iaaPdfBase64: z.string().optional(),
+});
 
 // In-memory rate limiting
 const rateLimitMap = new Map<
