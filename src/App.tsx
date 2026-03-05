@@ -23,6 +23,7 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
 import NotFound from "./pages/NotFound";
+import PatientenManagerPage from "./pages/PatientenManager";
 import Patientenaufklaerung from "./pages/Patientenaufklaerung";
 import Erstanmeldung from "./pages/Erstanmeldung";
 
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/patientenaufklaerung" element={<Patientenaufklaerung />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/patienten" element={<PatientenManagerPage />} />
               <Route path="/dashboard" element={<PatientDashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
