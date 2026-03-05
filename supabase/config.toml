@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.send-icd10-report]
 verify_jwt = false
+
+[functions.resend-submission]
+verify_jwt = false
