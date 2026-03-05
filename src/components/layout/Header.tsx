@@ -27,7 +27,7 @@ export function Header() {
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
     ...(showTestLink ? [{ label: "🧪 Test", href: "/anamnesebogen?dev=true" }] : []),
-    ...(showTestLink ? [{ label: "👥 Patienten", href: "/admin?tab=patients" }] : []),
+    ...(showTestLink ? [{ label: "👥 Patienten", href: "/patienten?dev=true" }] : []),
     { label: t("Erstanmeldung", "First Registration"), href: "/erstanmeldung" },
   ];
 
