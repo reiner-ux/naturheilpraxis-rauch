@@ -30,12 +30,9 @@ export function Header() {
     window.location.search = '?dev=true';
   }, []);
 
-  const showTestLink = isAdmin;
-  
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
-    ...(showTestLink ? [{ label: "🧪 Test", href: "/anamnesebogen?dev=true" }] : []),
-    ...(showTestLink ? [{ label: "👥 Patienten", href: "/patienten?dev=true" }] : []),
+    ...(isAdmin ? [{ label: "👥 Patienten", href: "/patienten?dev=true" }] : []),
     { label: t("Erstanmeldung", "First Registration"), href: "/erstanmeldung" },
   ];
 
