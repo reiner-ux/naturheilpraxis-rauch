@@ -28,7 +28,11 @@ interface PatientProfile {
   login_count: number;
 }
 
-export function PatientManager() {
+interface PatientManagerProps {
+  devBypass?: boolean;
+}
+
+export function PatientManager({ devBypass = false }: PatientManagerProps) {
   const [patients, setPatients] = useState<PatientProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -40,40 +44,20 @@ export function PatientManager() {
   const fetchPatients = async () => {
     setLoading(true);
     try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Use edge function to fetch patients (bypasses RLS with service role)
+      const headers: Record<string, string> = {};
+      if (devBypass) {
+        headers["x-dev-mode"] = "true";
+      }
 
-      if (profilesError) throw profilesError;
-
-      const { data: loginCounts, error: loginError } = await supabase
-        .from("audit_log")
-        .select("user_id, action")
-        .eq("action", "login");
-
-      if (loginError) throw loginError;
-
-      const countMap: Record<string, number> = {};
-      loginCounts?.forEach((entry) => {
-        countMap[entry.user_id] = (countMap[entry.user_id] || 0) + 1;
+      const { data, error } = await supabase.functions.invoke("get-patients", {
+        headers,
       });
 
-      const enriched: PatientProfile[] = (profiles || []).map((p) => ({
-        user_id: p.user_id,
-        first_name: p.first_name,
-        last_name: p.last_name,
-        email: p.email,
-        street: p.street,
-        postal_code: p.postal_code,
-        city: p.city,
-        date_of_birth: p.date_of_birth,
-        phone: p.phone,
-        created_at: p.created_at,
-        login_count: countMap[p.user_id] || 0,
-      }));
-
-      setPatients(enriched);
+      if (error) throw error;
+      if (data?.patients) {
+        setPatients(data.patients);
+      }
     } catch (err) {
       console.error("Error fetching patients:", err);
     } finally {

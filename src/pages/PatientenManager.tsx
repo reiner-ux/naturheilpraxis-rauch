@@ -75,7 +75,7 @@ const PatientenManagerPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <PatientManager />
+              <PatientManager devBypass={devBypass} />
             </CardContent>
           </Card>
         </div>
