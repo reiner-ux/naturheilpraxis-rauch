@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import {
   Accordion,
@@ -14,6 +15,7 @@ import { translations } from "@/lib/translations";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import SEOHead from "@/components/seo/SEOHead";
 
 const FAQ = () => {
   const { language, t } = useLanguage();
@@ -33,8 +35,41 @@ const FAQ = () => {
     },
   });
 
+  // Inject FAQPage schema for Google rich results
+  useEffect(() => {
+    if (!faqs || faqs.length === 0) return;
+    const schemaId = "schema-faq-page";
+    const existing = document.getElementById(schemaId);
+    if (existing) existing.remove();
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqs.map((faq) => ({
+        "@type": "Question",
+        name: language === "de" ? faq.question_de : faq.question_en,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: language === "de" ? faq.answer_de : faq.answer_en,
+        },
+      })),
+    };
+    const script = document.createElement("script");
+    script.id = schemaId;
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+    return () => { document.getElementById(schemaId)?.remove(); };
+  }, [faqs, language]);
+
   return (
     <Layout>
+      <SEOHead
+        title={t("Häufige Fragen (FAQ)", "Frequently Asked Questions (FAQ)")}
+        description={t(
+          "Antworten auf häufig gestellte Fragen zu Naturheilkunde, Behandlungen und Terminen in der Naturheilpraxis Peter Rauch in Augsburg.",
+          "Answers to frequently asked questions about naturopathy, treatments and appointments at Naturheilpraxis Peter Rauch in Augsburg."
+        )}
+      />
       <div className="bg-sage-50 py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-3xl text-center">

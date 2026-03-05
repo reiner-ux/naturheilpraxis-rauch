@@ -492,6 +492,32 @@ const Anamnesebogen = () => {
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [tempUserId, setTempUserId] = useState<string | null>(null);
   const [iaaData, setIaaData] = useState<Record<string, number>>({});
+  const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
+  const [checkingSubmission, setCheckingSubmission] = useState(true);
+
+  // Check if user already has a verified submission
+  useEffect(() => {
+    const checkExisting = async () => {
+      if (!user?.id) {
+        setCheckingSubmission(false);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from("anamnesis_submissions")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("status", "verified")
+          .limit(1)
+          .maybeSingle();
+        setHasExistingSubmission(!!data);
+      } catch {
+        // ignore
+      }
+      setCheckingSubmission(false);
+    };
+    checkExisting();
+  }, [user?.id]);
 
   const draftStorageKey = useMemo(() => {
     if (!user?.id) return null;
@@ -868,11 +894,38 @@ const Anamnesebogen = () => {
           </div>
         </div>
 
-        {/* Content based on selected layout */}
-        {selectedLayout === null && (
+        {/* Block if already submitted */}
+        {hasExistingSubmission && !cameFromErstanmeldung ? (
+          <div className="container py-12">
+            <Card className="mx-auto max-w-lg">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-8 h-8 text-green-600" />
+                </div>
+                <h2 className="text-xl font-semibold mb-2">
+                  {language === "de" ? "Anamnesebogen bereits eingereicht" : "Medical history already submitted"}
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  {language === "de" 
+                    ? "Sie haben bereits einen Anamnesebogen erfolgreich eingereicht und verifiziert. Bei Änderungswünschen wenden Sie sich bitte direkt an die Praxis."
+                    : "You have already successfully submitted and verified a medical history form. For changes, please contact the practice directly."}
+                </p>
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  {language === "de" ? "Zur Startseite" : "Go to Homepage"}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        ) : checkingSubmission ? (
+          <div className="container py-12 text-center">
+            <p className="text-muted-foreground">{language === "de" ? "Wird geladen..." : "Loading..."}</p>
+          </div>
+        ) : selectedLayout === null ? (
           <LayoutSelector language={language} onSelectLayout={(layout) => setSelectedLayout(layout)} />
-        )}
-        {selectedLayout === "wizard" && (
+        ) : null}
+
+        {/* Content based on selected layout */}
+        {!hasExistingSubmission && selectedLayout === "wizard" && (
           <WizardLayout
             language={language}
             formSections={getFilteredSections(formData.geschlecht)}
@@ -886,7 +939,7 @@ const Anamnesebogen = () => {
             onExportPdf={handleExportPdf}
           />
         )}
-        {selectedLayout === "accordion" && (
+        {!hasExistingSubmission && selectedLayout === "accordion" && (
           <AccordionLayout
             language={language}
             formSections={getFilteredSections(formData.geschlecht)}

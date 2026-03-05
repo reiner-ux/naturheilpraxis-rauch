@@ -378,8 +378,11 @@ serve(async (req) => {
         contentType: "application/pdf",
       } : undefined;
 
-      // ── Send Anamnese notification to practice (anamnese@ address) ──
-      await sendEmail({
+      // ── Send practice emails in parallel to avoid timeout from sequential delays ──
+      const practiceEmails: Promise<any>[] = [];
+      
+      // Anamnese notification to practice (anamnese@ address)
+      practiceEmails.push(sendEmail({
         to: "anamnese@rauch-heilpraktiker.de",
         subject: `Neuer Anamnesebogen eingegangen: ${escapeHtml(patientName)}`,
         html: `<!DOCTYPE html>
@@ -402,17 +405,18 @@ serve(async (req) => {
     <p><span class="label">Telefon:</span> ${escapeHtml(patientPhone)}</p>
     <p><span class="label">Geburtsdatum:</span> ${escapeHtml(patientDob)}</p>
     <p><span class="label">Eingereicht am:</span> ${escapeHtml(submittedAt)}</p>
-    <p><span class="label">Status:</span> ✅ Digital verifiziert (§&nbsp;126a BGB)</p>
+    <p><span class="label">Status:</span> Digital verifiziert</p>
   </div>
-  <p>📎 Der vollständige Anamnesebogen ist als <strong>PDF im Anhang</strong> beigefügt.</p>
-  <div class="footer"><p>Automatische Benachrichtigung – Naturheilpraxis Rauch</p></div>
+  <p>Der vollstaendige Anamnesebogen ist als PDF im Anhang beigefuegt.</p>
+  <div class="footer"><p>Automatische Benachrichtigung - Naturheilpraxis Rauch</p></div>
 </div></body></html>`,
         attachment: anamnesePdfAttachment,
-      });
+      }));
 
-      // ── Send IAA notification to practice (iaa@ address) – only if IAA data exists ──
+      // IAA notification to practice (iaa@ address) - only if IAA data exists
       if (iaaPdfAttachment) {
-        await sendEmail({
+        console.log("[submit-anamnesis] IAA PDF found, sending to iaa@rauch-heilpraktiker.de");
+        practiceEmails.push(sendEmail({
           to: "iaa@rauch-heilpraktiker.de",
           subject: `Neuer IAA-Fragebogen eingegangen: ${escapeHtml(patientName)}`,
           html: `<!DOCTYPE html>
@@ -434,12 +438,17 @@ serve(async (req) => {
     <p><span class="label">E-Mail:</span> ${escapeHtml(patientEmail)}</p>
     <p><span class="label">Eingereicht am:</span> ${escapeHtml(submittedAt)}</p>
   </div>
-  <p>📎 Der IAA-Fragebogen ist als <strong>PDF im Anhang</strong> beigefügt.</p>
-  <div class="footer"><p>Automatische Benachrichtigung – Naturheilpraxis Rauch</p></div>
+  <p>Der IAA-Fragebogen ist als PDF im Anhang beigefuegt.</p>
+  <div class="footer"><p>Automatische Benachrichtigung - Naturheilpraxis Rauch</p></div>
 </div></body></html>`,
           attachment: iaaPdfAttachment,
-        });
+        }));
+      } else {
+        console.log("[submit-anamnesis] No IAA PDF data, skipping IAA email. iaaPdfBase64 length:", iaaPdfBase64?.length || 0);
       }
+
+      // Send all practice emails in parallel
+      await Promise.all(practiceEmails);
 
       // ── Send confirmation to patient ──
       await sendEmail({

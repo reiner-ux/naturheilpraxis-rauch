@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Zap, Radio, Heart, Sparkles, Activity, Phone, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import SEOHead from "@/components/seo/SEOHead";
 
 const Frequenztherapie = () => {
   const { t } = useLanguage();
@@ -45,6 +46,13 @@ const Frequenztherapie = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={t("Frequenztherapie", "Frequency Therapy")}
+        description={t(
+          "Frequenztherapie in Augsburg: Erfahren Sie mehr über den Diamond Shield Zapper und die Anwendung bioenergetischer Frequenzen in der Naturheilpraxis Peter Rauch.",
+          "Frequency therapy in Augsburg: Learn about the Diamond Shield Zapper and bioenergentic frequency applications at Naturheilpraxis Peter Rauch."
+        )}
+      />
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-sage-50 via-sage-100/50 to-background py-12 md:py-20">
         <div className="container">

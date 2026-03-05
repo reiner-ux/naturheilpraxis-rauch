@@ -148,9 +148,11 @@ class AnamnesePdfBuilder {
     this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
     const displayValue = value === true ? this.t("Ja", "Yes") : this.sanitizeForPdf(String(value));
     const safeLabel = this.sanitizeForPdf(label);
-    this.doc.text(`${safeLabel}:`, this.margin + indent, this.yPos);
+    const labelText = `${safeLabel}: `;
+    this.doc.text(labelText, this.margin + indent, this.yPos);
+    // Measure label width while still in bold font to match rendered width
+    const labelWidth = this.doc.getTextWidth(labelText);
     this.doc.setFont("helvetica", "normal");
-    const labelWidth = this.doc.getTextWidth(`${safeLabel}: `);
     const valueX = this.margin + indent + labelWidth;
     const maxValueWidth = this.contentWidth - labelWidth - indent;
     const lines = this.doc.splitTextToSize(displayValue, Math.max(maxValueWidth, 30));
@@ -165,9 +167,11 @@ class AnamnesePdfBuilder {
     this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
     const displayValue = value === true ? this.t("Ja", "Yes") : value === false ? this.t("Nein", "No") : this.sanitizeForPdf(String(value || "-"));
     const safeLabel = this.sanitizeForPdf(label);
-    this.doc.text(`${safeLabel}:`, this.margin + indent, this.yPos);
+    const labelText = `${safeLabel}: `;
+    this.doc.text(labelText, this.margin + indent, this.yPos);
+    // Measure label width while still in bold font to match rendered width
+    const labelWidth = this.doc.getTextWidth(labelText);
     this.doc.setFont("helvetica", "normal");
-    const labelWidth = this.doc.getTextWidth(`${safeLabel}: `);
     const valueX = this.margin + indent + labelWidth;
     const maxValueWidth = this.contentWidth - labelWidth - indent;
     const lines = this.doc.splitTextToSize(String(displayValue), Math.max(maxValueWidth, 30));

@@ -53,9 +53,10 @@ export async function sendEmail(
   }
 
   // Delay for local delivery addresses to avoid QMail timeout on same-domain routing
+  // Reduced from 60s to 5s to avoid edge function timeouts when sending multiple local emails
   const isLocalDelivery = to.endsWith("@rauch-heilpraktiker.de");
   if (isLocalDelivery) {
-    const delaySec = 60;
+    const delaySec = 5;
     console.log(`[relay] delaying ${delaySec}s for local delivery to ${to}`);
     await new Promise((r) => setTimeout(r, delaySec * 1000));
   }
