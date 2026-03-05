@@ -38,29 +38,41 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
     return language === "de" ? "Sorgeberechtigte/r" : "Guardian";
   }, [formData.sorgeberechtigterTyp, language]);
 
-  // Auto-set today's date if not already set
+  // Auto-set today's date and auto-fill ort from contact data
   React.useEffect(() => {
-    if (!formData.unterschrift?.datum) {
-      const today = new Date().toISOString().split('T')[0];
-      updateFormData("unterschrift", {
-        ...formData.unterschrift,
-        datum: today
-      });
+    const updates: Record<string, any> = { ...formData.unterschrift };
+    let changed = false;
+    if (!updates.datum) {
+      updates.datum = new Date().toISOString().split('T')[0];
+      changed = true;
     }
-  }, []);
+    if (formData.wohnort && updates.ort !== formData.wohnort) {
+      updates.ort = formData.wohnort;
+      changed = true;
+    }
+    if (changed) {
+      updateFormData("unterschrift", updates);
+    }
+  }, [formData.wohnort]);
 
-  // Auto-fill guardian name if minor and name is empty
+  // Auto-fill name for adults from contact data, for minors from guardian
   React.useEffect(() => {
     if (isMinor && formData.sorgeberechtigterVorname && formData.sorgeberechtigterNachname) {
       const guardianName = `${formData.sorgeberechtigterVorname} ${formData.sorgeberechtigterNachname}`;
-      if (!formData.unterschrift?.nameInDruckbuchstaben) {
+      updateFormData("unterschrift", {
+        ...formData.unterschrift,
+        nameInDruckbuchstaben: guardianName.toUpperCase()
+      });
+    } else if (!isMinor && formData.vorname && formData.nachname) {
+      const patientName = `${formData.vorname} ${formData.nachname}`;
+      if (!formData.unterschrift?.nameInDruckbuchstaben || formData.unterschrift.nameInDruckbuchstaben !== patientName.toUpperCase()) {
         updateFormData("unterschrift", {
           ...formData.unterschrift,
-          nameInDruckbuchstaben: guardianName.toUpperCase()
+          nameInDruckbuchstaben: patientName.toUpperCase()
         });
       }
     }
-  }, [isMinor, formData.sorgeberechtigterVorname, formData.sorgeberechtigterNachname]);
+  }, [isMinor, formData.sorgeberechtigterVorname, formData.sorgeberechtigterNachname, formData.vorname, formData.nachname]);
 
   // Validate signature date – for minors, signer must be ≥18
   const signatureDateError = React.useMemo(() => {
@@ -181,9 +193,13 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
             <Label htmlFor="ort">{language === "de" ? "Ort" : "Location"}</Label>
             <Input
               id="ort"
-              value={formData.unterschrift?.ort || "Augsburg"}
-              onChange={(e) => updateUnterschrift("ort", e.target.value)}
+              value={formData.unterschrift?.ort || ""}
+              readOnly
+              className="bg-muted cursor-not-allowed"
             />
+            <p className="text-xs text-muted-foreground">
+              {language === "de" ? "Wird automatisch aus den Kontaktdaten übernommen." : "Automatically filled from contact data."}
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="datum">{language === "de" ? "Datum" : "Date"} *</Label>
@@ -231,10 +247,14 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
           <Input
             id="nameInDruckbuchstaben"
             value={formData.unterschrift?.nameInDruckbuchstaben || ""}
-            onChange={(e) => updateUnterschrift("nameInDruckbuchstaben", e.target.value)}
-            className="uppercase"
-            required
+            readOnly
+            className="uppercase bg-muted cursor-not-allowed"
           />
+          <p className="text-xs text-muted-foreground">
+            {language === "de"
+              ? (isMinor ? "Wird automatisch vom Sorgeberechtigten übernommen." : "Wird automatisch aus den Patientendaten übernommen.")
+              : (isMinor ? "Automatically filled from guardian data." : "Automatically filled from patient data.")}
+          </p>
         </div>
 
         <div className="bg-muted/50 rounded-lg p-6 space-y-4">
