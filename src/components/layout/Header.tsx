@@ -20,9 +20,9 @@ export function Header() {
   const nav = translations.nav;
   const header = translations.header;
 
-  // Show Test link in non-production environments (preview/localhost) OR for logged-in admins
-  const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('localhost');
-  const showTestLink = isAdmin || isNonProduction;
+  // Show Test/Patienten links: for admins (from auth or dev bypass)
+  // The dev bypass in AuthContext now properly sets isAdmin=true and persists via sessionStorage
+  const showTestLink = isAdmin;
   
   const navItems = [
     { label: t(nav.home.de, nav.home.en), href: "/" },
