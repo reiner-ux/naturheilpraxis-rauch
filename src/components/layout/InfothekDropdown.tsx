@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText, ClipboardList, ShieldCheck, FileSignature } from "lucide-react";
+import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText, ClipboardList, ShieldCheck, FileSignature, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -62,6 +62,13 @@ const infothekGroups: InfothekGroup[] = [
         href: "/zapper-diamond-shield.html",
         icon: Radio,
         description: { de: "Frequenzgerät für Wellness und Erfahrungsheilkunde", en: "Frequency device for wellness" },
+        external: true,
+      },
+      {
+        label: { de: "Vieva Pro Vitalanalyse", en: "Vieva Pro Vital Analysis" },
+        href: "/vieva-pro-vitalanalyse.html",
+        icon: Activity,
+        description: { de: "Ganzheitliche Gesundheitsanalyse per HRV & Vitalfeld", en: "Holistic health analysis via HRV & vital field" },
         external: true,
       },
     ],
