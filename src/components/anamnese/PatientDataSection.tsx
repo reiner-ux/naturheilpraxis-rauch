@@ -50,6 +50,9 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
     return String(Math.min(max, Math.max(min, n)));
   };
 
+  /** Allow only digits, +, -, (, ), spaces in phone numbers */
+  const sanitizePhone = (raw: string) => raw.replace(/[^\d+\-() /]/g, "");
+
   // Calculate if patient is a minor (under 18)
   const isMinor = React.useMemo(() => {
     if (!formData.geburtsdatum) return false;
@@ -115,6 +118,8 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
               value={formData.geburtsdatum} 
               onChange={(e) => updateFormData("geburtsdatum", e.target.value)} 
               required 
+              min={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 100); return d.toISOString().split('T')[0]; })()}
+              max={new Date().toISOString().split('T')[0]}
               className={cn(!formData.geburtsdatum && "border-accent")}
             />
           </div>
@@ -183,37 +188,44 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
           {language === "de" ? "B. Kontaktdaten" : "B. Contact Information"}
         </h3>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="strasse">{language === "de" ? "Straße, Hausnummer" : "Street, House Number"}</Label>
+          <div className={cn("space-y-2 md:col-span-2", !formData.strasse && "required-field-highlight")}>
+            <Label htmlFor="strasse">{language === "de" ? "Straße, Hausnummer" : "Street, House Number"} <span className="text-destructive">*</span></Label>
             <Input 
               id="strasse" 
               value={formData.strasse} 
               onChange={(e) => updateFormData("strasse", e.target.value)} 
+              required
+              className={cn(!formData.strasse && "border-accent")}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="plz">{language === "de" ? "PLZ" : "Postal Code"}</Label>
+          <div className={cn("space-y-2", !formData.plz && "required-field-highlight")}>
+            <Label htmlFor="plz">{language === "de" ? "PLZ" : "Postal Code"} <span className="text-destructive">*</span></Label>
             <Input 
               id="plz" 
               value={formData.plz} 
               onChange={(e) => updateFormData("plz", e.target.value)} 
+              required
+              className={cn(!formData.plz && "border-accent")}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="wohnort">{language === "de" ? "Wohnort" : "City"}</Label>
+          <div className={cn("space-y-2", !formData.wohnort && "required-field-highlight")}>
+            <Label htmlFor="wohnort">{language === "de" ? "Wohnort" : "City"} <span className="text-destructive">*</span></Label>
             <Input 
               id="wohnort" 
               value={formData.wohnort} 
               onChange={(e) => updateFormData("wohnort", e.target.value)} 
+              required
+              className={cn(!formData.wohnort && "border-accent")}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="telefonPrivat">{language === "de" ? "Telefon privat" : "Private Phone"}</Label>
+          <div className={cn("space-y-2", !formData.telefonPrivat && !formData.mobil && "required-field-highlight")}>
+            <Label htmlFor="telefonPrivat">{language === "de" ? "Telefon privat" : "Private Phone"} {!formData.mobil && <span className="text-destructive">*</span>}</Label>
             <Input 
               id="telefonPrivat" 
               type="tel"
               value={formData.telefonPrivat} 
-              onChange={(e) => updateFormData("telefonPrivat", e.target.value)} 
+              onChange={(e) => updateFormData("telefonPrivat", sanitizePhone(e.target.value))} 
+              className={cn(!formData.telefonPrivat && !formData.mobil && "border-accent")}
             />
           </div>
           <div className="space-y-2">
@@ -222,18 +234,24 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
               id="telefonBeruflich" 
               type="tel"
               value={formData.telefonBeruflich} 
-              onChange={(e) => updateFormData("telefonBeruflich", e.target.value)} 
+              onChange={(e) => updateFormData("telefonBeruflich", sanitizePhone(e.target.value))} 
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="mobil">{language === "de" ? "Mobil" : "Mobile"}</Label>
+          <div className={cn("space-y-2", !formData.mobil && !formData.telefonPrivat && "required-field-highlight")}>
+            <Label htmlFor="mobil">{language === "de" ? "Mobil" : "Mobile"} {!formData.telefonPrivat && <span className="text-destructive">*</span>}</Label>
             <Input 
               id="mobil" 
               type="tel"
               value={formData.mobil} 
-              onChange={(e) => updateFormData("mobil", e.target.value)} 
+              onChange={(e) => updateFormData("mobil", sanitizePhone(e.target.value))} 
+              className={cn(!formData.mobil && !formData.telefonPrivat && "border-accent")}
             />
           </div>
+          {!formData.telefonPrivat && !formData.mobil && (
+            <p className="text-xs text-destructive md:col-span-2">
+              {language === "de" ? "Bitte geben Sie mindestens eine Telefonnummer an (privat oder mobil)." : "Please provide at least one phone number (private or mobile)."}
+            </p>
+          )}
           <div className={cn("space-y-2", !formData.email && "required-field-highlight")}>
             <Label htmlFor="email">{language === "de" ? "E-Mail" : "Email"} <span className="text-destructive">*</span></Label>
             <Input 
@@ -313,7 +331,7 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
                   id="sorgeTelefon"
                   type="tel"
                   value={formData.sorgeberechtigterTelefon}
-                  onChange={(e) => updateFormData("sorgeberechtigterTelefon", e.target.value)}
+                  onChange={(e) => updateFormData("sorgeberechtigterTelefon", sanitizePhone(e.target.value))}
                   className={cn(!formData.sorgeberechtigterTelefon && "border-accent")}
                 />
               </div>
@@ -384,7 +402,7 @@ const PatientDataSection = ({ formData, updateFormData, userEmail }: PatientData
                       id="sorgeFestnetz"
                       type="tel"
                       value={formData.sorgeberechtigterFestnetz || ""}
-                      onChange={(e) => updateFormData("sorgeberechtigterFestnetz", e.target.value)}
+                      onChange={(e) => updateFormData("sorgeberechtigterFestnetz", sanitizePhone(e.target.value))}
                     />
                   </div>
                 </>

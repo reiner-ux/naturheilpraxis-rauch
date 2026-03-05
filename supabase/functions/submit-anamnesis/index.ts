@@ -25,7 +25,8 @@ const requestSchema = z.object({
   submissionId: z.string().uuid().optional().nullable(),
   tempUserId: z.string().uuid().optional().nullable(),
   pdfBase64: z.string().optional(),
-});
+  pdfBase64WithoutIAA: z.string().optional(),
+  iaaPdfBase64: z.string().optional(),
 
 // In-memory rate limiting
 const rateLimitMap = new Map<
@@ -91,7 +92,7 @@ serve(async (req) => {
       });
     }
 
-    const { action, email, formData, code, submissionId, tempUserId, pdfBase64 } =
+    const { action, email, formData, code, submissionId, tempUserId, pdfBase64, pdfBase64WithoutIAA, iaaPdfBase64 } =
       parseResult.data;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -353,20 +354,34 @@ serve(async (req) => {
       });
 
       const pdfFilename = `Anamnesebogen_${escapeHtml(patientName).replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      const pdfAttachment = pdfBase64 ? {
+      const iaaPdfFilename = `IAA_${escapeHtml(patientName).replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Anamnese PDF (with IAA) for practice anamnese address
+      const anamnesePdfAttachment = pdfBase64 ? {
         filename: pdfFilename,
         base64: pdfBase64,
         contentType: "application/pdf",
       } : undefined;
 
-      // ── Send notification to practice (both email addresses) ──
-      const practiceEmails = ["info@rauch-heilpraktiker.de", "praxis_rauch@icloud.com"];
-      
-      for (const practiceEmail of practiceEmails) {
-        await sendEmail({
-          to: practiceEmail,
-          subject: `Neuer Anamnesebogen eingegangen: ${escapeHtml(patientName)}`,
-          html: `<!DOCTYPE html>
+      // Anamnese PDF WITHOUT IAA for patient
+      const patientPdfAttachment = (pdfBase64WithoutIAA || pdfBase64) ? {
+        filename: pdfFilename,
+        base64: pdfBase64WithoutIAA || pdfBase64,
+        contentType: "application/pdf",
+      } : undefined;
+
+      // IAA-only PDF for iaa@ address
+      const iaaPdfAttachment = iaaPdfBase64 ? {
+        filename: iaaPdfFilename,
+        base64: iaaPdfBase64,
+        contentType: "application/pdf",
+      } : undefined;
+
+      // ── Send Anamnese notification to practice (anamnese@ address) ──
+      await sendEmail({
+        to: "anamnese@rauch-heilpraktiker.de",
+        subject: `Neuer Anamnesebogen eingegangen: ${escapeHtml(patientName)}`,
+        html: `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
   body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
@@ -391,7 +406,37 @@ serve(async (req) => {
   <p>📎 Der vollständige Anamnesebogen ist als <strong>PDF im Anhang</strong> beigefügt.</p>
   <div class="footer"><p>Automatische Benachrichtigung – Naturheilpraxis Rauch</p></div>
 </div></body></html>`,
-          attachment: pdfAttachment,
+        attachment: anamnesePdfAttachment,
+      });
+
+      // ── Send IAA notification to practice (iaa@ address) – only if IAA data exists ──
+      if (iaaPdfAttachment) {
+        await sendEmail({
+          to: "iaa@rauch-heilpraktiker.de",
+          subject: `Neuer IAA-Fragebogen eingegangen: ${escapeHtml(patientName)}`,
+          html: `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+  .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a7c59; }
+  .info-box { background: #f0f7f0; border: 1px solid #4a7c59; border-radius: 8px; padding: 15px; margin: 20px 0; }
+  .label { font-weight: bold; color: #4a7c59; }
+  .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+</style>
+</head><body>
+<div class="container">
+  <div class="header"><h1 style="color: #4a7c59; margin: 0;">Neuer IAA-Fragebogen</h1></div>
+  <p>Ein neuer IAA-Fragebogen (Individuelle Austestung und Analyse) wurde eingereicht:</p>
+  <div class="info-box">
+    <p><span class="label">Patient:</span> ${escapeHtml(patientName)}</p>
+    <p><span class="label">E-Mail:</span> ${escapeHtml(patientEmail)}</p>
+    <p><span class="label">Eingereicht am:</span> ${escapeHtml(submittedAt)}</p>
+  </div>
+  <p>📎 Der IAA-Fragebogen ist als <strong>PDF im Anhang</strong> beigefügt.</p>
+  <div class="footer"><p>Automatische Benachrichtigung – Naturheilpraxis Rauch</p></div>
+</div></body></html>`,
+          attachment: iaaPdfAttachment,
         });
       }
 
@@ -428,7 +473,7 @@ serve(async (req) => {
     <p style="font-size: 11px; color: #999;">Diese E-Mail wurde automatisch generiert. Ihre Gesundheitsdaten werden gemäß DSGVO geschützt und mit einer Aufbewahrungsfrist von 10 Jahren gespeichert.</p>
   </div>
 </div></body></html>`,
-        attachment: pdfAttachment,
+        attachment: patientPdfAttachment,
       });
 
       // Audit log entry for DSGVO compliance

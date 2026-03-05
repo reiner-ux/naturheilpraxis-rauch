@@ -49,6 +49,27 @@ class AnamnesePdfBuilder {
 
   t(de: string, en: string) { return this.language === "de" ? de : en; }
 
+  /** Strip emojis and replace problematic Unicode chars for jsPDF Helvetica */
+  sanitizeForPdf(text: string): string {
+    return text
+      // Remove emojis and other non-BMP characters
+      .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+      .replace(/[\u{2600}-\u{27BF}]/gu, "")
+      .replace(/[\u{FE00}-\u{FE0F}]/gu, "")
+      .replace(/[\u{200D}]/gu, "")
+      // Common German char replacements that Helvetica handles
+      .replace(/\u00A0/g, " ") // non-breaking space
+      .replace(/\u2013/g, "-") // en dash
+      .replace(/\u2014/g, "-") // em dash
+      .replace(/\u201C/g, '"') // left double quote
+      .replace(/\u201D/g, '"') // right double quote
+      .replace(/\u2018/g, "'") // left single quote
+      .replace(/\u2019/g, "'") // right single quote
+      .replace(/\u2026/g, "...") // ellipsis
+      .trim()
+      .replace(/\s{2,}/g, " ");
+  }
+
   addHeader() {
     this.doc.setFillColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
     this.doc.rect(0, 0, this.pageWidth, this.headerHeight, "F");
@@ -103,7 +124,8 @@ class AnamnesePdfBuilder {
     this.doc.setTextColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
     this.doc.setFontSize(12);
     this.doc.setFont("helvetica", "bold");
-    this.doc.text(emoji ? `${emoji}  ${text}` : text, this.margin, this.yPos + 2);
+    // Strip emojis – jsPDF Helvetica doesn't support them
+    this.doc.text(this.sanitizeForPdf(text), this.margin, this.yPos + 2);
     this.yPos += 15;
     this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
   }
@@ -124,10 +146,11 @@ class AnamnesePdfBuilder {
     this.doc.setFontSize(9);
     this.doc.setFont("helvetica", "bold");
     this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-    const displayValue = value === true ? this.t("Ja", "Yes") : String(value);
-    this.doc.text(`${label}:`, this.margin + indent, this.yPos);
+    const displayValue = value === true ? this.t("Ja", "Yes") : this.sanitizeForPdf(String(value));
+    const safeLabel = this.sanitizeForPdf(label);
+    this.doc.text(`${safeLabel}:`, this.margin + indent, this.yPos);
     this.doc.setFont("helvetica", "normal");
-    const labelWidth = this.doc.getTextWidth(`${label}: `);
+    const labelWidth = this.doc.getTextWidth(`${safeLabel}: `);
     const valueX = this.margin + indent + labelWidth;
     const maxValueWidth = this.contentWidth - labelWidth - indent;
     const lines = this.doc.splitTextToSize(displayValue, Math.max(maxValueWidth, 30));
@@ -140,10 +163,11 @@ class AnamnesePdfBuilder {
     this.doc.setFontSize(9);
     this.doc.setFont("helvetica", "bold");
     this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
-    const displayValue = value === true ? this.t("Ja", "Yes") : value === false ? this.t("Nein", "No") : value || "-";
-    this.doc.text(`${label}:`, this.margin + indent, this.yPos);
+    const displayValue = value === true ? this.t("Ja", "Yes") : value === false ? this.t("Nein", "No") : this.sanitizeForPdf(String(value || "-"));
+    const safeLabel = this.sanitizeForPdf(label);
+    this.doc.text(`${safeLabel}:`, this.margin + indent, this.yPos);
     this.doc.setFont("helvetica", "normal");
-    const labelWidth = this.doc.getTextWidth(`${label}: `);
+    const labelWidth = this.doc.getTextWidth(`${safeLabel}: `);
     const valueX = this.margin + indent + labelWidth;
     const maxValueWidth = this.contentWidth - labelWidth - indent;
     const lines = this.doc.splitTextToSize(String(displayValue), Math.max(maxValueWidth, 30));
@@ -162,7 +186,7 @@ class AnamnesePdfBuilder {
     this.doc.rect(this.margin + indent, this.yPos - 3, s, s);
     this.doc.setFillColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
     this.doc.rect(this.margin + indent + 0.5, this.yPos - 2.5, s - 1, s - 1, "F");
-    this.doc.text(label, this.margin + indent + s + 3, this.yPos);
+    this.doc.text(this.sanitizeForPdf(label), this.margin + indent + s + 3, this.yPos);
     this.yPos += this.lineHeight;
   }
 
@@ -370,7 +394,7 @@ class AnamnesePdfBuilder {
 
   // ============ Build all sections ============
 
-  buildDocument(formData: AnamneseFormData, iaaData?: Record<string, number>) {
+  buildDocument(formData: AnamneseFormData, iaaData?: Record<string, number>, options?: { excludeIAA?: boolean }) {
     this.addHeader();
 
     // Title
@@ -422,13 +446,50 @@ class AnamnesePdfBuilder {
     this.buildComplaints(formData);
     this.buildPreferences(formData);
     this.buildSocial(formData);
-    // IAA section before signature
-    if (iaaData && Object.keys(iaaData).length > 0) {
+    // IAA section – only if not excluded
+    if (!options?.excludeIAA && iaaData && Object.keys(iaaData).length > 0) {
       this.buildIAA(iaaData);
     }
     this.buildSignature(formData);
 
     // Footers
+    const pageCount = (this.doc.internal as any).pages.length - 1;
+    for (let i = 1; i <= pageCount; i++) {
+      this.doc.setPage(i);
+      this.addFooter(i, pageCount);
+    }
+  }
+
+  /** Build an IAA-only document */
+  buildIAADocument(formData: AnamneseFormData, iaaData: Record<string, number>) {
+    this.addHeader();
+
+    this.doc.setTextColor(BRAND_TEXT.r, BRAND_TEXT.g, BRAND_TEXT.b);
+    this.doc.setFontSize(20);
+    this.doc.setFont("helvetica", "bold");
+    this.doc.text(this.t("IAA - Individuelle Austestung und Analyse", "IAA - Individual Testing and Analysis"), this.pageWidth / 2, this.yPos + 5, { align: "center" });
+    this.yPos += 15;
+
+    // Patient info box
+    if (formData.vorname || formData.nachname) {
+      this.doc.setFillColor(240, 248, 240);
+      this.doc.roundedRect(this.margin, this.yPos - 2, this.contentWidth, 18, 3, 3, "F");
+      this.doc.setDrawColor(BRAND_PRIMARY.r, BRAND_PRIMARY.g, BRAND_PRIMARY.b);
+      this.doc.setLineWidth(0.3);
+      this.doc.roundedRect(this.margin, this.yPos - 2, this.contentWidth, 18, 3, 3, "S");
+      this.doc.setFontSize(12);
+      this.doc.setFont("helvetica", "bold");
+      this.doc.text(`${this.t("Patient/in", "Patient")}: ${formData.vorname} ${formData.nachname}`, this.margin + 5, this.yPos + 5);
+      if (formData.geburtsdatum) {
+        this.doc.setFontSize(10);
+        this.doc.setFont("helvetica", "normal");
+        this.doc.text(`${this.t("Geburtsdatum", "Date of Birth")}: ${formData.geburtsdatum}`, this.margin + 5, this.yPos + 12);
+      }
+      this.yPos += 25;
+    }
+
+    this.buildIAA(iaaData);
+
     const pageCount = (this.doc.internal as any).pages.length - 1;
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
@@ -1333,5 +1394,20 @@ export const generateEnhancedAnamnesePdf = async ({ formData, language, iaaData 
 export const generateAnamnesePdfBase64 = async ({ formData, language, iaaData }: PdfExportOptions): Promise<string> => {
   const builder = new AnamnesePdfBuilder(language);
   builder.buildDocument(formData, iaaData);
+  return builder.toBase64();
+};
+
+/** Generate Anamnese PDF WITHOUT IAA data (for patient copy) */
+export const generateAnamnesePdfBase64WithoutIAA = async ({ formData, language }: PdfExportOptions): Promise<string> => {
+  const builder = new AnamnesePdfBuilder(language);
+  builder.buildDocument(formData, undefined, { excludeIAA: true });
+  return builder.toBase64();
+};
+
+/** Generate IAA-only PDF (for practice only) */
+export const generateIAAPdfBase64 = async ({ formData, language, iaaData }: PdfExportOptions): Promise<string> => {
+  if (!iaaData || Object.keys(iaaData).length === 0) return "";
+  const builder = new AnamnesePdfBuilder(language);
+  builder.buildIAADocument(formData, iaaData);
   return builder.toBase64();
 };

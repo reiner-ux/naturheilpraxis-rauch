@@ -49,7 +49,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { formSections as formSectionsData, initialFormData, AnamneseFormData } from "@/lib/anamneseFormData";
-import { generateEnhancedAnamnesePdf, generateAnamnesePdfBase64 } from "@/lib/pdfExportEnhanced";
+import { generateEnhancedAnamnesePdf, generateAnamnesePdfBase64, generateAnamnesePdfBase64WithoutIAA, generateIAAPdfBase64 } from "@/lib/pdfExportEnhanced";
 import PrintView from "@/components/anamnese/PrintView";
 import FilteredSummaryView from "@/components/anamnese/FilteredSummaryView";
 import SEOHead from "@/components/seo/SEOHead";
@@ -120,6 +120,15 @@ const formSections = formSectionsData.map(section => ({
   ...section,
   Icon: iconMap[section.icon] || AlertCircle,
 }));
+
+// Filter sections based on patient gender
+const getFilteredSections = (gender: string) => {
+  return formSections.filter(section => {
+    if (section.id === "womenHealth" && gender === "maennlich") return false;
+    if (section.id === "mensHealth" && gender === "weiblich") return false;
+    return true;
+  });
+};
 
 type LayoutSelectorProps = {
   language: string;
@@ -575,8 +584,13 @@ const Anamnesebogen = () => {
     e.preventDefault();
     
     // Validate required fields
-    if (!formData.nachname || !formData.vorname || !formData.email) {
-      toast.error(language === "de" ? "Bitte füllen Sie alle Pflichtfelder aus" : "Please fill in all required fields");
+    if (!formData.nachname || !formData.vorname || !formData.email || !formData.strasse || !formData.plz || !formData.wohnort) {
+      toast.error(language === "de" ? "Bitte füllen Sie alle Pflichtfelder aus (Name, Adresse, E-Mail)" : "Please fill in all required fields (name, address, email)");
+      return;
+    }
+
+    if (!formData.telefonPrivat && !formData.mobil) {
+      toast.error(language === "de" ? "Bitte geben Sie mindestens eine Telefonnummer an" : "Please provide at least one phone number");
       return;
     }
     
@@ -641,10 +655,16 @@ const Anamnesebogen = () => {
   const handleVerifyCode = async (code: string) => {
     setIsSubmitting(true);
     try {
-      // Generate PDF as Base64 for email attachment
+      // Generate PDF WITHOUT IAA for patient copy, full PDF for practice
       let pdfBase64: string | undefined;
+      let pdfBase64WithoutIAA: string | undefined;
+      let iaaPdfBase64: string | undefined;
       try {
         pdfBase64 = await generateAnamnesePdfBase64({ formData, language, iaaData });
+        pdfBase64WithoutIAA = await generateAnamnesePdfBase64WithoutIAA({ formData, language });
+        if (Object.keys(iaaData).length > 0) {
+          iaaPdfBase64 = await generateIAAPdfBase64({ formData, language, iaaData });
+        }
       } catch (e) {
         console.warn("PDF generation failed, sending without attachment:", e);
       }
@@ -658,6 +678,8 @@ const Anamnesebogen = () => {
           tempUserId,
           formData,
           pdfBase64,
+          pdfBase64WithoutIAA,
+          iaaPdfBase64,
         },
       });
       
@@ -853,7 +875,7 @@ const Anamnesebogen = () => {
         {selectedLayout === "wizard" && (
           <WizardLayout
             language={language}
-            formSections={formSections}
+            formSections={getFilteredSections(formData.geschlecht)}
             wizardStep={wizardStep}
             setWizardStep={setWizardStep}
             handleBack={handleBack}
@@ -867,7 +889,7 @@ const Anamnesebogen = () => {
         {selectedLayout === "accordion" && (
           <AccordionLayout
             language={language}
-            formSections={formSections}
+            formSections={getFilteredSections(formData.geschlecht)}
             openAccordionItems={openAccordionItems}
             setOpenAccordionItems={setOpenAccordionItems}
             handleBack={handleBack}
