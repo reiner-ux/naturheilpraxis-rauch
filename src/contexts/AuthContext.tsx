@@ -22,7 +22,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Dev bypass: In non-production environments with ?dev=true, grant admin access
+  // This solves the problem that the Lovable platform login is separate from the app's Supabase auth
+  // Once activated, it persists for the browser session via sessionStorage
+  const isNonProduction = typeof window !== 'undefined' && (
+    window.location.hostname.includes('preview') || 
+    window.location.hostname.includes('lovableproject.com') || 
+    window.location.hostname.includes('localhost') ||
+    import.meta.env.DEV
+  );
+  
+  const getDevBypass = () => {
+    if (!isNonProduction) return false;
+    const urlHasDev = new URLSearchParams(window.location.search).get('dev') === 'true';
+    if (urlHasDev) {
+      sessionStorage.setItem('dev_admin_bypass', 'true');
+      return true;
+    }
+    return sessionStorage.getItem('dev_admin_bypass') === 'true';
+  };
+  
+  const devBypass = getDevBypass();
+  
+  const [isAdmin, setIsAdmin] = useState(devBypass);
 
   useEffect(() => {
     let isMounted = true;
@@ -61,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }).then(() => {}, () => {}); // fire-and-forget
           }
         } else {
-          setIsAdmin(false);
+          if (!devBypass) setIsAdmin(false);
         }
       }
     );
@@ -104,7 +127,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
-    setIsAdmin(false);
+    if (!devBypass) setIsAdmin(false);
+    sessionStorage.removeItem('dev_admin_bypass');
   };
 
   return (
