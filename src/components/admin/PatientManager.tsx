@@ -88,6 +88,29 @@ export function PatientManager({ devBypass = false }: PatientManagerProps) {
     }
   };
 
+  const [resending, setResending] = useState<string | null>(null);
+
+  const handleResend = async (patient: PatientProfile) => {
+    if (!patient.submission_id) {
+      toast.error("Keine Einreichung für diesen Patienten gefunden.");
+      return;
+    }
+    setResending(patient.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("resend-submission", {
+        body: { submissionId: patient.submission_id },
+        headers: devBypass ? { "x-dev-mode": "true" } : {},
+      });
+      if (error) throw error;
+      toast.success(`E-Mails für ${patient.first_name || patient.email} erneut gesendet!`);
+    } catch (err: any) {
+      console.error("Resend error:", err);
+      toast.error("Fehler beim erneuten Senden: " + (err.message || "Unbekannt"));
+    } finally {
+      setResending(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-3">
