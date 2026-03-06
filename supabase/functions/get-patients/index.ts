@@ -42,9 +42,10 @@ Deno.serve(async (req) => {
     // Use service role to bypass RLS
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    const [profilesResult, loginCountsResult] = await Promise.all([
+    const [profilesResult, loginCountsResult, submissionsResult] = await Promise.all([
       adminClient.from("profiles").select("*").order("created_at", { ascending: false }),
       adminClient.from("audit_log").select("user_id, action").eq("action", "login"),
+      adminClient.from("anamnesis_submissions").select("id, user_id").order("submitted_at", { ascending: false }),
     ]);
 
     if (profilesResult.error) throw profilesResult.error;
@@ -52,6 +53,12 @@ Deno.serve(async (req) => {
     const countMap: Record<string, number> = {};
     (loginCountsResult.data || []).forEach((entry: any) => {
       countMap[entry.user_id] = (countMap[entry.user_id] || 0) + 1;
+    });
+
+    // Map latest submission per user
+    const submissionMap: Record<string, string> = {};
+    (submissionsResult.data || []).forEach((s: any) => {
+      if (!submissionMap[s.user_id]) submissionMap[s.user_id] = s.id;
     });
 
     const patients = (profilesResult.data || []).map((p: any) => ({
@@ -66,6 +73,7 @@ Deno.serve(async (req) => {
       phone: p.phone,
       created_at: p.created_at,
       login_count: countMap[p.user_id] || 0,
+      submission_id: submissionMap[p.user_id] || null,
     }));
 
     return new Response(JSON.stringify({ patients }), {

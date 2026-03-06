@@ -9,10 +9,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Users } from "lucide-react";
+import { Search, Users, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface PatientProfile {
   user_id: string;
@@ -26,6 +28,7 @@ interface PatientProfile {
   phone: string | null;
   created_at: string;
   login_count: number;
+  submission_id?: string | null;
 }
 
 interface PatientManagerProps {
@@ -85,6 +88,29 @@ export function PatientManager({ devBypass = false }: PatientManagerProps) {
     }
   };
 
+  const [resending, setResending] = useState<string | null>(null);
+
+  const handleResend = async (patient: PatientProfile) => {
+    if (!patient.submission_id) {
+      toast.error("Keine Einreichung für diesen Patienten gefunden.");
+      return;
+    }
+    setResending(patient.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("resend-submission", {
+        body: { submissionId: patient.submission_id },
+        headers: devBypass ? { "x-dev-mode": "true" } : {},
+      });
+      if (error) throw error;
+      toast.success(`E-Mails für ${patient.first_name || patient.email} erneut gesendet!`);
+    } catch (err: any) {
+      console.error("Resend error:", err);
+      toast.error("Fehler beim erneuten Senden: " + (err.message || "Unbekannt"));
+    } finally {
+      setResending(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -123,12 +149,13 @@ export function PatientManager({ devBypass = false }: PatientManagerProps) {
               <TableHead>Geburtsdatum</TableHead>
               <TableHead>Erstanmeldung</TableHead>
               <TableHead className="text-right">Logins</TableHead>
+              <TableHead className="text-center">Aktion</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   Keine Patienten gefunden.
                 </TableCell>
               </TableRow>
@@ -147,6 +174,23 @@ export function PatientManager({ devBypass = false }: PatientManagerProps) {
                     </TableCell>
                     <TableCell>{formatDate(p.date_of_birth)}</TableCell>
                     <TableCell>{formatDate(p.created_at)}</TableCell>
+                    <TableCell className="text-right">{p.login_count}</TableCell>
+                    <TableCell className="text-center">
+                      {p.submission_id ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleResend(p)}
+                          disabled={resending === p.user_id}
+                          className="gap-1"
+                        >
+                          <RefreshCw className={`h-3 w-3 ${resending === p.user_id ? "animate-spin" : ""}`} />
+                          Resend
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">–</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">{p.login_count}</TableCell>
                   </TableRow>
                 );
