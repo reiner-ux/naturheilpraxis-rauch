@@ -16,7 +16,7 @@
  * 3. Alte mail-relay.php vorher sichern (umbenennen in mail-relay.php.bak)
  */
 
-$RELAY_VERSION = '2026-03-06-v3.4-per-recipient-auth';
+$RELAY_VERSION = '2026-03-06-v3.6-mailfix';
 
 // CORS Headers
 header('Content-Type: application/json');
