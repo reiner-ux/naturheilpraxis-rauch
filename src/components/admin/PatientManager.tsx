@@ -28,6 +28,7 @@ interface PatientProfile {
   phone: string | null;
   created_at: string;
   login_count: number;
+  submission_id?: string | null;
 }
 
 interface PatientManagerProps {
