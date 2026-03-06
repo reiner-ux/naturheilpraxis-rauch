@@ -264,6 +264,44 @@ Deno.serve(async (req) => {
 
     const icd10Html = buildICD10HtmlTable(finalCodes);
 
+    // Try to retrieve stored PDFs from storage
+    let anamnesePdfBase64: string | undefined;
+    let patientPdfBase64: string | undefined;
+    let iaaPdfBase64: string | undefined;
+
+    const pdfStoragePath = submissionId;
+    const pdfNames = ['anamnese-full.pdf', 'anamnese-patient.pdf', 'iaa.pdf'];
+    
+    console.log(`[resend] Retrieving PDFs from storage path: ${pdfStoragePath}`);
+    const pdfResults = await Promise.all(
+      pdfNames.map(name => 
+        adminClient.storage.from('anamnesis-pdfs').download(`${pdfStoragePath}/${name}`)
+      )
+    );
+
+    if (pdfResults[0].data) {
+      const buf = await pdfResults[0].data.arrayBuffer();
+      anamnesePdfBase64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      console.log(`[resend] Retrieved anamnese-full.pdf (${anamnesePdfBase64.length} base64 chars)`);
+    }
+    if (pdfResults[1].data) {
+      const buf = await pdfResults[1].data.arrayBuffer();
+      patientPdfBase64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      console.log(`[resend] Retrieved anamnese-patient.pdf`);
+    }
+    if (pdfResults[2].data) {
+      const buf = await pdfResults[2].data.arrayBuffer();
+      iaaPdfBase64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      console.log(`[resend] Retrieved iaa.pdf`);
+    }
+
+    if (!anamnesePdfBase64) {
+      console.warn(`[resend] No stored PDFs found for ${pdfStoragePath} – sending without attachments`);
+    }
+
+    const pdfFilename = `Anamnesebogen_${patientName.replace(/\s+/g, '_')}_${new Date(submission.submitted_at).toISOString().split('T')[0]}.pdf`;
+    const iaaPdfFilename = `IAA_${patientName.replace(/\s+/g, '_')}_${new Date(submission.submitted_at).toISOString().split('T')[0]}.pdf`;
+
     // Build IAA summary HTML
     let iaaSummaryHtml = "";
     if (Object.keys(iaaData).length > 0) {
@@ -286,7 +324,7 @@ Deno.serve(async (req) => {
     // Send emails in parallel
     const emailPromises: Promise<any>[] = [];
 
-    // 1. Anamnese to practice
+    // 1. Anamnese to practice (with PDF if available)
     emailPromises.push(sendEmail({
       to: "anamnese@rauch-heilpraktiker.de",
       subject: `[Erneut] Anamnesebogen: ${escapeHtml(patientName)}`,
@@ -307,11 +345,12 @@ Deno.serve(async (req) => {
   <h3 style="color:#4a7c59;">ICD-10 Vorschläge</h3>
   ${icd10Html}
   <p style="margin-top:20px;color:#666;font-size:12px;">Automatische Benachrichtigung - Naturheilpraxis Rauch<br>
-  <em>Hinweis: Diese E-Mail wurde erneut aus dem Admin-Bereich gesendet (ohne PDF-Anhang).</em></p>
+  <em>Erneut gesendet aus dem Admin-Bereich.${anamnesePdfBase64 ? ' PDF-Anhang beigefügt.' : ''}</em></p>
 </div></body></html>`,
+      attachment: anamnesePdfBase64 ? { filename: pdfFilename, base64: anamnesePdfBase64, contentType: 'application/pdf' } : undefined,
     }));
 
-    // 2. IAA to practice (always send, with or without IAA data)
+    // 2. IAA to practice (with IAA PDF if available)
     emailPromises.push(sendEmail({
       to: "iaa@rauch-heilpraktiker.de",
       subject: `[Erneut] IAA + ICD-10 Bericht: ${escapeHtml(patientName)}`,
@@ -342,11 +381,12 @@ Deno.serve(async (req) => {
   </div>
   
   <p style="margin-top:20px;color:#666;font-size:12px;">Automatische Benachrichtigung - Naturheilpraxis Rauch<br>
-  <em>Erneut gesendet aus dem Admin-Bereich.</em></p>
+  <em>Erneut gesendet aus dem Admin-Bereich.${iaaPdfBase64 ? ' IAA-PDF beigefügt.' : ''}</em></p>
 </div></body></html>`,
+      attachment: iaaPdfBase64 ? { filename: iaaPdfFilename, base64: iaaPdfBase64, contentType: 'application/pdf' } : undefined,
     }));
 
-    // 3. Confirmation copy to patient (without ICD-10 / IAA data)
+    // 3. Confirmation copy to patient (with patient PDF, without ICD-10 / IAA data)
     emailPromises.push(sendEmail({
       to: patientEmail,
       subject: `[Erneut] Bestätigung: Ihr Anamnesebogen – Naturheilpraxis Rauch`,
@@ -362,6 +402,7 @@ Deno.serve(async (req) => {
     <p><strong style="color:#4a7c59;">Eingereicht am:</strong> ${escapeHtml(submittedAt)}</p>
     <p><strong style="color:#4a7c59;">Status:</strong> Digital verifiziert ✅</p>
   </div>
+  ${patientPdfBase64 ? '<p>📎 Eine Kopie Ihres Anamnesebogens finden Sie als <strong>PDF im Anhang</strong>.</p>' : ''}
   <p>Bei Fragen erreichen Sie uns unter:</p>
   <ul style="list-style:none;padding:0;">
     <li>📧 E-Mail: info@rauch-heilpraktiker.de</li>
@@ -372,17 +413,20 @@ Deno.serve(async (req) => {
     <p><em>Hinweis: Diese Bestätigung wurde erneut gesendet.</em></p>
   </div>
 </div></body></html>`,
+      attachment: patientPdfBase64 ? { filename: pdfFilename, base64: patientPdfBase64, contentType: 'application/pdf' } : undefined,
     }));
 
     await Promise.all(emailPromises);
 
-    console.log(`[resend] Emails sent successfully for submission ${submissionId} (incl. patient: ${patientEmail})`);
+    const pdfInfo = anamnesePdfBase64 ? 'mit PDF-Anhängen' : 'ohne PDF (keine gespeicherten PDFs gefunden)';
+    console.log(`[resend] Emails sent successfully for submission ${submissionId} ${pdfInfo} (incl. patient: ${patientEmail})`);
 
     return new Response(JSON.stringify({
       success: true,
-      message: "E-Mails erfolgreich erneut gesendet",
+      message: `E-Mails erfolgreich erneut gesendet (${pdfInfo})`,
       icd10Count: finalCodes.length,
       iaaEntries: Object.keys(iaaData).length,
+      pdfsAttached: !!anamnesePdfBase64,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

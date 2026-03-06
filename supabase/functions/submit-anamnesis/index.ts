@@ -617,6 +617,45 @@ serve(async (req) => {
         attachment: patientPdfAttachment,
       });
 
+      // Store PDFs in storage for future resend capability
+      const storePdfPromises: Promise<any>[] = [];
+      const pdfStoragePath = submissionId || effectiveUserId;
+      
+      if (pdfBase64) {
+        const pdfBytes = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
+        storePdfPromises.push(
+          supabase.storage.from('anamnesis-pdfs').upload(
+            `${pdfStoragePath}/anamnese-full.pdf`, pdfBytes,
+            { contentType: 'application/pdf', upsert: true }
+          ).then(r => { if (r.error) console.warn('[pdf-store] anamnese-full:', r.error.message); })
+        );
+      }
+      if (pdfBase64WithoutIAA) {
+        const pdfBytes = Uint8Array.from(atob(pdfBase64WithoutIAA), c => c.charCodeAt(0));
+        storePdfPromises.push(
+          supabase.storage.from('anamnesis-pdfs').upload(
+            `${pdfStoragePath}/anamnese-patient.pdf`, pdfBytes,
+            { contentType: 'application/pdf', upsert: true }
+          ).then(r => { if (r.error) console.warn('[pdf-store] anamnese-patient:', r.error.message); })
+        );
+      }
+      if (iaaPdfBase64) {
+        const pdfBytes = Uint8Array.from(atob(iaaPdfBase64), c => c.charCodeAt(0));
+        storePdfPromises.push(
+          supabase.storage.from('anamnesis-pdfs').upload(
+            `${pdfStoragePath}/iaa.pdf`, pdfBytes,
+            { contentType: 'application/pdf', upsert: true }
+          ).then(r => { if (r.error) console.warn('[pdf-store] iaa:', r.error.message); })
+        );
+      }
+      
+      // Store PDFs in background (don't block response)
+      if (storePdfPromises.length > 0) {
+        Promise.all(storePdfPromises).then(() => {
+          console.log(`[pdf-store] ${storePdfPromises.length} PDFs stored for ${pdfStoragePath}`);
+        }).catch(e => console.warn('[pdf-store] Error:', e));
+      }
+
       // Audit log entry for DSGVO compliance
       await supabase.from("audit_log").insert({
         user_id: effectiveUserId,
@@ -626,6 +665,7 @@ serve(async (req) => {
           patient_name: patientName,
           verified_at: new Date().toISOString(),
           icd10_count: finalCodes.length,
+          pdfs_stored: storePdfPromises.length,
         },
       });
 
