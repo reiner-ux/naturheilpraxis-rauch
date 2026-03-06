@@ -346,9 +346,37 @@ Deno.serve(async (req) => {
 </div></body></html>`,
     }));
 
+    // 3. Confirmation copy to patient (without ICD-10 / IAA data)
+    emailPromises.push(sendEmail({
+      to: patientEmail,
+      subject: `[Erneut] Bestätigung: Ihr Anamnesebogen – Naturheilpraxis Rauch`,
+      html: `<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;color:#333;line-height:1.6;">
+<div style="max-width:600px;margin:0 auto;padding:20px;">
+  <div style="text-align:center;padding:20px 0;border-bottom:2px solid #4a7c59;">
+    <h1 style="color:#4a7c59;margin:0;">Bestätigung Ihres Anamnesebogens</h1>
+  </div>
+  <p style="margin-top:20px;">Sehr geehrte/r ${escapeHtml(patientName)},</p>
+  <p>Ihr Anamnesebogen wurde erfolgreich an die Naturheilpraxis Rauch übermittelt.</p>
+  <div style="background:#f0f7f0;border:1px solid #4a7c59;border-radius:8px;padding:15px;margin:20px 0;">
+    <p><strong style="color:#4a7c59;">Eingereicht am:</strong> ${escapeHtml(submittedAt)}</p>
+    <p><strong style="color:#4a7c59;">Status:</strong> Digital verifiziert ✅</p>
+  </div>
+  <p>Bei Fragen erreichen Sie uns unter:</p>
+  <ul style="list-style:none;padding:0;">
+    <li>📧 E-Mail: info@rauch-heilpraktiker.de</li>
+    <li>📞 Telefon: 0821-4504050</li>
+  </ul>
+  <div style="margin-top:30px;padding-top:15px;border-top:1px solid #ddd;color:#999;font-size:12px;">
+    <p>Mit freundlichen Grüßen,<br>Ihre Naturheilpraxis Rauch</p>
+    <p><em>Hinweis: Diese Bestätigung wurde erneut gesendet.</em></p>
+  </div>
+</div></body></html>`,
+    }));
+
     await Promise.all(emailPromises);
 
-    console.log(`[resend] Emails sent successfully for submission ${submissionId}`);
+    console.log(`[resend] Emails sent successfully for submission ${submissionId} (incl. patient: ${patientEmail})`);
 
     return new Response(JSON.stringify({
       success: true,
