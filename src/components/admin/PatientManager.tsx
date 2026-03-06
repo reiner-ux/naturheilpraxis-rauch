@@ -149,12 +149,13 @@ export function PatientManager({ devBypass = false }: PatientManagerProps) {
               <TableHead>Geburtsdatum</TableHead>
               <TableHead>Erstanmeldung</TableHead>
               <TableHead className="text-right">Logins</TableHead>
+              <TableHead className="text-center">Aktion</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   Keine Patienten gefunden.
                 </TableCell>
               </TableRow>
@@ -173,6 +174,23 @@ export function PatientManager({ devBypass = false }: PatientManagerProps) {
                     </TableCell>
                     <TableCell>{formatDate(p.date_of_birth)}</TableCell>
                     <TableCell>{formatDate(p.created_at)}</TableCell>
+                    <TableCell className="text-right">{p.login_count}</TableCell>
+                    <TableCell className="text-center">
+                      {p.submission_id ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleResend(p)}
+                          disabled={resending === p.user_id}
+                          className="gap-1"
+                        >
+                          <RefreshCw className={`h-3 w-3 ${resending === p.user_id ? "animate-spin" : ""}`} />
+                          Resend
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">–</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">{p.login_count}</TableCell>
                   </TableRow>
                 );
