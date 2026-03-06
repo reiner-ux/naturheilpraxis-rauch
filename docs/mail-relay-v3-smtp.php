@@ -427,17 +427,25 @@ if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename
 // Pro-Postfach Auth: Für lokale Empfänger den jeweiligen SMTP-Account verwenden
 $smtp_user_for_send = $SMTP_USER;
 $smtp_pass_for_send = $SMTP_PASS;
+$envelope_from = $from;  // MAIL FROM im SMTP-Envelope
 
 if (isset($LOCAL_SMTP_ACCOUNTS[$to]) && !empty($LOCAL_SMTP_ACCOUNTS[$to])) {
     $smtp_user_for_send = $to;
     $smtp_pass_for_send = $LOCAL_SMTP_ACCOUNTS[$to];
-    relay_log("Using per-recipient SMTP auth: authenticating as $to (instead of $SMTP_USER)");
+    // KRITISCH: MAIL FROM muss dem authentifizierten Account entsprechen!
+    // QMail liefert sonst an das Postfach des MAIL FROM (info@) statt RCPT TO.
+    $envelope_from = $to;
+    relay_log("Using per-recipient SMTP auth: authenticating AND sending as $to (MAIL FROM=$to, instead of $from)");
+    
+    // Auch die E-Mail-Header anpassen (From: und Reply-To:)
+    $hdrs = preg_replace('/^From: .*$/m', "From: Naturheilpraxis Rauch <$to>", $hdrs);
+    $hdrs = preg_replace('/^Reply-To: .*$/m', "Reply-To: $from", $hdrs);  // Reply-To bleibt info@
 } else {
     relay_log("Using default SMTP auth: $SMTP_USER (recipient: $to)");
 }
 
-// Senden
-$result = smtp_send($SMTP_HOST, $SMTP_PORT, $smtp_user_for_send, $smtp_pass_for_send, $SMTP_SECURE, $from, $to, $hdrs, $body);
+// Senden – envelope_from wird als MAIL FROM verwendet
+$result = smtp_send($SMTP_HOST, $SMTP_PORT, $smtp_user_for_send, $smtp_pass_for_send, $SMTP_SECURE, $envelope_from, $to, $hdrs, $body);
 
 if ($result === true) {
     relay_log("SMTP OK: to=$to attachment=$attachInfo");
