@@ -16,7 +16,7 @@
  * 3. Alte mail-relay.php vorher sichern (umbenennen in mail-relay.php.bak)
  */
 
-$RELAY_VERSION = '2026-02-26-v3.2-qmail-tlsfix';
+$RELAY_VERSION = '2026-03-06-v3.3-crlf-fix';
 
 // CORS Headers
 header('Content-Type: application/json');
