@@ -547,13 +547,13 @@ if ($result === true) {
         $mailHeaders = [
             'MIME-Version: 1.0',
             'Content-type: text/html; charset=UTF-8',
-            "From: Naturheilpraxis Rauch <$from>",
+            "From: Naturheilpraxis Rauch <$mail_from_header>",
             "Reply-To: $from",
         ];
-        $mailSuccess = @mail($to, $encodedSubject, $html, implode("\r\n", $mailHeaders));
+        $mailSuccess = @mail($to, $encodedSubject, $html, implode("\r\n", $mailHeaders), $mail_extra_params);
         
         if ($mailSuccess) {
-            relay_log("mail() fallback OK: to=$to");
+            relay_log("mail() fallback OK: to=$to envelope=$mail_envelope");
             echo json_encode([
                 'success' => true,
                 'message' => 'Email sent via mail() fallback',
