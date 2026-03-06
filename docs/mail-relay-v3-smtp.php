@@ -458,9 +458,22 @@ if ($result === true) {
     ]);
 } else {
     // ============================================
-    // Fallback: mail() MIT Anhang-Unterstützung (v3.2 Fix!)
+    // Fallback: mail() MIT Anhang-Unterstützung (v3.6 Fix!)
+    // WICHTIG: Für lokale Empfänger envelope sender auf $to setzen!
     // ============================================
     relay_log("SMTP FAIL: $result – trying mail() fallback WITH attachment support");
+    
+    // Envelope-Sender: Für lokale Empfänger den Empfänger selbst verwenden,
+    // damit QMail die Mail in das richtige Postfach zustellt.
+    $mail_envelope = $envelope_from;  // $envelope_from ist bereits per-recipient gesetzt
+    $mail_extra_params = '-f ' . escapeshellarg($mail_envelope);
+    relay_log("mail() fallback using envelope sender: $mail_envelope");
+    
+    // From-Header für lokale Empfänger anpassen (wie beim SMTP-Pfad)
+    $mail_from_header = $from;
+    if (isset($LOCAL_SMTP_ACCOUNTS[$to]) && !empty($LOCAL_SMTP_ACCOUNTS[$to])) {
+        $mail_from_header = $to;
+    }
     
     if ($attachment && !empty($attachment['base64']) && !empty($attachment['filename'])) {
         // mail() Fallback MIT Multipart-MIME und Anhang
@@ -469,9 +482,9 @@ if ($result === true) {
         $mailHeaders = [
             'MIME-Version: 1.0',
             "Content-Type: multipart/mixed; boundary=\"$fallbackBoundary\"",
-            "From: Naturheilpraxis Rauch <$from>",
+            "From: Naturheilpraxis Rauch <$mail_from_header>",
             "Reply-To: $from",
-            "X-Mailer: NHP-Relay/3.2-QMail-Fallback",
+            "X-Mailer: NHP-Relay/3.6-QMail-Fallback",
         ];
         
         $mailBody  = "--$fallbackBoundary\r\n";
@@ -488,10 +501,10 @@ if ($result === true) {
         $mailBody .= chunk_split($attachment['base64']) . "\r\n";
         $mailBody .= "--$fallbackBoundary--";
         
-        $mailSuccess = @mail($to, $encodedSubject, $mailBody, implode("\r\n", $mailHeaders));
+        $mailSuccess = @mail($to, $encodedSubject, $mailBody, implode("\r\n", $mailHeaders), $mail_extra_params);
         
         if ($mailSuccess) {
-            relay_log("mail() fallback OK WITH attachment: to=$to filename=$aFilename");
+            relay_log("mail() fallback OK WITH attachment: to=$to filename=$aFilename envelope=$mail_envelope");
             echo json_encode([
                 'success' => true,
                 'message' => 'Email sent via mail() fallback with attachment',
@@ -505,12 +518,12 @@ if ($result === true) {
             $simpleHeaders = [
                 'MIME-Version: 1.0',
                 'Content-type: text/html; charset=UTF-8',
-                "From: Naturheilpraxis Rauch <$from>",
+                "From: Naturheilpraxis Rauch <$mail_from_header>",
                 "Reply-To: $from",
             ];
-            $mailSuccess = @mail($to, $encodedSubject, $html, implode("\r\n", $simpleHeaders));
+            $mailSuccess = @mail($to, $encodedSubject, $html, implode("\r\n", $simpleHeaders), $mail_extra_params);
             if ($mailSuccess) {
-                relay_log("mail() fallback OK WITHOUT attachment: to=$to");
+                relay_log("mail() fallback OK WITHOUT attachment: to=$to envelope=$mail_envelope");
                 echo json_encode([
                     'success' => true,
                     'message' => 'Email sent via mail() fallback (no attachment)',
