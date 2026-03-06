@@ -299,39 +299,30 @@ const DentalChart = ({ chartData, onChartDataChange, className }: DentalChartPro
                 ? selectedToothData.diagnoses.includes(diag.id)
                 : false;
               return (
-                <div
+                <label
                   key={diag.id}
                   className={cn(
-                    "flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all",
+                    "flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all select-none",
                     isActive
                       ? "bg-primary/10 border-primary"
                       : "bg-background border-muted hover:border-primary/50"
                   )}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (selectedTooth) {
-                      toggleDiagnosis(selectedTooth, diag.id);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
                 >
                   <Checkbox
                     checked={isActive}
-                    onCheckedChange={(checked) => {
-                      // State is managed by parent onClick – prevent Radix internal toggle
-                      // which can cause double-toggle and rendering issues
+                    onCheckedChange={() => {
+                      if (selectedTooth) {
+                        toggleDiagnosis(selectedTooth, diag.id);
+                      }
                     }}
-                    onClick={(e) => e.stopPropagation()}
                   />
                   <div className="flex items-center gap-1.5">
                     <div className={cn("w-2.5 h-2.5 rounded-full", diag.color)} />
-                    <Label className="font-normal text-sm cursor-pointer">
+                    <span className="font-normal text-sm cursor-pointer">
                       {language === "de" ? diag.labelDe : diag.labelEn}
-                    </Label>
+                    </span>
                   </div>
-                </div>
+                </label>
               );
             })}
           </div>
