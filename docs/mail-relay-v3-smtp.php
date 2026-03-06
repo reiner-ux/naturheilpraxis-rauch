@@ -330,6 +330,12 @@ function smtp_send($host, $port, $user, $pass, $secure, $from, $to, $headers, $b
     // DATA
     if (!$sendCmd("DATA", 354)) { fclose($sock); return implode('; ', $errors); }
     
+    // Normalize bare LF to CRLF (QMail/RFC 2821 requirement!)
+    // JSON-decoded HTML from Edge Functions contains bare \n which QMail rejects with 451
+    $body = str_replace("\r\n", "\n", $body);   // first normalize to LF
+    $body = str_replace("\r", "\n", $body);      // handle stray CR
+    $body = str_replace("\n", "\r\n", $body);    // then convert all to CRLF
+    
     // Send headers + body
     $message = $headers . "\r\n\r\n" . $body;
     // Dot-stuffing (RFC 5321)
