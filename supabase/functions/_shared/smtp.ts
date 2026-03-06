@@ -96,6 +96,9 @@ export async function sendEmail(
     throw new Error("Email service response error");
   }
 
+  // Log full relay response for debugging
+  console.log(`[relay] Response for ${to}: version=${result.version || 'unknown'}, success=${result.success}, message=${result.message || '-'}, full=${JSON.stringify(result).substring(0, 500)}`);
+
   if (!result.success) {
     if (attachment) {
       console.warn("[relay] Failed with attachment (success=false), retrying without");
