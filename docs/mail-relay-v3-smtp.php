@@ -51,9 +51,20 @@ $RELAY_SECRET = '998a476a-cf1c-7443-ea47-3e329d70e934';
 // SMTP-Zugangsdaten (Plesk-Postfach, QMail SMTP auf Port 587)
 $SMTP_HOST  = '185.248.141.144';           // QMail SMTP auf Server-IP (Port 587, alle IPs aktiviert)
 $SMTP_PORT  = 587;                         // Submission-Port (Plesk QMail SMTP-Service)
-$SMTP_USER  = 'info@rauch-heilpraktiker.de';
-$SMTP_PASS  = '';                          // <-- HIER DAS POSTFACH-PASSWORT EINTRAGEN
 $SMTP_SECURE = false;                      // false = STARTTLS wird automatisch verhandelt auf 587
+
+// Standard-SMTP-Account (für externe Empfänger und Fallback)
+$SMTP_USER  = 'info@rauch-heilpraktiker.de';
+$SMTP_PASS  = '';                          // <-- HIER DAS POSTFACH-PASSWORT FÜR info@ EINTRAGEN
+
+// Pro-Postfach SMTP-Auth für lokale Zustellung
+// QMail liefert Mails an den authentifizierten Account, nicht an RCPT TO.
+// Daher muss für lokale Empfänger der jeweilige Account verwendet werden.
+$LOCAL_SMTP_ACCOUNTS = [
+    'anamnese@rauch-heilpraktiker.de' => '',  // <-- HIER PASSWORT FÜR anamnese@ EINTRAGEN
+    'iaa@rauch-heilpraktiker.de'      => '',  // <-- HIER PASSWORT FÜR iaa@ EINTRAGEN
+    // 'info@rauch-heilpraktiker.de' wird automatisch über $SMTP_USER/$SMTP_PASS abgedeckt
+];
 
 // Token validieren
 $token = $_SERVER['HTTP_X_RELAY_TOKEN'] ?? '';
