@@ -206,10 +206,13 @@ const SignatureSection = ({ formData, updateFormData }: SignatureSectionProps) =
             <Input
               id="datum"
               type="date"
-              value={formData.unterschrift?.datum || ""}
-              onChange={(e) => updateUnterschrift("datum", e.target.value)}
-              required
+              value={new Date().toISOString().split('T')[0]}
+              readOnly
+              className="bg-muted cursor-not-allowed"
             />
+            <p className="text-xs text-muted-foreground">
+              {language === "de" ? "Das Datum wird automatisch auf heute gesetzt." : "The date is automatically set to today."}
+            </p>
           </div>
         </div>
 
