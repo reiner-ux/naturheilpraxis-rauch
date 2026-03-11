@@ -13,9 +13,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [searchParams] = useSearchParams();
 
   // Development bypass: Available in dev mode AND preview environments
-  // Add ?dev=true to URL to skip authentication during testing
+  // SECURITY: Explicitly blocked on published production domains
   const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('localhost');
-  const devBypass = isNonProduction && searchParams.get('dev') === 'true';
+  const isPublishedProduction = window.location.hostname === 'naturheilpraxis-rauch.lovable.app' || window.location.hostname === 'www.rauch-heilpraktiker.de' || window.location.hostname === 'rauch-heilpraktiker.de';
+  const devBypass = isNonProduction && !isPublishedProduction && searchParams.get('dev') === 'true';
 
   if (devBypass) {
     // Development mode bypass - only works in non-production builds

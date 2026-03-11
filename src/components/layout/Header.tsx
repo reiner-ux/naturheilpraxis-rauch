@@ -21,9 +21,12 @@ export function Header() {
   const header = translations.header;
 
   // Non-production detection for showing dev activate button
+  // SECURITY: Explicitly blocked on published production domains
   const isNonProduction = import.meta.env.DEV || window.location.hostname.includes('preview') || window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('localhost');
+  const isPublishedProduction = window.location.hostname === 'naturheilpraxis-rauch.lovable.app' || window.location.hostname === 'www.rauch-heilpraktiker.de' || window.location.hostname === 'rauch-heilpraktiker.de';
+  const allowDevMode = isNonProduction && !isPublishedProduction;
   const devActive = sessionStorage.getItem('dev_admin_bypass') === 'true';
-  const showDevButton = isNonProduction && !isAdmin && !devActive;
+  const showDevButton = allowDevMode && !isAdmin && !devActive;
   
   const activateDevMode = useCallback(() => {
     sessionStorage.setItem('dev_admin_bypass', 'true');

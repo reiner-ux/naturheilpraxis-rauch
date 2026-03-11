@@ -75,9 +75,13 @@ export async function sendEmail(
   const text = await resp.text();
 
   if (!resp.ok || text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
-    // If sending WITH attachment failed, retry WITHOUT
+    // If sending WITH attachment failed, retry WITHOUT and notify admin
     if (attachment) {
       console.warn("[relay] Failed with attachment, retrying without. Status:", resp.status, text.substring(0, 200));
+      
+      // Send admin notification about the fallback (fire-and-forget, don't block)
+      notifyAdminPdfFailure(to, attachment.filename, resp.status, text.substring(0, 200)).catch(() => {});
+      
       return sendEmail({
         ...options,
         html: html + '\n<p style="color:#999;font-size:11px;">⚠️ Hinweis: Der PDF-Anhang konnte aus technischen Gründen nicht beigefügt werden.</p>',
@@ -102,6 +106,10 @@ export async function sendEmail(
   if (!result.success) {
     if (attachment) {
       console.warn("[relay] Failed with attachment (success=false), retrying without");
+      
+      // Send admin notification about the fallback (fire-and-forget)
+      notifyAdminPdfFailure(to, attachment.filename, 200, result.message || "success=false").catch(() => {});
+      
       return sendEmail({
         ...options,
         html: html + '\n<p style="color:#999;font-size:11px;">⚠️ Hinweis: Der PDF-Anhang konnte aus technischen Gründen nicht beigefügt werden.</p>',
@@ -113,4 +121,48 @@ export async function sendEmail(
 
   console.log("[relay] Email sent successfully to", to, attachment ? "(with attachment)" : "");
   return { attachmentSent: !!attachment };
+}
+
+/**
+ * Notify admin that a PDF attachment could not be sent.
+ * Sends a lightweight alert email to the practice info address.
+ */
+async function notifyAdminPdfFailure(
+  originalTo: string,
+  filename: string,
+  statusCode: number,
+  errorDetail: string,
+): Promise<void> {
+  const relaySecret = Deno.env.get("RELAY_SECRET");
+  if (!relaySecret) return;
+
+  const relayUrl = "https://rauch-heilpraktiker.de/mail-relay.php";
+  
+  try {
+    await fetch(relayUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Relay-Token": relaySecret,
+      },
+      body: JSON.stringify({
+        to: "info@rauch-heilpraktiker.de",
+        subject: `[WARNUNG] PDF-Anhang fehlgeschlagen: ${filename}`,
+        html: `<div style="font-family:Arial,sans-serif;padding:20px;">
+          <h2 style="color:#c0392b;">⚠️ PDF-Anhang konnte nicht gesendet werden</h2>
+          <p><strong>Empfänger:</strong> ${originalTo}</p>
+          <p><strong>Dateiname:</strong> ${filename}</p>
+          <p><strong>HTTP-Status:</strong> ${statusCode}</p>
+          <p><strong>Fehlerdetail:</strong> ${errorDetail}</p>
+          <p><strong>Zeitpunkt:</strong> ${new Date().toLocaleString("de-DE", { timeZone: "Europe/Berlin" })}</p>
+          <hr style="margin:15px 0;border:none;border-top:1px solid #ddd;">
+          <p style="color:#666;font-size:12px;">Die E-Mail wurde ohne Anhang gesendet. Bitte prüfen Sie den Vorgang im Admin-Bereich und senden Sie ggf. erneut.</p>
+        </div>`,
+        from: "info@rauch-heilpraktiker.de",
+      }),
+    });
+    console.log(`[relay] Admin notified about PDF failure for ${originalTo}`);
+  } catch (e) {
+    console.warn("[relay] Failed to notify admin about PDF failure:", e);
+  }
 }

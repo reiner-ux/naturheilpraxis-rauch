@@ -29,10 +29,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Check for dev mode header (only non-production)
+    // Dev mode bypass: only allowed when Origin header matches non-production domains
     const devMode = req.headers.get("x-dev-mode") === "true";
+    let devAllowed = false;
+    if (devMode) {
+      const origin = req.headers.get("origin") || "";
+      devAllowed = origin.includes("localhost") || origin.includes("preview") || origin.includes("lovableproject.com");
+      if (!devAllowed) {
+        console.warn(`[get-patients] dev-mode rejected for origin: ${origin}`);
+      }
+    }
     
-    if (!isAdmin && !devMode) {
+    if (!isAdmin && !devAllowed) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
