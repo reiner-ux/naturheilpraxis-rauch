@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
 
     // 2. IAA to practice (with IAA PDF if available)
     emailPromises.push(sendEmail({
-      to: "iaa@rauch-heilpraktiker.de",
+      to: "iaa@art-of-therapy.de",
       subject: `[Erneut] IAA + ICD-10 Bericht: ${escapeHtml(patientName)}`,
       html: `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;color:#333;line-height:1.6;">
