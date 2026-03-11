@@ -506,7 +506,7 @@ serve(async (req) => {
       
       // Anamnese notification to practice (anamnese@ address)
       practiceEmails.push(sendEmail({
-        to: "anamnese@rauch-heilpraktiker.de",
+        to: "anamnese@art-of-therapy.de",
         subject: `Neuer Anamnesebogen eingegangen: ${escapeHtml(patientName)}`,
         html: `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
@@ -538,7 +538,7 @@ serve(async (req) => {
 
       // IAA + ICD-10 notification to practice (iaa@ address) - ALWAYS send with ICD-10 codes
       practiceEmails.push(sendEmail({
-        to: "iaa@rauch-heilpraktiker.de",
+        to: "iaa@art-of-therapy.de",
         subject: `Neuer IAA-Fragebogen + ICD-10: ${escapeHtml(patientName)}`,
         html: `<!DOCTYPE html>
 <html><head><meta charset="utf-8">

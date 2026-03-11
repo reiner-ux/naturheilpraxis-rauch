@@ -61,8 +61,8 @@ $SMTP_PASS  = '';                          // <-- HIER DAS POSTFACH-PASSWORT FÜ
 // QMail liefert Mails an den authentifizierten Account, nicht an RCPT TO.
 // Daher muss für lokale Empfänger der jeweilige Account verwendet werden.
 $LOCAL_SMTP_ACCOUNTS = [
-    'anamnese@rauch-heilpraktiker.de' => '',  // <-- HIER PASSWORT FÜR anamnese@ EINTRAGEN
-    'iaa@rauch-heilpraktiker.de'      => '',  // <-- HIER PASSWORT FÜR iaa@ EINTRAGEN
+    'anamnese@art-of-therapy.de' => '',  // <-- HIER PASSWORT FÜR anamnese@ EINTRAGEN
+    'iaa@art-of-therapy.de'      => '',  // <-- HIER PASSWORT FÜR iaa@ EINTRAGEN
     // 'info@rauch-heilpraktiker.de' wird automatisch über $SMTP_USER/$SMTP_PASS abgedeckt
 ];
 
