@@ -189,9 +189,19 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const devMode = req.headers.get("x-dev-mode") === "true";
+    
+    // Dev mode bypass: only allowed when Origin matches non-production domains
+    const devModeHeader = req.headers.get("x-dev-mode") === "true";
+    let devAllowed = false;
+    if (devModeHeader) {
+      const origin = req.headers.get("origin") || "";
+      devAllowed = origin.includes("localhost") || origin.includes("preview") || origin.includes("lovableproject.com");
+      if (!devAllowed) {
+        console.warn(`[resend] dev-mode rejected for origin: ${origin}`);
+      }
+    }
 
-    // Admin auth check (with dev-mode bypass)
+    // Admin auth check
     let isAdmin = false;
     const authHeader = req.headers.get("authorization");
     
@@ -206,7 +216,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!isAdmin && !devMode) {
+    if (!isAdmin && !devAllowed) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
