@@ -506,7 +506,7 @@ serve(async (req) => {
       
       // Anamnese notification to practice (anamnese@ address)
       practiceEmails.push(sendEmail({
-        to: "anamnese@rauch-heilpraktiker.de",
+        to: "anamnese@art-of-therapy.de",
         subject: `Neuer Anamnesebogen eingegangen: ${escapeHtml(patientName)}`,
         html: `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
