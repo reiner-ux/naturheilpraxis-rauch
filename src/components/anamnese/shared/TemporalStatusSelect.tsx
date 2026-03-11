@@ -1,6 +1,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { AlertTriangle } from "lucide-react";
 import YearMonthSelect from "./YearMonthSelect";
 
 interface TemporalStatusSelectProps {
@@ -28,6 +29,17 @@ const TemporalStatusSelect = ({
   birthYear,
 }: TemporalStatusSelectProps) => {
   const { language } = useLanguage();
+
+  // Validate: end date must not be before start date
+  const bisBeforeSeit = (() => {
+    if (status !== "geendet" || !seitYear || !bisYear) return false;
+    const seitNum = parseInt(seitYear) * 100 + (seitMonth ? parseInt(seitMonth) : 0);
+    const bisNum = parseInt(bisYear) * 100 + (bisMonth ? parseInt(bisMonth) : 0);
+    return bisNum < seitNum;
+  })();
+
+  // Calculate minimum year for "bis" based on "seit"
+  const bisMinYear = seitYear ? parseInt(seitYear) : undefined;
 
   return (
     <div className="space-y-3">
@@ -74,8 +86,17 @@ const TemporalStatusSelect = ({
             onYearChange={onBisYearChange}
             onMonthChange={onBisMonthChange}
             showMonth
-            birthYear={birthYear}
+            birthYear={bisMinYear}
+            showAgeHint={false}
           />
+          {bisBeforeSeit && (
+            <p className="text-sm text-destructive flex items-center gap-1 mt-1">
+              <AlertTriangle className="w-3 h-3" />
+              {language === "de"
+                ? "Das Enddatum darf nicht vor dem Startdatum liegen."
+                : "The end date cannot be before the start date."}
+            </p>
+          )}
         </div>
       )}
     </div>
