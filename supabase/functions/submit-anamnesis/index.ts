@@ -649,11 +649,15 @@ serve(async (req) => {
         );
       }
       
-      // Store PDFs in background (don't block response)
+      // Await PDF storage before returning – edge functions shut down after response,
+      // so fire-and-forget promises would be killed before completing the upload.
       if (storePdfPromises.length > 0) {
-        Promise.all(storePdfPromises).then(() => {
+        try {
+          await Promise.all(storePdfPromises);
           console.log(`[pdf-store] ${storePdfPromises.length} PDFs stored for ${pdfStoragePath}`);
-        }).catch(e => console.warn('[pdf-store] Error:', e));
+        } catch (e) {
+          console.warn('[pdf-store] Error storing PDFs:', e);
+        }
       }
 
       // Audit log entry for DSGVO compliance
