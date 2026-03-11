@@ -691,6 +691,22 @@ const Anamnesebogen = () => {
         if (Object.keys(iaaData).length > 0) {
           iaaPdfBase64 = await generateIAAPdfBase64({ formData, language, iaaData });
         }
+        
+        // PDF size monitoring: warn if total payload exceeds ~4MB (Edge Function limit ~6MB with overhead)
+        const totalBase64Bytes = (pdfBase64?.length || 0) + (pdfBase64WithoutIAA?.length || 0) + (iaaPdfBase64?.length || 0);
+        const totalMB = totalBase64Bytes / (1024 * 1024);
+        if (totalMB > 4) {
+          console.warn(`[PDF-Size] Total PDF payload: ${totalMB.toFixed(1)} MB – may exceed Edge Function limit`);
+          // Drop the largest PDF to stay within limits, keep patient copy
+          pdfBase64 = undefined;
+          iaaPdfBase64 = undefined;
+          toast.warning(
+            language === "de"
+              ? "Die PDF-Anhänge sind sehr groß. Die Praxis-PDFs werden serverseitig verkleinert."
+              : "PDF attachments are very large. Practice PDFs will be reduced server-side.",
+            { duration: 6000 }
+          );
+        }
       } catch (e) {
         console.warn("PDF generation failed, sending without attachment:", e);
       }

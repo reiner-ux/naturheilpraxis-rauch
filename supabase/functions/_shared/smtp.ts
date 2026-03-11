@@ -75,9 +75,13 @@ export async function sendEmail(
   const text = await resp.text();
 
   if (!resp.ok || text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
-    // If sending WITH attachment failed, retry WITHOUT
+    // If sending WITH attachment failed, retry WITHOUT and notify admin
     if (attachment) {
       console.warn("[relay] Failed with attachment, retrying without. Status:", resp.status, text.substring(0, 200));
+      
+      // Send admin notification about the fallback (fire-and-forget, don't block)
+      notifyAdminPdfFailure(to, attachment.filename, resp.status, text.substring(0, 200)).catch(() => {});
+      
       return sendEmail({
         ...options,
         html: html + '\n<p style="color:#999;font-size:11px;">⚠️ Hinweis: Der PDF-Anhang konnte aus technischen Gründen nicht beigefügt werden.</p>',
