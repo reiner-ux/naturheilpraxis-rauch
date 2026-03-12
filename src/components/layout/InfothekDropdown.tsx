@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText, ClipboardList, ShieldCheck, FileSignature, Activity } from "lucide-react";
+import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText, ClipboardList, ShieldCheck, FileSignature, Activity, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -69,6 +69,13 @@ const infothekGroups: InfothekGroup[] = [
         href: "/vieva-pro-vitalanalyse.html",
         icon: Activity,
         description: { de: "Ganzheitliche Gesundheitsanalyse per HRV & Vitalfeld", en: "Holistic health analysis via HRV & vital field" },
+        external: true,
+      },
+      {
+        label: { de: "Allergien & Intoleranzen", en: "Allergies & Intolerances" },
+        href: "/ass-salicylat-histamin.html",
+        icon: AlertTriangle,
+        description: { de: "ASS-, Salicylat- & Histamin-Unverträglichkeit", en: "ASS, salicylate & histamine intolerance" },
         external: true,
       },
     ],
