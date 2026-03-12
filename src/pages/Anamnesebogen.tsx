@@ -476,6 +476,7 @@ const AccordionLayout = ({
 );
 
 const Anamnesebogen = () => {
+  useContentProtection();
   const { language } = useLanguage();
   const { user } = useAuth();
   const location = useLocation();
