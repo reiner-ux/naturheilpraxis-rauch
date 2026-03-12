@@ -169,8 +169,14 @@
             color: #444 !important;
         }
     </style>
+    <style>
+      body, .reveal { -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
+      @media print { body { display:none !important; } }
+      img { -webkit-user-drag:none; user-drag:none; pointer-events:none; }
+    </style>
 </head>
 <body>
+<script src="/content-protection.js"></script>
 <div class="reveal">
     <div class="slides">
         <!-- Slide 1: Titel -->

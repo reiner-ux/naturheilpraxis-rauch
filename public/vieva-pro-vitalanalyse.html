@@ -328,8 +328,14 @@
             .cta-buttons { flex-direction: column; }
         }
     </style>
+    <style>
+      body, .reveal { -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
+      @media print { body { display:none !important; } }
+      img { -webkit-user-drag:none; user-drag:none; pointer-events:none; }
+    </style>
 </head>
 <body>
+<script src="/content-protection.js"></script>
 
     <!-- ════════════════════ SLIDE 1: HERO ════════════════════ -->
     <div class="slide active bg-hero">
