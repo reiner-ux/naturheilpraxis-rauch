@@ -252,7 +252,7 @@ export function InfothekDropdown({ isMobile = false, onItemClick }: InfothekDrop
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-80 animate-in fade-in-0 slide-in-from-top-2 rounded-xl border border-border bg-background p-2 shadow-elevated">
+        <div className="absolute left-0 top-full z-50 mt-1 w-80 max-h-[calc(100vh-5rem)] overflow-y-auto animate-in fade-in-0 slide-in-from-top-2 rounded-xl border border-border bg-background p-2 shadow-elevated scrollbar-thin scrollbar-thumb-sage-300 scrollbar-track-transparent">
           {infothekGroups.map((group, idx) => (
             <div key={group.title.de}>
               {idx > 0 && <div className="my-1.5 border-t border-border/50" />}
