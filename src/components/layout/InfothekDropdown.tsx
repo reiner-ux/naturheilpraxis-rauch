@@ -71,6 +71,14 @@ const infothekGroups: InfothekGroup[] = [
         description: { de: "Ganzheitliche Gesundheitsanalyse per HRV & Vitalfeld", en: "Holistic health analysis via HRV & vital field" },
         external: true,
       },
+      {
+        label: { de: "Allergien & Intoleranzen", en: "Allergies & Intolerances" },
+        href: "/ass-salicylat-histamin.html",
+        icon: AlertTriangle,
+        description: { de: "ASS-, Salicylat- & Histamin-Unverträglichkeit", en: "ASS, salicylate & histamine intolerance" },
+        external: true,
+      },
+      },
     ],
   },
   {
