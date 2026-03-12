@@ -78,7 +78,6 @@ const infothekGroups: InfothekGroup[] = [
         description: { de: "ASS-, Salicylat- & Histamin-Unverträglichkeit", en: "ASS, salicylate & histamine intolerance" },
         external: true,
       },
-      },
     ],
   },
   {
