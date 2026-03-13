@@ -78,6 +78,13 @@ const infothekGroups: InfothekGroup[] = [
         description: { de: "ASS-, Salicylat- & Histamin-Unverträglichkeit", en: "ASS, salicylate & histamine intolerance" },
         external: true,
       },
+      {
+        label: { de: "Candida-Diät", en: "Candida Diet" },
+        href: "/candida-diaet.html",
+        icon: FileText,
+        description: { de: "Ernährungsratgeber bei Candida-Pilzbefall", en: "Dietary guide for Candida infection" },
+        external: true,
+      },
     ],
   },
   {
