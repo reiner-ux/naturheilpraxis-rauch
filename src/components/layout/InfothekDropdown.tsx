@@ -90,6 +90,13 @@ const infothekGroups: InfothekGroup[] = [
         description: { de: "Ernährungsratgeber bei Candida-Pilzbefall", en: "Dietary guide for Candida infection" },
         external: true,
       },
+      {
+        label: { de: "Kräuter & Gewürze gegen Schmerz", en: "Herbs & Spices for Pain" },
+        href: "/kraeuter-schmerz-entzuendung.html",
+        icon: Leaf,
+        description: { de: "Phytotherapie bei Schmerz & Entzündung", en: "Phytotherapy for pain & inflammation" },
+        external: true,
+      },
     ],
   },
   {
