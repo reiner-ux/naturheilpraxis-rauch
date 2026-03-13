@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText, ClipboardList, ShieldCheck, FileSignature, Activity, AlertTriangle } from "lucide-react";
+import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText, ClipboardList, ShieldCheck, FileSignature, Activity, AlertTriangle, Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -88,6 +88,13 @@ const infothekGroups: InfothekGroup[] = [
         href: "/candida-diaet.html",
         icon: FileText,
         description: { de: "Ernährungsratgeber bei Candida-Pilzbefall", en: "Dietary guide for Candida infection" },
+        external: true,
+      },
+      {
+        label: { de: "Kräuter & Gewürze gegen Schmerz", en: "Herbs & Spices for Pain" },
+        href: "/kraeuter-schmerz-entzuendung.html",
+        icon: Leaf,
+        description: { de: "Phytotherapie bei Schmerz & Entzündung", en: "Phytotherapy for pain & inflammation" },
         external: true,
       },
     ],
