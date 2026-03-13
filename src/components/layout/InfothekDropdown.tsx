@@ -78,6 +78,11 @@ const infothekGroups: InfothekGroup[] = [
         description: { de: "ASS-, Salicylat- & Histamin-Unverträglichkeit", en: "ASS, salicylate & histamine intolerance" },
         external: true,
       },
+    ],
+  },
+  {
+    title: { de: "Für Patienten der Naturheilpraxis Peter Rauch", en: "For Patients of Naturheilpraxis Peter Rauch" },
+    items: [
       {
         label: { de: "Candida-Diät", en: "Candida Diet" },
         href: "/candida-diaet.html",
