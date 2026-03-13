@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText, ClipboardList, ShieldCheck, FileSignature, Activity, AlertTriangle, Leaf } from "lucide-react";
+import { ChevronDown, Stethoscope, Euro, Zap, HelpCircle, BookOpen, Radio, FileText, ClipboardList, ShieldCheck, FileSignature, Activity, AlertTriangle, Leaf, Flower2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -83,6 +83,13 @@ const infothekGroups: InfothekGroup[] = [
   {
     title: { de: "Für Patienten der Naturheilpraxis Peter Rauch", en: "For Patients of Naturheilpraxis Peter Rauch" },
     items: [
+      {
+        label: { de: "Allergiebehandlung", en: "Allergy Treatment" },
+        href: "/allergiebehandlung.html",
+        icon: Flower2,
+        description: { de: "Ganzheitliche Allergie-Betrachtung & Therapie", en: "Holistic allergy approach & therapy" },
+        external: true,
+      },
       {
         label: { de: "Candida-Diät", en: "Candida Diet" },
         href: "/candida-diaet.html",
