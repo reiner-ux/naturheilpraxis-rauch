@@ -84,6 +84,13 @@ const infothekGroups: InfothekGroup[] = [
     title: { de: "Für Patienten der Naturheilpraxis Peter Rauch", en: "For Patients of Naturheilpraxis Peter Rauch" },
     items: [
       {
+        label: { de: "Allergiebehandlung", en: "Allergy Treatment" },
+        href: "/allergiebehandlung.html",
+        icon: Flower2,
+        description: { de: "Ganzheitliche Allergie-Betrachtung & Therapie", en: "Holistic allergy approach & therapy" },
+        external: true,
+      },
+      {
         label: { de: "Candida-Diät", en: "Candida Diet" },
         href: "/candida-diaet.html",
         icon: FileText,
